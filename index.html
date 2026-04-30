@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>靜華 OS</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="靜華 OS" />
+  <meta name="theme-color" content="#1E293B" />
+  <style>
+    :root {
+      --morning:   #F59E0B;
+      --career:    #3B82F6;
+      --family:    #10B981;
+      --growth:    #8B5CF6;
+      --health:    #EF4444;
+      --review:    #64748B;
+      --monthly:   #0EA5E9;
+      --portfolio: #F97316;
+      --bg:        #F8FAFC;
+      --card:      #FFFFFF;
+      --text:      #1E293B;
+      --muted:     #64748B;
+      --border:    #E2E8F0;
+      --radius:    16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px 16px 48px;
+    }
+
+    .wrap { max-width: 480px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 32px; }
+    header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    header .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    /* ── Home grid ── */
+    .section-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); margin: 20px 0 10px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .full { grid-column: 1 / -1; }
+
+    .card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 18px 14px; cursor: pointer;
+      border: 2px solid var(--border);
+      transition: all 0.18s ease;
+      text-align: center; user-select: none;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.09); }
+    .card:active { transform: translateY(0); }
+    .card .icon { font-size: 30px; display: block; margin-bottom: 8px; }
+    .card .label { font-size: 15px; font-weight: 700; }
+    .card .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    .card-morning:hover   { background: #FFFBEB; border-color: var(--morning); }
+    .card-career:hover    { background: #EFF6FF; border-color: var(--career);  }
+    .card-family:hover    { background: #ECFDF5; border-color: var(--family);  }
+    .card-growth:hover    { background: #F5F3FF; border-color: var(--growth);  }
+    .card-health:hover    { background: #FEF2F2; border-color: var(--health);  }
+    .card-review:hover    { background: #F8FAFC; border-color: var(--review);  }
+    .card-monthly:hover   { background: #F0F9FF; border-color: var(--monthly); }
+    .card-portfolio:hover { background: #FFF7ED; border-color: var(--portfolio); }
+
+    /* ── Template view ── */
+    .tpl { display: none; }
+    .tpl.active { display: block; }
+    .home.hidden { display: none; }
+
+    .back {
+      background: none; border: none; cursor: pointer;
+      font-size: 14px; color: var(--muted);
+      display: flex; align-items: center; gap: 5px;
+      margin-bottom: 24px; padding: 0;
+    }
+    .back:hover { color: var(--text); }
+
+    .tpl-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+    .tpl-header .big-icon { font-size: 40px; line-height: 1; }
+    .tpl-header h2 { font-size: 22px; font-weight: 800; }
+    .tpl-header .tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 100px; margin-top: 5px;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .field input, .field textarea {
+      width: 100%; border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 15px; font-family: inherit; color: var(--text);
+      background: white; resize: vertical; transition: border-color .18s;
+    }
+    .field input:focus, .field textarea:focus { outline: none; border-color: #94A3B8; }
+    .field textarea { min-height: 88px; }
+    .field textarea.lg { min-height: 180px; }
+
+    .copy-btn {
+      width: 100%; padding: 16px; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 700; cursor: pointer; color: white;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 10px; transition: opacity .18s, transform .18s;
+    }
+    .copy-btn:hover  { opacity: .9; transform: translateY(-1px); }
+    .copy-btn:active { transform: translateY(0); }
+
+    .btn-morning   { background: var(--morning); }
+    .btn-career    { background: var(--career);  }
+    .btn-family    { background: var(--family);  }
+    .btn-growth    { background: var(--growth);  }
+    .btn-health    { background: var(--health);  }
+    .btn-review    { background: var(--review);  }
+    .btn-monthly   { background: var(--monthly); }
+    .btn-portfolio { background: var(--portfolio); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1E293B; color: white;
+      padding: 12px 24px; border-radius: 100px;
+      font-size: 14px; font-weight: 600;
+      transition: transform .28s ease; z-index: 99;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── NotebookLM 建議欄 ── */
+    .nb-box {
+      border-radius: 12px; padding: 12px 14px;
+      margin-bottom: 20px;
+      border: 1.5px dashed #CBD5E1;
+      background: #F8FAFC;
+    }
+    .nb-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .nb-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .nb-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: 6px; padding: 2px 10px;
+      font-size: 11px; font-weight: 600; cursor: pointer; color: var(--muted);
+    }
+    .nb-btn:hover { background: white; color: var(--text); }
+    .nb-display {
+      font-size: 13px; line-height: 1.7; color: var(--text);
+      white-space: pre-wrap; cursor: pointer; min-height: 18px;
+    }
+    .nb-empty { color: #94A3B8; font-style: italic; font-size: 13px; }
+    .nb-textarea {
+      width: 100%; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; font-size: 13px; font-family: inherit;
+      color: var(--text); resize: vertical; min-height: 100px;
+      background: white; display: none;
+    }
+    .nb-textarea:focus { outline: none; border-color: #94A3B8; }
+    .nb-suggest { margin-top: 8px; }
+    .nb-sug-generic {
+      font-size: 12px; font-weight: 600;
+      background: #F1F5F9; color: #475569;
+      border: 1px solid #CBD5E1; border-radius: 20px;
+      padding: 4px 14px; cursor: pointer; transition: background .15s;
+    }
+    .nb-sug-generic:hover { background: #E2E8F0; }
+    .nb-sep {
+      border: none; border-top: 1px dashed #E2E8F0;
+      margin: 12px 0 10px;
+    }
+    .nb-perf-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: #F97316; margin-bottom: 6px;
+    }
+    .nb-perf-ta {
+      width: 100%; border: 1.5px solid #FED7AA; border-radius: 8px;
+      padding: 10px 12px; font-size: 13px; font-family: inherit;
+      color: var(--text); resize: vertical; min-height: 70px;
+      background: #FFFBF5;
+    }
+    .nb-perf-ta:focus { outline: none; border-color: #F97316; }
+    .nb-perf-btn {
+      margin-top: 8px; padding: 7px 18px;
+      background: #F97316; color: white;
+      border: none; border-radius: 20px;
+      font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity .15s;
+    }
+    .nb-perf-btn:hover { opacity: .85; }
+
+    /* ── 績效素材庫 ── */
+    .pf-add {
+      background: white; border: 2px dashed var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 20px;
+    }
+    .pf-add-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .pf-cats {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .cat-btn {
+      padding: 5px 12px; border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: white; font-size: 12px; font-weight: 600;
+      cursor: pointer; color: var(--muted); transition: all .15s;
+    }
+    .cat-btn.sel.c-career  { background: #DBEAFE; border-color: var(--career);    color: #1E40AF; }
+    .cat-btn.sel.c-family  { background: #D1FAE5; border-color: var(--family);    color: #065F46; }
+    .cat-btn.sel.c-growth  { background: #EDE9FE; border-color: var(--growth);    color: #4C1D95; }
+    .cat-btn.sel.c-health  { background: #FEE2E2; border-color: var(--health);    color: #991B1B; }
+    .cat-btn.sel.c-general { background: #F1F5F9; border-color: var(--muted);     color: #334155; }
+    .pf-add textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; font-size: 14px; font-family: inherit;
+      resize: vertical; min-height: 80px; margin-bottom: 10px; background: white;
+    }
+    .pf-add textarea:focus { outline: none; border-color: #94A3B8; }
+    .pf-add-btn {
+      width: 100%; padding: 12px; background: var(--text); color: white;
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: opacity .15s;
+    }
+    .pf-add-btn:hover { opacity: .85; }
+
+    .pf-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .f-btn {
+      padding: 5px 12px; border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: white; font-size: 12px; font-weight: 600;
+      cursor: pointer; color: var(--muted); transition: all .15s;
+    }
+    .f-btn.sel { background: var(--text); color: white; border-color: var(--text); }
+
+    .pf-count { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .pf-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .pf-item {
+      background: white; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .pf-item-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .pf-item-meta { display: flex; align-items: center; gap: 8px; }
+    .pf-item-cat {
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 100px;
+    }
+    .pf-item-date { font-size: 11px; color: var(--muted); }
+    .pf-item-del {
+      background: none; border: none; cursor: pointer;
+      color: #CBD5E1; font-size: 14px; padding: 2px 4px;
+    }
+    .pf-item-del:hover { color: var(--health); }
+    .pf-item-body {
+      font-size: 14px; line-height: 1.6;
+      color: var(--text); white-space: pre-wrap;
+    }
+    .pf-empty {
+      text-align: center; padding: 36px 20px;
+      color: var(--muted); font-size: 14px; line-height: 1.8;
+    }
+    .pf-copy-all {
+      width: 100%; padding: 13px; background: white; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px;
+    }
+    .pf-copy-all:hover { background: var(--bg); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ════ HOME ════ -->
+  <div class="home" id="home">
+    <header>
+      <h1>靜華 OS</h1>
+      <div class="sub" id="today-label"></div>
+    </header>
+
+    <div class="section-label">每日儀式</div>
+    <div class="grid">
+      <div class="card card-morning full" onclick="show('morning')">
+        <span class="icon">🌅</span>
+        <div class="label">早晨校準</div>
+        <div class="hint">每天早上 · 5 分鐘</div>
+      </div>
+    </div>
+
+    <div class="section-label">卡關助理</div>
+    <div class="grid">
+      <div class="card card-career" onclick="show('career')">
+        <span class="icon">🏢</span>
+        <div class="label">品牌策略</div>
+        <div class="hint">PR・媒體・危機</div>
+      </div>
+      <div class="card card-family" onclick="show('family')">
+        <span class="icon">👨‍👩‍👧‍👦</span>
+        <div class="label">家庭教練</div>
+        <div class="hint">婚姻・育兒・關係</div>
+      </div>
+      <div class="card card-growth" onclick="show('growth')">
+        <span class="icon">📈</span>
+        <div class="label">學習陪跑</div>
+        <div class="hint">英文・TOEIC・成長</div>
+      </div>
+      <div class="card card-health" onclick="show('health')">
+        <span class="icon">💪</span>
+        <div class="label">健康管理</div>
+        <div class="hint">健身・飲食・身心</div>
+      </div>
+    </div>
+
+    <div class="section-label">覆盤與成果</div>
+    <div class="grid">
+      <div class="card card-review" onclick="show('review')">
+        <span class="icon">📊</span>
+        <div class="label">週覆盤</div>
+        <div class="hint">每週日 · 30 分鐘</div>
+      </div>
+      <div class="card card-monthly" onclick="show('monthly')">
+        <span class="icon">📅</span>
+        <div class="label">月回顧</div>
+        <div class="hint">每月底 · 60 分鐘</div>
+      </div>
+      <div class="card card-portfolio full" onclick="show('portfolio')">
+        <span class="icon">🏆</span>
+        <div class="label">績效素材庫</div>
+        <div class="hint">年中・年底績效檢核素材</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ 早晨校準 ════ -->
+  <div class="tpl" id="tpl-morning">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">🌅</span>
+      <div>
+        <h2>早晨校準</h2>
+        <span class="tag" style="background:#FEF3C7;color:#92400E;">每天早上 · 5 分鐘</span>
+      </div>
+    </div>
+    <div class="nb-box">
+      <div class="nb-header">
+        <span class="nb-label">📌 NotebookLM 建議</span>
+        <button class="nb-btn" id="nb-btn-morning" onclick="toggleNb('morning')">編輯</button>
+      </div>
+      <div class="nb-display" id="nb-disp-morning" onclick="editNb('morning')">
+        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
+      </div>
+      <textarea class="nb-textarea" id="nb-ta-morning" placeholder="貼上 NotebookLM 的建議…"></textarea>
+      <div class="nb-suggest" id="nb-sug-morning" style="display:none;">
+        <button class="nb-sug-generic" onclick="addNbToPortfolio('morning')">＋ 加入績效素材庫</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>日期</label>
+      <input type="text" id="m-date" />
+    </div>
+    <div class="field">
+      <label>🏢 事業</label>
+      <textarea id="m-career" placeholder="今天最重要的一件工作是什麼？有沒有讓你擔心的事？"></textarea>
+    </div>
+    <div class="field">
+      <label>👨‍👩‍👧‍👦 家庭</label>
+      <textarea id="m-family" placeholder="昨天家庭狀態如何？今天有什麼想特別留意的？"></textarea>
+    </div>
+    <div class="field">
+      <label>📈 成長</label>
+      <textarea id="m-growth" placeholder="英文或個人發展這週有在推進嗎？"></textarea>
+    </div>
+    <div class="field">
+      <label>💪 身心</label>
+      <textarea id="m-health" placeholder="今天身體和情緒狀態如何？今天有健身嗎？"></textarea>
+    </div>
+    <button class="copy-btn btn-morning" onclick="copyOnly('morning')">複製內容</button>
+  </div>
+
+  <!-- ════ 品牌策略顧問 ════ -->
+  <div class="tpl" id="tpl-career">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">🏢</span>
+      <div>
+        <h2>品牌策略顧問</h2>
+        <span class="tag" style="background:#DBEAFE;color:#1E40AF;">PR・媒體・危機處理</span>
+      </div>
+    </div>
+    <div class="nb-box">
+      <div class="nb-header">
+        <span class="nb-label">📌 NotebookLM 建議</span>
+        <button class="nb-btn" id="nb-btn-career" onclick="toggleNb('career')">編輯</button>
+      </div>
+      <div class="nb-display" id="nb-disp-career" onclick="editNb('career')">
+        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
+      </div>
+      <textarea class="nb-textarea" id="nb-ta-career" placeholder="貼上 NotebookLM 的建議…"></textarea>
+      <div class="nb-suggest" id="nb-sug-career" style="display:none;">
+        <button class="nb-sug-generic" onclick="addNbToPortfolio('career')">＋ 加入績效素材庫</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>遇到的狀況</label>
+      <textarea class="lg" id="c-situation" placeholder="描述你遇到的狀況…"></textarea>
+    </div>
+    <button class="copy-btn btn-career" onclick="copyOnly('career')">複製內容</button>
+  </div>
+
+  <!-- ════ 家庭教練 ════ -->
+  <div class="tpl" id="tpl-family">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">👨‍👩‍👧‍👦</span>
+      <div>
+        <h2>家庭教練</h2>
+        <span class="tag" style="background:#D1FAE5;color:#065F46;">婚姻・育兒・關係</span>
+      </div>
+    </div>
+    <div class="nb-box">
+      <div class="nb-header">
+        <span class="nb-label">📌 NotebookLM 建議</span>
+        <button class="nb-btn" id="nb-btn-family" onclick="toggleNb('family')">編輯</button>
+      </div>
+      <div class="nb-display" id="nb-disp-family" onclick="editNb('family')">
+        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
+      </div>
+      <textarea class="nb-textarea" id="nb-ta-family" placeholder="貼上 NotebookLM 的建議…"></textarea>
+      <div class="nb-suggest" id="nb-sug-family" style="display:none;">
+        <button class="nb-sug-generic" onclick="addNbToPortfolio('family')">＋ 加入績效素材庫</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>遇到的狀況</label>
+      <textarea class="lg" id="f-situation" placeholder="描述你遇到的狀況…"></textarea>
+    </div>
+    <button class="copy-btn btn-family" onclick="copyOnly('family')">複製內容</button>
+  </div>
+
+  <!-- ════ 學習陪跑者 ════ -->
+  <div class="tpl" id="tpl-growth">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">📈</span>
+      <div>
+        <h2>學習陪跑者</h2>
+        <span class="tag" style="background:#EDE9FE;color:#4C1D95;">英文・TOEIC・個人成長</span>
+      </div>
+    </div>
+    <div class="nb-box">
+      <div class="nb-header">
+        <span class="nb-label">📌 NotebookLM 建議</span>
+        <button class="nb-btn" id="nb-btn-growth" onclick="toggleNb('growth')">編輯</button>
+      </div>
+      <div class="nb-display" id="nb-disp-growth" onclick="editNb('growth')">
+        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
+      </div>
+      <textarea class="nb-textarea" id="nb-ta-growth" placeholder="貼上 NotebookLM 的建議…"></textarea>
+      <div class="nb-suggest" id="nb-sug-growth" style="display:none;">
+        <button class="nb-sug-generic" onclick="addNbToPortfolio('growth')">＋ 加入績效素材庫</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>遇到的狀況</label>
+      <textarea class="lg" id="g-situation" placeholder="描述你遇到的狀況…"></textarea>
+    </div>
+    <button class="copy-btn btn-growth" onclick="copyOnly('growth')">複製內容</button>
+  </div>
+
+  <!-- ════ 健康管理師 ════ -->
+  <div class="tpl" id="tpl-health">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">💪</span>
+      <div>
+        <h2>健康管理師</h2>
+        <span class="tag" style="background:#FEE2E2;color:#991B1B;">健身・飲食・身心狀態</span>
+      </div>
+    </div>
+    <div class="nb-box">
+      <div class="nb-header">
+        <span class="nb-label">📌 NotebookLM 建議</span>
+        <button class="nb-btn" id="nb-btn-health" onclick="toggleNb('health')">編輯</button>
+      </div>
+      <div class="nb-display" id="nb-disp-health" onclick="editNb('health')">
+        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
+      </div>
+      <textarea class="nb-textarea" id="nb-ta-health" placeholder="貼上 NotebookLM 的建議…"></textarea>
+      <div class="nb-suggest" id="nb-sug-health" style="display:none;">
+        <button class="nb-sug-generic" onclick="addNbToPortfolio('health')">＋ 加入績效素材庫</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>遇到的狀況</label>
+      <textarea class="lg" id="h-situation" placeholder="描述你遇到的狀況…"></textarea>
+    </div>
+    <button class="copy-btn btn-health" onclick="copyOnly('health')">複製內容</button>
+  </div>
+
+  <!-- ════ 週覆盤 ════ -->
+  <div class="tpl" id="tpl-review">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">📊</span>
+      <div>
+        <h2>週覆盤</h2>
+        <span class="tag" style="background:#F1F5F9;color:#475569;">每週日 · 30 分鐘</span>
+      </div>
+    </div>
+    <div class="nb-box">
+      <div class="nb-header">
+        <span class="nb-label">📌 NotebookLM 建議（亮點 / 痛點 / 防呆行動）</span>
+        <button class="nb-btn" id="nb-btn-review" onclick="toggleNb('review')">編輯</button>
+      </div>
+      <div class="nb-display" id="nb-disp-review" onclick="editNb('review')">
+        <span class="nb-empty">週覆盤做完後，把 NotebookLM 給的亮點、痛點、防呆行動貼進來</span>
+      </div>
+      <textarea class="nb-textarea" id="nb-ta-review" placeholder="貼上本週 NotebookLM 建議…"></textarea>
+      <hr class="nb-sep" />
+      <div class="nb-perf-label">⭐ 績效素材（值得年中 / 年底留存的結論）</div>
+      <textarea class="nb-perf-ta" id="nb-perf-review" placeholder="把值得年中、年底使用的結論貼進來，按下按鈕直接存入素材庫"></textarea>
+      <button class="nb-perf-btn" onclick="savePerf('review')">存入績效素材庫 →</button>
+    </div>
+    <div class="field">
+      <label>週期</label>
+      <input type="text" id="r-week" />
+    </div>
+    <div class="field">
+      <label>這週紀錄（貼上 Google Sheets 內容）</label>
+      <textarea class="lg" id="r-notes" placeholder="把這週的紀錄貼過來，流水帳也可以…"></textarea>
+    </div>
+    <button class="copy-btn btn-review" onclick="copyOnly('review')">複製內容</button>
+  </div>
+
+  <!-- ════ 月回顧 ════ -->
+  <div class="tpl" id="tpl-monthly">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">📅</span>
+      <div>
+        <h2>月回顧</h2>
+        <span class="tag" style="background:#E0F2FE;color:#075985;">每月底 · 60 分鐘</span>
+      </div>
+    </div>
+    <div class="nb-box">
+      <div class="nb-header">
+        <span class="nb-label">📌 NotebookLM 建議（本月覆盤）</span>
+        <button class="nb-btn" id="nb-btn-monthly" onclick="toggleNb('monthly')">編輯</button>
+      </div>
+      <div class="nb-display" id="nb-disp-monthly" onclick="editNb('monthly')">
+        <span class="nb-empty">月底覆盤後，把 NotebookLM 給的本月總結貼進來</span>
+      </div>
+      <textarea class="nb-textarea" id="nb-ta-monthly" placeholder="貼上本月 NotebookLM 建議…"></textarea>
+      <hr class="nb-sep" />
+      <div class="nb-perf-label">⭐ 績效素材（值得年中 / 年底留存的結論）</div>
+      <textarea class="nb-perf-ta" id="nb-perf-monthly" placeholder="把值得年中、年底使用的結論貼進來，按下按鈕直接存入素材庫"></textarea>
+      <button class="nb-perf-btn" onclick="savePerf('monthly')">存入績效素材庫 →</button>
+    </div>
+    <div class="field">
+      <label>月份</label>
+      <input type="text" id="mo-month" />
+    </div>
+    <div class="field">
+      <label>🏢 事業成果</label>
+      <textarea id="mo-career" placeholder="這個月在工作上完成了什麼？有什麼值得記錄的？"></textarea>
+    </div>
+    <div class="field">
+      <label>📈 個人成長</label>
+      <textarea id="mo-growth" placeholder="英文進度、學習、個人發展有什麼推進？"></textarea>
+    </div>
+    <div class="field">
+      <label>👨‍👩‍👧‍👦 家庭與關係</label>
+      <textarea id="mo-family" placeholder="家庭關係、與孩子互動有什麼亮點或需要調整的？"></textarea>
+    </div>
+    <div class="field">
+      <label>💪 身心健康</label>
+      <textarea id="mo-health" placeholder="健身、飲食、睡眠、情緒這個月的整體狀態？"></textarea>
+    </div>
+    <div class="field">
+      <label>下個月最重要的 1 件事</label>
+      <textarea id="mo-next" placeholder="下個月如果只能專注一件事，是什麼？"></textarea>
+    </div>
+    <button class="copy-btn btn-monthly" onclick="copyOnly('monthly')">複製內容</button>
+  </div>
+
+  <!-- ════ 績效素材庫 ════ -->
+  <div class="tpl" id="tpl-portfolio">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">🏆</span>
+      <div>
+        <h2>績效素材庫</h2>
+        <span class="tag" style="background:#FFF7ED;color:#9A3412;">年中・年底績效檢核</span>
+      </div>
+    </div>
+
+    <div class="pf-add">
+      <div class="pf-add-title">＋ 新增素材</div>
+      <div class="pf-cats">
+        <button class="cat-btn c-career sel" data-cat="career" onclick="selCat('career')">🏢 事業</button>
+        <button class="cat-btn c-family" data-cat="family" onclick="selCat('family')">👨‍👩‍👧‍👦 家庭</button>
+        <button class="cat-btn c-growth" data-cat="growth" onclick="selCat('growth')">📈 成長</button>
+        <button class="cat-btn c-health" data-cat="health" onclick="selCat('health')">💪 身心</button>
+        <button class="cat-btn c-general" data-cat="general" onclick="selCat('general')">📋 其他</button>
+      </div>
+      <textarea id="pf-new" placeholder="記錄值得留存的成果、突破或具體貢獻…&#10;例如：成功執行教育平權高雄場，獲媒體報導 3 則"></textarea>
+      <button class="pf-add-btn" onclick="addPfItem()">加入素材庫</button>
+    </div>
+
+    <div class="pf-filter">
+      <button class="f-btn sel" data-f="all"     onclick="setPfFilter('all')">全部</button>
+      <button class="f-btn" data-f="career"  onclick="setPfFilter('career')">🏢 事業</button>
+      <button class="f-btn" data-f="family"  onclick="setPfFilter('family')">👨‍👩‍👧‍👦 家庭</button>
+      <button class="f-btn" data-f="growth"  onclick="setPfFilter('growth')">📈 成長</button>
+      <button class="f-btn" data-f="health"  onclick="setPfFilter('health')">💪 身心</button>
+      <button class="f-btn" data-f="general" onclick="setPfFilter('general')">📋 其他</button>
+    </div>
+
+    <div class="pf-count" id="pf-count"></div>
+    <div class="pf-list" id="pf-list"></div>
+    <button class="pf-copy-all" onclick="copyPfAll()">複製所有素材（用於績效準備）</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ── 時間 (Taipei UTC+8) ── */
+  function taipeiNow() {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  }
+  function fmtDate(d) {
+    const days = ['日','一','二','三','四','五','六'];
+    return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日（週${days[d.getDay()]}）`;
+  }
+  function fmtMonth(d) {
+    return `${d.getFullYear()} 年 ${d.getMonth()+1} 月`;
+  }
+  function weekRange() {
+    const d = taipeiNow(), dow = d.getDay();
+    const mon = new Date(d); mon.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const f = x => `${x.getMonth()+1}/${x.getDate()}`;
+    return `${d.getFullYear()} 年 ${f(mon)} – ${f(sun)}`;
+  }
+
+  /* ── 初始化 ── */
+  (function init() {
+    const now = taipeiNow();
+    document.getElementById('today-label').textContent = fmtDate(now);
+    document.getElementById('m-date').value   = fmtDate(now);
+    document.getElementById('r-week').value   = weekRange();
+    document.getElementById('mo-month').value = fmtMonth(now);
+  })();
+
+  /* ── 頁面切換 ── */
+  function show(type) {
+    document.getElementById('home').classList.add('hidden');
+    document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
+    document.getElementById('tpl-' + type).classList.add('active');
+    if (type === 'portfolio') loadPf();
+    else loadNb(type);
+    window.scrollTo(0, 0);
+  }
+  function goHome() {
+    document.getElementById('home').classList.remove('hidden');
+    document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
+    window.scrollTo(0, 0);
+  }
+
+  /* ── 組裝複製文字 ── */
+  function assemble(type) {
+    const v = id => (document.getElementById(id)||{}).value || '';
+    switch (type) {
+      case 'morning':
+        return `今天是 ${v('m-date')}，早晨校準。\n\n🏢 事業：${v('m-career')||'（未填寫）'}\n👨‍👩‍👧‍👦 家庭：${v('m-family')||'（未填寫）'}\n📈 成長：${v('m-growth')||'（未填寫）'}\n💪 身心：${v('m-health')||'（未填寫）'}\n\n請幫我找出今天最需要專注的維度，給我一個具體的當日焦點。`;
+      case 'career':
+        return `切換：品牌策略顧問\n\n${v('c-situation')||'（未填寫狀況）'}`;
+      case 'family':
+        return `切換：家庭教練\n\n${v('f-situation')||'（未填寫狀況）'}`;
+      case 'growth':
+        return `切換：學習陪跑者\n\n${v('g-situation')||'（未填寫狀況）'}`;
+      case 'health':
+        return `切換：健康管理師\n\n${v('h-situation')||'（未填寫狀況）'}`;
+      case 'review':
+        return `週日覆盤，這週是 ${v('r-week')}。\n\n這週紀錄：\n${v('r-notes')||'（未填寫）'}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 公司目標與個人目標各佔日常多少比例\n3. 有沒有哪個流程可以優化`;
+      case 'monthly':
+        return `月回顧，${v('mo-month')}。\n\n🏢 事業成果：${v('mo-career')||'（未填寫）'}\n📈 個人成長：${v('mo-growth')||'（未填寫）'}\n👨‍👩‍👧‍👦 家庭關係：${v('mo-family')||'（未填寫）'}\n💪 身心健康：${v('mo-health')||'（未填寫）'}\n下月重點：${v('mo-next')||'（未填寫）'}\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句可用於績效描述的成果句。`;
+    }
+  }
+
+  function copyOnly(type) {
+    const text = assemble(type);
+    const done = () => showToast('已複製！貼到 NotebookLM 使用');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
+    } else fbCopy(text, done);
+  }
+  function fbCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta); cb();
+  }
+
+  /* ── Toast ── */
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  /* ── NotebookLM 建議欄 ── */
+  function loadNb(type) {
+    const content = localStorage.getItem('nb-' + type) || '';
+    const disp = document.getElementById('nb-disp-' + type);
+    const ta   = document.getElementById('nb-ta-' + type);
+    const btn  = document.getElementById('nb-btn-' + type);
+    ta.style.display = 'none';
+    disp.style.display = 'block';
+    if (btn) btn.textContent = '編輯';
+    ta.value = content;
+    if (content) {
+      disp.textContent = content;
+    } else {
+      const ph = type === 'review'
+        ? '週覆盤做完後，把 NotebookLM 給的亮點、痛點、防呆行動貼進來'
+        : type === 'monthly'
+        ? '月底覆盤後，把 NotebookLM 給的本月總結貼進來'
+        : '點此貼上 NotebookLM 的建議，下次開啟仍會顯示';
+      disp.innerHTML = `<span class="nb-empty">${ph}</span>`;
+    }
+    refreshSuggest(type);
+  }
+
+  function editNb(type) {
+    const disp = document.getElementById('nb-disp-' + type);
+    const ta   = document.getElementById('nb-ta-' + type);
+    const btn  = document.getElementById('nb-btn-' + type);
+    disp.style.display = 'none';
+    ta.style.display = 'block';
+    ta.focus();
+    if (btn) btn.textContent = '儲存';
+  }
+
+  function saveNb(type) {
+    const ta = document.getElementById('nb-ta-' + type);
+    localStorage.setItem('nb-' + type, ta.value.trim());
+    loadNb(type);
+    refreshSuggest(type);
+  }
+
+  /* ── 績效素材快速存入 ── */
+  const CAT_FOR_TYPE = {
+    morning: 'general', career: 'career', family: 'family',
+    growth: 'growth', health: 'health', review: 'career', monthly: 'career'
+  };
+
+  function savePerf(type) {
+    const ta = document.getElementById('nb-perf-' + type);
+    const content = ta.value.trim();
+    if (!content) { showToast('請先輸入績效素材內容'); return; }
+    const now = taipeiNow();
+    const items = getPf();
+    items.unshift({
+      id: Date.now(),
+      date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`,
+      cat: CAT_FOR_TYPE[type] || 'general',
+      content
+    });
+    setPf(items);
+    ta.value = '';
+    showToast('已存入績效素材庫 ✓');
+  }
+
+  function refreshSuggest(type) {
+    const sug = document.getElementById('nb-sug-' + type);
+    if (!sug) return;
+    const content = localStorage.getItem('nb-' + type) || '';
+    sug.style.display = content ? 'block' : 'none';
+  }
+
+  function addNbToPortfolio(type) {
+    const content = localStorage.getItem('nb-' + type) || '';
+    if (!content) return;
+    const now = taipeiNow();
+    const items = getPf();
+    items.unshift({
+      id: Date.now(),
+      date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`,
+      cat: CAT_FOR_TYPE[type] || 'general',
+      content: content.trim().slice(0, 300)
+    });
+    setPf(items);
+    showToast('已加入績效素材庫 ✓');
+  }
+
+  function toggleNb(type) {
+    const ta = document.getElementById('nb-ta-' + type);
+    if (ta.style.display === 'none' || ta.style.display === '') editNb(type);
+    else saveNb(type);
+  }
+
+  /* ── 績效素材庫 ── */
+  let pfFilter = 'all';
+  let pfCat    = 'career';
+
+  const CAT = {
+    career:  { label: '🏢 事業', bg: '#DBEAFE', color: '#1E40AF' },
+    family:  { label: '👨‍👩‍👧‍👦 家庭', bg: '#D1FAE5', color: '#065F46' },
+    growth:  { label: '📈 成長', bg: '#EDE9FE', color: '#4C1D95' },
+    health:  { label: '💪 身心', bg: '#FEE2E2', color: '#991B1B' },
+    general: { label: '📋 其他', bg: '#F1F5F9', color: '#475569' },
+  };
+
+  function getPf() {
+    try { return JSON.parse(localStorage.getItem('portfolio') || '[]'); }
+    catch(e) { return []; }
+  }
+  function setPf(items) { localStorage.setItem('portfolio', JSON.stringify(items)); }
+
+  function selCat(cat) {
+    pfCat = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.classList.toggle('sel', b.dataset.cat === cat);
+    });
+  }
+
+  function addPfItem() {
+    const content = document.getElementById('pf-new').value.trim();
+    if (!content) { showToast('請先輸入內容'); return; }
+    const now = taipeiNow();
+    const items = getPf();
+    items.unshift({
+      id: Date.now(),
+      date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`,
+      cat: pfCat, content
+    });
+    setPf(items);
+    document.getElementById('pf-new').value = '';
+    renderPf();
+    showToast('已加入素材庫');
+  }
+
+  function delPfItem(id) {
+    setPf(getPf().filter(i => i.id !== id));
+    renderPf();
+  }
+
+  function setPfFilter(f) {
+    pfFilter = f;
+    document.querySelectorAll('.f-btn').forEach(b => b.classList.toggle('sel', b.dataset.f === f));
+    renderPf();
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderPf() {
+    const list = document.getElementById('pf-list');
+    const countEl = document.getElementById('pf-count');
+    let items = getPf();
+    const total = items.length;
+    if (pfFilter !== 'all') items = items.filter(i => i.cat === pfFilter);
+    countEl.textContent = total ? `共 ${total} 筆` : '';
+    if (!items.length) {
+      list.innerHTML = '<div class="pf-empty">還沒有素材<br>把值得記錄的成果加進來</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const c = CAT[item.cat] || CAT.general;
+      return `<div class="pf-item">
+        <div class="pf-item-top">
+          <div class="pf-item-meta">
+            <span class="pf-item-cat" style="background:${c.bg};color:${c.color};">${c.label}</span>
+            <span class="pf-item-date">${item.date}</span>
+          </div>
+          <button class="pf-item-del" onclick="delPfItem(${item.id})" title="刪除">✕</button>
+        </div>
+        <div class="pf-item-body">${esc(item.content)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function loadPf() {
+    pfFilter = 'all';
+    document.querySelectorAll('.f-btn').forEach(b => b.classList.toggle('sel', b.dataset.f === 'all'));
+    renderPf();
+  }
+
+  function copyPfAll() {
+    const items = getPf();
+    if (!items.length) { showToast('素材庫是空的'); return; }
+    const text = '【績效素材庫】\n\n' + items.map(item => {
+      const c = CAT[item.cat] || CAT.general;
+      return `${c.label}  ${item.date}\n${item.content}`;
+    }).join('\n\n---\n\n');
+    const done = () => showToast('已複製！可貼入績效文件');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
+    } else fbCopy(text, done);
+  }
+</script>
+</body>
+</html>
