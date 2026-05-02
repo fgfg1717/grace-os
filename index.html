@@ -597,7 +597,6 @@
   (function init() {
     const now = taipeiNow();
     document.getElementById('today-label').textContent = fmtDate(now);
-    document.getElementById('m-date').value   = fmtDate(now);
     document.getElementById('r-week').value   = weekRange();
     document.getElementById('mo-month').value = fmtMonth(now);
   })();
@@ -621,16 +620,6 @@
   function assemble(type) {
     const v = id => (document.getElementById(id)||{}).value || '';
     switch (type) {
-      case 'morning':
-        return `今天是 ${v('m-date')}，早晨校準。\n\n🏢 事業：${v('m-career')||'（未填寫）'}\n👨‍👩‍👧‍👦 家庭：${v('m-family')||'（未填寫）'}\n📈 成長：${v('m-growth')||'（未填寫）'}\n💪 身心：${v('m-health')||'（未填寫）'}\n\n請幫我找出今天最需要專注的維度，給我一個具體的當日焦點。`;
-      case 'career':
-        return `切換：品牌策略顧問\n\n${v('c-situation')||'（未填寫狀況）'}`;
-      case 'family':
-        return `切換：家庭教練\n\n${v('f-situation')||'（未填寫狀況）'}`;
-      case 'growth':
-        return `切換：學習陪跑者\n\n${v('g-situation')||'（未填寫狀況）'}`;
-      case 'health':
-        return `切換：健康管理師\n\n${v('h-situation')||'（未填寫狀況）'}`;
       case 'review':
         return `週日覆盤，這週是 ${v('r-week')}。\n\n這週紀錄：\n${v('r-notes')||'（未填寫）'}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 公司目標與個人目標各佔日常多少比例\n3. 有沒有哪個流程可以優化`;
       case 'monthly':
