@@ -679,7 +679,6 @@
         : '點此貼上 NotebookLM 的建議，下次開啟仍會顯示';
       disp.innerHTML = `<span class="nb-empty">${ph}</span>`;
     }
-    refreshSuggest(type);
   }
 
   function editNb(type) {
@@ -696,7 +695,6 @@
     const ta = document.getElementById('nb-ta-' + type);
     localStorage.setItem('nb-' + type, ta.value.trim());
     loadNb(type);
-    refreshSuggest(type);
   }
 
   function toggleNb(type) {
