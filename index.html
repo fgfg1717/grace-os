@@ -19,6 +19,7 @@
       --review:    #64748B;
       --monthly:   #0EA5E9;
       --portfolio: #F97316;
+      --capture:   #059669;
       --bg:        #F8FAFC;
       --card:      #FFFFFF;
       --text:      #1E293B;
@@ -74,6 +75,7 @@
     .card-review:hover    { background: #F8FAFC; border-color: var(--review);  }
     .card-monthly:hover   { background: #F0F9FF; border-color: var(--monthly); }
     .card-portfolio:hover { background: #FFF7ED; border-color: var(--portfolio); }
+    .card-capture:hover   { background: #ECFDF5; border-color: var(--capture);   }
 
     /* ── Template view ── */
     .tpl { display: none; }
@@ -287,6 +289,111 @@
       font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px;
     }
     .pf-copy-all:hover { background: var(--bg); }
+
+    /* ── 快速記錄 ── */
+    .cap-form {
+      background: white; border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px;
+      border: 1.5px solid var(--border);
+    }
+    .cap-cats {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .cap-cat {
+      padding: 6px 12px; border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: white; font-size: 13px; font-weight: 600;
+      cursor: pointer; color: var(--muted); transition: all .15s;
+    }
+    .cap-cat.sel { background: #D1FAE5; border-color: var(--capture); color: #065F46; }
+    .cap-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; gap: 10px;
+    }
+    .cap-time-group { display: flex; align-items: center; gap: 6px; flex: 1; }
+    .cap-time-input {
+      width: 68px; border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 9px 10px; font-size: 16px;
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      text-align: center; color: var(--text); background: white;
+    }
+    .cap-time-input:focus { outline: none; border-color: var(--capture); }
+    .cap-dash { color: var(--muted); font-size: 18px; }
+    .cap-attack {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600; color: var(--text);
+      cursor: pointer; white-space: nowrap;
+    }
+    .cap-attack input { width: 17px; height: 17px; accent-color: #EF4444; cursor: pointer; }
+    .cap-textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; font-size: 15px; font-family: inherit;
+      color: var(--text); resize: vertical; min-height: 100px;
+      margin-bottom: 12px; background: white;
+    }
+    .cap-textarea:focus { outline: none; border-color: var(--capture); }
+    .cap-submit {
+      width: 100%; padding: 15px; border: none; border-radius: 12px;
+      background: var(--capture); color: white;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      transition: opacity .18s, transform .18s;
+    }
+    .cap-submit:hover  { opacity: .9; transform: translateY(-1px); }
+    .cap-submit:active { opacity: 1; transform: translateY(0); }
+
+    .cap-item {
+      background: white; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+    }
+    .cap-item-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .cap-item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .cap-item-cat {
+      font-size: 11px; font-weight: 700;
+      padding: 2px 9px; border-radius: 100px;
+    }
+    .cap-item-time {
+      font-size: 12px; color: var(--muted);
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    }
+    .cap-item-attack { font-size: 12px; color: #EF4444; font-weight: 700; }
+    .cap-item-right  { display: flex; align-items: center; gap: 8px; }
+    .cap-synced     { font-size: 11px; color: #10B981; font-weight: 600; }
+    .cap-not-synced { font-size: 11px; color: #F59E0B; font-weight: 600; }
+    .cap-item-del {
+      background: none; border: none; cursor: pointer;
+      color: #CBD5E1; font-size: 14px; padding: 2px 4px;
+    }
+    .cap-item-del:hover { color: var(--health); }
+    .cap-item-body { font-size: 14px; line-height: 1.6; color: var(--text); }
+    .cap-empty {
+      text-align: center; padding: 28px 20px;
+      color: var(--muted); font-size: 14px;
+    }
+    .cap-settings {
+      margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px;
+    }
+    .cap-settings-toggle {
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; color: var(--muted); padding: 0;
+    }
+    .cap-settings-toggle:hover { color: var(--text); }
+    .cap-settings-body { margin-top: 12px; }
+    .cap-retry-btn {
+      width: 100%; padding: 11px; margin-top: 8px;
+      background: #F1F5F9; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .cap-retry-btn:hover { background: #E2E8F0; }
+    .cap-save-settings {
+      padding: 10px 24px; background: var(--text); color: white;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 8px; transition: opacity .15s;
+    }
+    .cap-save-settings:hover { opacity: .85; }
   </style>
 </head>
 <body>
@@ -298,6 +405,15 @@
       <h1>靜華 OS</h1>
       <div class="sub" id="today-label"></div>
     </header>
+
+    <div class="section-label">隨手記錄</div>
+    <div class="grid">
+      <div class="card card-capture full" onclick="show('capture')">
+        <span class="icon">⚡</span>
+        <div class="label">快速記錄</div>
+        <div class="hint">即時記下 · 自動同步 Google Sheets</div>
+      </div>
+    </div>
 
     <div class="section-label">每日儀式</div>
     <div class="grid">
@@ -642,6 +758,57 @@
     <button class="pf-copy-all" onclick="copyPfAll()">複製所有素材（用於績效準備）</button>
   </div>
 
+  <!-- ════ 快速記錄 ════ -->
+  <div class="tpl" id="tpl-capture">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">⚡</span>
+      <div>
+        <h2>快速記錄</h2>
+        <span class="tag" style="background:#D1FAE5;color:#065F46;">即時記下 · 自動同步 Sheets</span>
+      </div>
+    </div>
+
+    <div class="cap-form">
+      <div class="cap-cats">
+        <button class="cap-cat sel" data-cat="公司目標" onclick="setCapCat('公司目標')">🏢 公司目標</button>
+        <button class="cap-cat" data-cat="個人目標" onclick="setCapCat('個人目標')">📈 個人目標</button>
+        <button class="cap-cat" data-cat="個人生活" onclick="setCapCat('個人生活')">🏠 個人生活</button>
+        <button class="cap-cat" data-cat="瑣務" onclick="setCapCat('瑣務')">📋 瑣務</button>
+      </div>
+
+      <div class="cap-row">
+        <div class="cap-time-group">
+          <input type="text" id="cap-start" inputmode="numeric" placeholder="0900" maxlength="4" class="cap-time-input" />
+          <span class="cap-dash">–</span>
+          <input type="text" id="cap-end" inputmode="numeric" placeholder="1000" maxlength="4" class="cap-time-input" />
+        </div>
+        <label class="cap-attack">
+          <input type="checkbox" id="cap-attack" />
+          <span>進攻 ⚔️</span>
+        </label>
+      </div>
+
+      <textarea id="cap-summary" class="cap-textarea" placeholder="記下你做了什麼、遇到了什麼、想到了什麼…"></textarea>
+      <button class="cap-submit" onclick="submitCapture()">記錄下來</button>
+    </div>
+
+    <div class="section-label" style="margin-top:4px;">今天的紀錄</div>
+    <div id="cap-list"></div>
+
+    <div class="cap-settings">
+      <button class="cap-settings-toggle" onclick="toggleCapSettings()">⚙️ Google Sheets 同步設定</button>
+      <div id="cap-settings-body" class="cap-settings-body" style="display:none;">
+        <div class="field" style="margin-top:10px;">
+          <label>Apps Script 網址</label>
+          <input type="text" id="cap-gas-url" placeholder="https://script.google.com/macros/s/…/exec" />
+        </div>
+        <button class="cap-save-settings" onclick="saveCapSettings()">儲存</button>
+        <button class="cap-retry-btn" onclick="retrySyncAll()">重試未同步的項目</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -681,6 +848,7 @@
     document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
     document.getElementById('tpl-' + type).classList.add('active');
     if (type === 'portfolio') loadPf();
+    else if (type === 'capture') initCaptureForm();
     else loadNb(type);
     window.scrollTo(0, 0);
   }
@@ -909,6 +1077,168 @@
     pfFilter = 'all';
     document.querySelectorAll('.f-btn').forEach(b => b.classList.toggle('sel', b.dataset.f === 'all'));
     renderPf();
+  }
+
+  /* ── 快速記錄 ── */
+  const CAT_STYLE = {
+    '公司目標': { bg: '#DBEAFE', color: '#1E40AF' },
+    '個人目標': { bg: '#EDE9FE', color: '#4C1D95' },
+    '個人生活': { bg: '#D1FAE5', color: '#065F46' },
+    '瑣務':     { bg: '#F1F5F9', color: '#475569' },
+  };
+  let capCat = '公司目標';
+
+  function setCapCat(cat) {
+    capCat = cat;
+    document.querySelectorAll('.cap-cat').forEach(b => {
+      b.classList.toggle('sel', b.dataset.cat === cat);
+    });
+  }
+
+  function getCaptures() {
+    try { return JSON.parse(localStorage.getItem('captures') || '[]'); }
+    catch(e) { return []; }
+  }
+  function setCaptures(items) { localStorage.setItem('captures', JSON.stringify(items)); }
+
+  function fmtHHMM(d) {
+    return String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function initCaptureForm() {
+    const now = taipeiNow();
+    document.getElementById('cap-start').value = fmtHHMM(now);
+    document.getElementById('cap-end').value   = '';
+    document.getElementById('cap-summary').value = '';
+    document.getElementById('cap-attack').checked = false;
+    const url = localStorage.getItem('gas-url') || '';
+    document.getElementById('cap-gas-url').value = url;
+    loadCaptureList();
+  }
+
+  async function submitCapture() {
+    const rawStart = document.getElementById('cap-start').value.replace(/\D/g,'').substring(0,4);
+    const rawEnd   = document.getElementById('cap-end').value.replace(/\D/g,'').substring(0,4);
+    const summary  = document.getElementById('cap-summary').value.trim();
+    const isAttack = document.getElementById('cap-attack').checked;
+
+    if (!summary) { showToast('請先輸入摘要內容'); return; }
+
+    const now  = taipeiNow();
+    const date = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+    const time = rawStart && rawEnd ? `${rawStart}-${rawEnd}` : rawStart || '';
+
+    const capture = {
+      id: Date.now(), date, time,
+      category: capCat, summary,
+      is_attack: isAttack, synced: false
+    };
+
+    const items = getCaptures();
+    items.unshift(capture);
+    setCaptures(items);
+
+    // 重設表單，開始時間 = 結束時間（連續記錄很方便）
+    document.getElementById('cap-start').value = rawEnd || fmtHHMM(taipeiNow());
+    document.getElementById('cap-end').value   = '';
+    document.getElementById('cap-summary').value = '';
+    document.getElementById('cap-attack').checked = false;
+    loadCaptureList();
+    showToast('已記錄！');
+
+    const ok = await syncToSheets(capture);
+    if (ok) {
+      const latest = getCaptures();
+      const idx = latest.findIndex(c => c.id === capture.id);
+      if (idx !== -1) { latest[idx].synced = true; setCaptures(latest); }
+      loadCaptureList();
+      showToast('已記錄並同步到 Google Sheets ✓');
+    }
+  }
+
+  async function syncToSheets(capture) {
+    const url = localStorage.getItem('gas-url');
+    if (!url) return false;
+    try {
+      await fetch(url, {
+        method:  'POST',
+        mode:    'no-cors',
+        body:    JSON.stringify({
+          date:      capture.date,
+          time:      capture.time,
+          category:  capture.category,
+          summary:   capture.summary,
+          is_attack: capture.is_attack
+        }),
+        headers: { 'Content-Type': 'text/plain' }
+      });
+      return true;
+    } catch(e) { return false; }
+  }
+
+  async function retrySyncAll() {
+    const items = getCaptures();
+    const now   = taipeiNow();
+    const today = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+    const pending = items.filter(c => !c.synced && c.date === today);
+    if (!pending.length) { showToast('沒有待同步的項目'); return; }
+    showToast(`正在重試 ${pending.length} 筆…`);
+    for (const c of pending) {
+      const ok = await syncToSheets(c);
+      if (ok) {
+        const idx = items.findIndex(x => x.id === c.id);
+        if (idx !== -1) items[idx].synced = true;
+      }
+    }
+    setCaptures(items);
+    loadCaptureList();
+    showToast('重試完成');
+  }
+
+  function loadCaptureList() {
+    const list = document.getElementById('cap-list');
+    if (!list) return;
+    const now   = taipeiNow();
+    const today = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+    const items = getCaptures().filter(c => c.date === today);
+    if (!items.length) {
+      list.innerHTML = '<div class="cap-empty">今天還沒有紀錄</div>'; return;
+    }
+    list.innerHTML = items.map(c => {
+      const st = CAT_STYLE[c.category] || { bg:'#F1F5F9', color:'#475569' };
+      return `<div class="cap-item">
+        <div class="cap-item-top">
+          <div class="cap-item-meta">
+            <span class="cap-item-cat" style="background:${st.bg};color:${st.color};">${esc(c.category)}</span>
+            ${c.time ? `<span class="cap-item-time">${esc(c.time)}</span>` : ''}
+            ${c.is_attack ? '<span class="cap-item-attack">⚔️</span>' : ''}
+          </div>
+          <div class="cap-item-right">
+            ${c.synced
+              ? '<span class="cap-synced">已同步 ✓</span>'
+              : '<span class="cap-not-synced">未同步</span>'}
+            <button class="cap-item-del" onclick="delCapture(${c.id})">✕</button>
+          </div>
+        </div>
+        <div class="cap-item-body">${esc(c.summary)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function delCapture(id) {
+    setCaptures(getCaptures().filter(c => c.id !== id));
+    loadCaptureList();
+  }
+
+  function toggleCapSettings() {
+    const b = document.getElementById('cap-settings-body');
+    b.style.display = b.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function saveCapSettings() {
+    const url = document.getElementById('cap-gas-url').value.trim();
+    localStorage.setItem('gas-url', url);
+    showToast('設定已儲存');
   }
 
   function copyPfAll() {
