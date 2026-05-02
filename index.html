@@ -421,15 +421,6 @@
       </div>
     </div>
 
-    <div class="section-label">每日儀式</div>
-    <div class="grid">
-      <div class="card card-morning full" onclick="show('morning')">
-        <span class="icon">🌅</span>
-        <div class="label">早晨校準</div>
-        <div class="hint">每天早上 · 5 分鐘</div>
-      </div>
-    </div>
-
     <div class="section-label">覆盤與成果</div>
     <div class="grid">
       <div class="card card-review" onclick="show('review')">
@@ -448,52 +439,6 @@
         <div class="hint">年中・年底績效檢核素材</div>
       </div>
     </div>
-  </div>
-
-  <!-- ════ 早晨校準 ════ -->
-  <div class="tpl" id="tpl-morning">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">🌅</span>
-      <div>
-        <h2>早晨校準</h2>
-        <span class="tag" style="background:#FEF3C7;color:#92400E;">每天早上 · 5 分鐘</span>
-      </div>
-    </div>
-    <div class="nb-box">
-      <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議</span>
-        <button class="nb-btn" id="nb-btn-morning" onclick="toggleNb('morning')">編輯</button>
-      </div>
-      <div class="nb-display" id="nb-disp-morning" onclick="editNb('morning')">
-        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
-      </div>
-      <textarea class="nb-textarea" id="nb-ta-morning" placeholder="貼上 NotebookLM 的建議…"></textarea>
-      <div class="nb-suggest" id="nb-sug-morning" style="display:none;">
-        <button class="nb-sug-generic" onclick="addNbToPortfolio('morning')">＋ 加入績效素材庫</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>日期</label>
-      <input type="text" id="m-date" />
-    </div>
-    <div class="field">
-      <label>🏢 事業</label>
-      <textarea id="m-career" placeholder="今天最重要的一件工作是什麼？有沒有讓你擔心的事？"></textarea>
-    </div>
-    <div class="field">
-      <label>👨‍👩‍👧‍👦 家庭</label>
-      <textarea id="m-family" placeholder="昨天家庭狀態如何？今天有什麼想特別留意的？"></textarea>
-    </div>
-    <div class="field">
-      <label>📈 成長</label>
-      <textarea id="m-growth" placeholder="英文或個人發展這週有在推進嗎？"></textarea>
-    </div>
-    <div class="field">
-      <label>💪 身心</label>
-      <textarea id="m-health" placeholder="今天身體和情緒狀態如何？今天有健身嗎？"></textarea>
-    </div>
-    <button class="copy-btn btn-morning" onclick="copyOnly('morning')">複製內容</button>
   </div>
 
 
