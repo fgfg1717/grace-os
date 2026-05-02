@@ -433,11 +433,6 @@
         <div class="label">月回顧</div>
         <div class="hint">每月底 · 60 分鐘</div>
       </div>
-      <div class="card card-portfolio full" onclick="show('portfolio')">
-        <span class="icon">🏆</span>
-        <div class="label">績效素材庫</div>
-        <div class="hint">年中・年底績效檢核素材</div>
-      </div>
     </div>
   </div>
 
@@ -462,10 +457,6 @@
         <span class="nb-empty">週覆盤做完後，把 NotebookLM 給的亮點、痛點、防呆行動貼進來</span>
       </div>
       <textarea class="nb-textarea" id="nb-ta-review" placeholder="貼上本週 NotebookLM 建議…"></textarea>
-      <hr class="nb-sep" />
-      <div class="nb-perf-label">⭐ 績效素材（值得年中 / 年底留存的結論）</div>
-      <textarea class="nb-perf-ta" id="nb-perf-review" placeholder="把值得年中、年底使用的結論貼進來，按下按鈕直接存入素材庫"></textarea>
-      <button class="nb-perf-btn" onclick="savePerf('review')">存入績效素材庫 →</button>
     </div>
     <div class="field">
       <label>週期</label>
@@ -497,10 +488,6 @@
         <span class="nb-empty">月底覆盤後，把 NotebookLM 給的本月總結貼進來</span>
       </div>
       <textarea class="nb-textarea" id="nb-ta-monthly" placeholder="貼上本月 NotebookLM 建議…"></textarea>
-      <hr class="nb-sep" />
-      <div class="nb-perf-label">⭐ 績效素材（值得年中 / 年底留存的結論）</div>
-      <textarea class="nb-perf-ta" id="nb-perf-monthly" placeholder="把值得年中、年底使用的結論貼進來，按下按鈕直接存入素材庫"></textarea>
-      <button class="nb-perf-btn" onclick="savePerf('monthly')">存入績效素材庫 →</button>
     </div>
     <div class="field">
       <label>月份</label>
@@ -529,43 +516,7 @@
     <button class="copy-btn btn-monthly" onclick="copyOnly('monthly')">複製內容</button>
   </div>
 
-  <!-- ════ 績效素材庫 ════ -->
-  <div class="tpl" id="tpl-portfolio">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">🏆</span>
-      <div>
-        <h2>績效素材庫</h2>
-        <span class="tag" style="background:#FFF7ED;color:#9A3412;">年中・年底績效檢核</span>
-      </div>
-    </div>
 
-    <div class="pf-add">
-      <div class="pf-add-title">＋ 新增素材</div>
-      <div class="pf-cats">
-        <button class="cat-btn c-career sel" data-cat="career" onclick="selCat('career')">🏢 事業</button>
-        <button class="cat-btn c-family" data-cat="family" onclick="selCat('family')">👨‍👩‍👧‍👦 家庭</button>
-        <button class="cat-btn c-growth" data-cat="growth" onclick="selCat('growth')">📈 成長</button>
-        <button class="cat-btn c-health" data-cat="health" onclick="selCat('health')">💪 身心</button>
-        <button class="cat-btn c-general" data-cat="general" onclick="selCat('general')">📋 其他</button>
-      </div>
-      <textarea id="pf-new" placeholder="記錄值得留存的成果、突破或具體貢獻…&#10;例如：成功執行教育平權高雄場，獲媒體報導 3 則"></textarea>
-      <button class="pf-add-btn" onclick="addPfItem()">加入素材庫</button>
-    </div>
-
-    <div class="pf-filter">
-      <button class="f-btn sel" data-f="all"     onclick="setPfFilter('all')">全部</button>
-      <button class="f-btn" data-f="career"  onclick="setPfFilter('career')">🏢 事業</button>
-      <button class="f-btn" data-f="family"  onclick="setPfFilter('family')">👨‍👩‍👧‍👦 家庭</button>
-      <button class="f-btn" data-f="growth"  onclick="setPfFilter('growth')">📈 成長</button>
-      <button class="f-btn" data-f="health"  onclick="setPfFilter('health')">💪 身心</button>
-      <button class="f-btn" data-f="general" onclick="setPfFilter('general')">📋 其他</button>
-    </div>
-
-    <div class="pf-count" id="pf-count"></div>
-    <div class="pf-list" id="pf-list"></div>
-    <button class="pf-copy-all" onclick="copyPfAll()">複製所有素材（用於績效準備）</button>
-  </div>
 
   <!-- ════ 快速記錄 ════ -->
   <div class="tpl" id="tpl-capture">
@@ -656,8 +607,7 @@
     document.getElementById('home').classList.add('hidden');
     document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
     document.getElementById('tpl-' + type).classList.add('active');
-    if (type === 'portfolio') loadPf();
-    else if (type === 'capture') initCaptureForm();
+    if (type === 'capture') initCaptureForm();
     else loadNb(type);
     window.scrollTo(0, 0);
   }
@@ -749,143 +699,14 @@
     refreshSuggest(type);
   }
 
-  /* ── 績效素材快速存入 ── */
-  const CAT_FOR_TYPE = {
-    morning: 'general', career: 'career', family: 'family',
-    growth: 'growth', health: 'health', review: 'career', monthly: 'career'
-  };
-
-  function savePerf(type) {
-    const ta = document.getElementById('nb-perf-' + type);
-    const content = ta.value.trim();
-    if (!content) { showToast('請先輸入績效素材內容'); return; }
-    const now = taipeiNow();
-    const items = getPf();
-    items.unshift({
-      id: Date.now(),
-      date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`,
-      cat: CAT_FOR_TYPE[type] || 'general',
-      content
-    });
-    setPf(items);
-    ta.value = '';
-    showToast('已存入績效素材庫 ✓');
-  }
-
-  function refreshSuggest(type) {
-    const sug = document.getElementById('nb-sug-' + type);
-    if (!sug) return;
-    const content = localStorage.getItem('nb-' + type) || '';
-    sug.style.display = content ? 'block' : 'none';
-  }
-
-  function addNbToPortfolio(type) {
-    const content = localStorage.getItem('nb-' + type) || '';
-    if (!content) return;
-    const now = taipeiNow();
-    const items = getPf();
-    items.unshift({
-      id: Date.now(),
-      date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`,
-      cat: CAT_FOR_TYPE[type] || 'general',
-      content: content.trim().slice(0, 300)
-    });
-    setPf(items);
-    showToast('已加入績效素材庫 ✓');
-  }
-
   function toggleNb(type) {
     const ta = document.getElementById('nb-ta-' + type);
     if (ta.style.display === 'none' || ta.style.display === '') editNb(type);
     else saveNb(type);
   }
 
-  /* ── 績效素材庫 ── */
-  let pfFilter = 'all';
-  let pfCat    = 'career';
-
-  const CAT = {
-    career:  { label: '🏢 事業', bg: '#DBEAFE', color: '#1E40AF' },
-    family:  { label: '👨‍👩‍👧‍👦 家庭', bg: '#D1FAE5', color: '#065F46' },
-    growth:  { label: '📈 成長', bg: '#EDE9FE', color: '#4C1D95' },
-    health:  { label: '💪 身心', bg: '#FEE2E2', color: '#991B1B' },
-    general: { label: '📋 其他', bg: '#F1F5F9', color: '#475569' },
-  };
-
-  function getPf() {
-    try { return JSON.parse(localStorage.getItem('portfolio') || '[]'); }
-    catch(e) { return []; }
-  }
-  function setPf(items) { localStorage.setItem('portfolio', JSON.stringify(items)); }
-
-  function selCat(cat) {
-    pfCat = cat;
-    document.querySelectorAll('.cat-btn').forEach(b => {
-      b.classList.toggle('sel', b.dataset.cat === cat);
-    });
-  }
-
-  function addPfItem() {
-    const content = document.getElementById('pf-new').value.trim();
-    if (!content) { showToast('請先輸入內容'); return; }
-    const now = taipeiNow();
-    const items = getPf();
-    items.unshift({
-      id: Date.now(),
-      date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`,
-      cat: pfCat, content
-    });
-    setPf(items);
-    document.getElementById('pf-new').value = '';
-    renderPf();
-    showToast('已加入素材庫');
-  }
-
-  function delPfItem(id) {
-    setPf(getPf().filter(i => i.id !== id));
-    renderPf();
-  }
-
-  function setPfFilter(f) {
-    pfFilter = f;
-    document.querySelectorAll('.f-btn').forEach(b => b.classList.toggle('sel', b.dataset.f === f));
-    renderPf();
-  }
-
   function esc(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function renderPf() {
-    const list = document.getElementById('pf-list');
-    const countEl = document.getElementById('pf-count');
-    let items = getPf();
-    const total = items.length;
-    if (pfFilter !== 'all') items = items.filter(i => i.cat === pfFilter);
-    countEl.textContent = total ? `共 ${total} 筆` : '';
-    if (!items.length) {
-      list.innerHTML = '<div class="pf-empty">還沒有素材<br>把值得記錄的成果加進來</div>';
-      return;
-    }
-    list.innerHTML = items.map(item => {
-      const c = CAT[item.cat] || CAT.general;
-      return `<div class="pf-item">
-        <div class="pf-item-top">
-          <div class="pf-item-meta">
-            <span class="pf-item-cat" style="background:${c.bg};color:${c.color};">${c.label}</span>
-            <span class="pf-item-date">${item.date}</span>
-          </div>
-          <button class="pf-item-del" onclick="delPfItem(${item.id})" title="刪除">✕</button>
-        </div>
-        <div class="pf-item-body">${esc(item.content)}</div>
-      </div>`;
-    }).join('');
-  }
-
-  function loadPf() {
-    pfFilter = 'all';
-    document.querySelectorAll('.f-btn').forEach(b => b.classList.toggle('sel', b.dataset.f === 'all'));
-    renderPf();
   }
 
   /* ── 快速記錄 ── */
@@ -1123,18 +944,7 @@
     showToast('設定已儲存');
   }
 
-  function copyPfAll() {
-    const items = getPf();
-    if (!items.length) { showToast('素材庫是空的'); return; }
-    const text = '【績效素材庫】\n\n' + items.map(item => {
-      const c = CAT[item.cat] || CAT.general;
-      return `${c.label}  ${item.date}\n${item.content}`;
-    }).join('\n\n---\n\n');
-    const done = () => showToast('已複製！可貼入績效文件');
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
-    } else fbCopy(text, done);
-  }
+
 </script>
 </body>
 </html>
