@@ -394,6 +394,12 @@
       cursor: pointer; margin-top: 8px; transition: opacity .15s;
     }
     .cap-save-settings:hover { opacity: .85; }
+    .cap-item-edit {
+      background: none; border: none; cursor: pointer;
+      color: #CBD5E1; font-size: 14px; padding: 2px 4px;
+    }
+    .cap-item-edit:hover { color: var(--capture); }
+    .cap-edit-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -421,30 +427,6 @@
         <span class="icon">🌅</span>
         <div class="label">早晨校準</div>
         <div class="hint">每天早上 · 5 分鐘</div>
-      </div>
-    </div>
-
-    <div class="section-label">卡關助理</div>
-    <div class="grid">
-      <div class="card card-career" onclick="show('career')">
-        <span class="icon">🏢</span>
-        <div class="label">品牌策略</div>
-        <div class="hint">PR・媒體・危機</div>
-      </div>
-      <div class="card card-family" onclick="show('family')">
-        <span class="icon">👨‍👩‍👧‍👦</span>
-        <div class="label">家庭教練</div>
-        <div class="hint">婚姻・育兒・關係</div>
-      </div>
-      <div class="card card-growth" onclick="show('growth')">
-        <span class="icon">📈</span>
-        <div class="label">學習陪跑</div>
-        <div class="hint">英文・TOEIC・成長</div>
-      </div>
-      <div class="card card-health" onclick="show('health')">
-        <span class="icon">💪</span>
-        <div class="label">健康管理</div>
-        <div class="hint">健身・飲食・身心</div>
       </div>
     </div>
 
@@ -514,125 +496,7 @@
     <button class="copy-btn btn-morning" onclick="copyOnly('morning')">複製內容</button>
   </div>
 
-  <!-- ════ 品牌策略顧問 ════ -->
-  <div class="tpl" id="tpl-career">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">🏢</span>
-      <div>
-        <h2>品牌策略顧問</h2>
-        <span class="tag" style="background:#DBEAFE;color:#1E40AF;">PR・媒體・危機處理</span>
-      </div>
-    </div>
-    <div class="nb-box">
-      <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議</span>
-        <button class="nb-btn" id="nb-btn-career" onclick="toggleNb('career')">編輯</button>
-      </div>
-      <div class="nb-display" id="nb-disp-career" onclick="editNb('career')">
-        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
-      </div>
-      <textarea class="nb-textarea" id="nb-ta-career" placeholder="貼上 NotebookLM 的建議…"></textarea>
-      <div class="nb-suggest" id="nb-sug-career" style="display:none;">
-        <button class="nb-sug-generic" onclick="addNbToPortfolio('career')">＋ 加入績效素材庫</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>遇到的狀況</label>
-      <textarea class="lg" id="c-situation" placeholder="描述你遇到的狀況…"></textarea>
-    </div>
-    <button class="copy-btn btn-career" onclick="copyOnly('career')">複製內容</button>
-  </div>
 
-  <!-- ════ 家庭教練 ════ -->
-  <div class="tpl" id="tpl-family">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">👨‍👩‍👧‍👦</span>
-      <div>
-        <h2>家庭教練</h2>
-        <span class="tag" style="background:#D1FAE5;color:#065F46;">婚姻・育兒・關係</span>
-      </div>
-    </div>
-    <div class="nb-box">
-      <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議</span>
-        <button class="nb-btn" id="nb-btn-family" onclick="toggleNb('family')">編輯</button>
-      </div>
-      <div class="nb-display" id="nb-disp-family" onclick="editNb('family')">
-        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
-      </div>
-      <textarea class="nb-textarea" id="nb-ta-family" placeholder="貼上 NotebookLM 的建議…"></textarea>
-      <div class="nb-suggest" id="nb-sug-family" style="display:none;">
-        <button class="nb-sug-generic" onclick="addNbToPortfolio('family')">＋ 加入績效素材庫</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>遇到的狀況</label>
-      <textarea class="lg" id="f-situation" placeholder="描述你遇到的狀況…"></textarea>
-    </div>
-    <button class="copy-btn btn-family" onclick="copyOnly('family')">複製內容</button>
-  </div>
-
-  <!-- ════ 學習陪跑者 ════ -->
-  <div class="tpl" id="tpl-growth">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">📈</span>
-      <div>
-        <h2>學習陪跑者</h2>
-        <span class="tag" style="background:#EDE9FE;color:#4C1D95;">英文・TOEIC・個人成長</span>
-      </div>
-    </div>
-    <div class="nb-box">
-      <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議</span>
-        <button class="nb-btn" id="nb-btn-growth" onclick="toggleNb('growth')">編輯</button>
-      </div>
-      <div class="nb-display" id="nb-disp-growth" onclick="editNb('growth')">
-        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
-      </div>
-      <textarea class="nb-textarea" id="nb-ta-growth" placeholder="貼上 NotebookLM 的建議…"></textarea>
-      <div class="nb-suggest" id="nb-sug-growth" style="display:none;">
-        <button class="nb-sug-generic" onclick="addNbToPortfolio('growth')">＋ 加入績效素材庫</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>遇到的狀況</label>
-      <textarea class="lg" id="g-situation" placeholder="描述你遇到的狀況…"></textarea>
-    </div>
-    <button class="copy-btn btn-growth" onclick="copyOnly('growth')">複製內容</button>
-  </div>
-
-  <!-- ════ 健康管理師 ════ -->
-  <div class="tpl" id="tpl-health">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">💪</span>
-      <div>
-        <h2>健康管理師</h2>
-        <span class="tag" style="background:#FEE2E2;color:#991B1B;">健身・飲食・身心狀態</span>
-      </div>
-    </div>
-    <div class="nb-box">
-      <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議</span>
-        <button class="nb-btn" id="nb-btn-health" onclick="toggleNb('health')">編輯</button>
-      </div>
-      <div class="nb-display" id="nb-disp-health" onclick="editNb('health')">
-        <span class="nb-empty">點此貼上 NotebookLM 的建議，下次開啟仍會顯示</span>
-      </div>
-      <textarea class="nb-textarea" id="nb-ta-health" placeholder="貼上 NotebookLM 的建議…"></textarea>
-      <div class="nb-suggest" id="nb-sug-health" style="display:none;">
-        <button class="nb-sug-generic" onclick="addNbToPortfolio('health')">＋ 加入績效素材庫</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>遇到的狀況</label>
-      <textarea class="lg" id="h-situation" placeholder="描述你遇到的狀況…"></textarea>
-    </div>
-    <button class="copy-btn btn-health" onclick="copyOnly('health')">複製內容</button>
-  </div>
 
   <!-- ════ 週覆盤 ════ -->
   <div class="tpl" id="tpl-review">
@@ -1206,7 +1070,7 @@
     }
     list.innerHTML = items.map(c => {
       const st = CAT_STYLE[c.category] || { bg:'#F1F5F9', color:'#475569' };
-      return `<div class="cap-item">
+      return `<div class="cap-item" id="cap-item-${c.id}">
         <div class="cap-item-top">
           <div class="cap-item-meta">
             <span class="cap-item-cat" style="background:${st.bg};color:${st.color};">${esc(c.category)}</span>
@@ -1217,12 +1081,85 @@
             ${c.synced
               ? '<span class="cap-synced">已同步 ✓</span>'
               : '<span class="cap-not-synced">未同步</span>'}
+            <button class="cap-item-edit" onclick="editCapture(${c.id})" title="編輯">✏️</button>
             <button class="cap-item-del" onclick="delCapture(${c.id})">✕</button>
           </div>
         </div>
         <div class="cap-item-body">${esc(c.summary)}</div>
       </div>`;
     }).join('');
+  }
+
+  function getCatLabel(cat) {
+    return { '公司目標':'🏢 公司目標', '個人目標':'📈 個人目標',
+             '個人生活':'🏠 個人生活', '瑣務':'📋 瑣務' }[cat] || cat;
+  }
+
+  function editCapture(id) {
+    const items = getCaptures();
+    const c = items.find(x => x.id === id);
+    if (!c) return;
+    const el = document.getElementById('cap-item-' + id);
+    if (!el) return;
+    el.dataset.editCat = c.category;
+    const timeStart = c.time ? c.time.split('-')[0] : '';
+    const timeEnd   = c.time ? (c.time.split('-')[1] || '') : '';
+    el.innerHTML = `
+      <div class="cap-edit-cats">
+        ${Object.keys(CAT_STYLE).map(cat =>
+          `<button class="cap-cat ${cat === c.category ? 'sel' : ''}"
+            data-editcat="${cat}" data-editid="${id}"
+            onclick="setEditCat(${id},'${cat}')">${getCatLabel(cat)}</button>`
+        ).join('')}
+      </div>
+      <div class="cap-row" style="margin-top:8px;">
+        <div class="cap-time-group">
+          <input type="text" id="edit-s-${id}" inputmode="numeric"
+            value="${timeStart}" maxlength="4" class="cap-time-input" />
+          <span class="cap-dash">–</span>
+          <input type="text" id="edit-e-${id}" inputmode="numeric"
+            value="${timeEnd}" maxlength="4" class="cap-time-input" />
+        </div>
+        <label class="cap-attack">
+          <input type="checkbox" id="edit-atk-${id}" ${c.is_attack ? 'checked' : ''} />
+          <span>進攻 ⚔️</span>
+        </label>
+      </div>
+      <textarea id="edit-sum-${id}" class="cap-textarea" style="margin-top:8px;">${esc(c.summary)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="cap-submit" style="flex:1;padding:10px;font-size:14px;"
+          onclick="saveEditCapture(${id})">儲存</button>
+        <button class="cap-retry-btn" style="flex:1;margin:0;padding:10px;"
+          onclick="loadCaptureList()">取消</button>
+      </div>`;
+  }
+
+  function setEditCat(id, cat) {
+    const el = document.getElementById('cap-item-' + id);
+    if (!el) return;
+    el.dataset.editCat = cat;
+    el.querySelectorAll('[data-editcat]').forEach(b =>
+      b.classList.toggle('sel', b.dataset.editcat === cat));
+  }
+
+  function saveEditCapture(id) {
+    const el   = document.getElementById('cap-item-' + id);
+    const items = getCaptures();
+    const idx  = items.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    const s   = (document.getElementById('edit-s-' + id)?.value || '').replace(/\D/g,'').substring(0,4);
+    const e   = (document.getElementById('edit-e-' + id)?.value || '').replace(/\D/g,'').substring(0,4);
+    const sum = (document.getElementById('edit-sum-' + id)?.value || '').trim();
+    const atk = document.getElementById('edit-atk-' + id)?.checked || false;
+    const cat = el?.dataset.editCat || items[idx].category;
+    if (!sum) { showToast('摘要不能空白'); return; }
+    const wasSynced = items[idx].synced;
+    items[idx] = { ...items[idx], category: cat,
+      time: s && e ? `${s}-${e}` : s || '', summary: sum,
+      is_attack: atk, synced: false };
+    setCaptures(items);
+    loadCaptureList();
+    showToast(wasSynced ? '已修改（請在手機快取分頁刪除舊的一筆）' : '已修改！');
   }
 
   function delCapture(id) {
