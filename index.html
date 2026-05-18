@@ -11,942 +11,1006 @@
   <meta name="theme-color" content="#1E293B" />
   <style>
     :root {
-      --capture: #059669; --vocab: #7C3AED;
-      --review:  #64748B; --monthly: #0EA5E9;
-      --health:  #EF4444;
-      --bg: #F8FAFC; --card: #FFFFFF;
-      --text: #1E293B; --muted: #64748B;
-      --border: #E2E8F0; --radius: 16px;
+      --capture:#059669; --vocab:#7C3AED; --ledger:#0891B2;
+      --stock:#EA580C;   --plan:#2563EB;  --aar:#64748B;
+      --review:#64748B;  --monthly:#0EA5E9;
+      --health:#EF4444;
+      --bg:#F8FAFC; --card:#FFFFFF; --text:#1E293B;
+      --muted:#64748B; --border:#E2E8F0; --radius:16px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
-      background: var(--bg); color: var(--text);
-      min-height: 100vh; padding: 28px 16px 48px;
-    }
-    .wrap { max-width: 480px; margin: 0 auto; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;
+      background:var(--bg);color:var(--text);min-height:100vh;padding:28px 16px 60px}
+    .wrap{max-width:480px;margin:0 auto}
 
-    /* Header */
-    header { text-align: center; margin-bottom: 32px; }
-    header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-    header .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    header{text-align:center;margin-bottom:28px}
+    header h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+    header .sub{color:var(--muted);font-size:13px;margin-top:4px}
 
-    /* Grid */
-    .section-label {
-      font-size: 11px; font-weight: 700; letter-spacing: 1px;
-      text-transform: uppercase; color: var(--muted); margin: 20px 0 10px;
-    }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .full { grid-column: 1 / -1; }
-    .card {
-      background: var(--card); border-radius: var(--radius);
-      padding: 18px 14px; cursor: pointer;
-      border: 2px solid var(--border); transition: all 0.18s ease;
-      text-align: center; user-select: none;
-    }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.09); }
-    .card:active { transform: translateY(0); }
-    .card .icon { font-size: 30px; display: block; margin-bottom: 8px; }
-    .card .label { font-size: 15px; font-weight: 700; }
-    .card .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
-    .card-capture:hover { background: #ECFDF5; border-color: var(--capture); }
-    .card-vocab:hover   { background: #F5F3FF; border-color: var(--vocab); }
-    .card-review:hover  { background: #F8FAFC; border-color: var(--review); }
-    .card-monthly:hover { background: #F0F9FF; border-color: var(--monthly); }
+    .section-label{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+      color:var(--muted);margin:18px 0 8px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .full{grid-column:1/-1}
+    .card{background:var(--card);border-radius:var(--radius);padding:16px 12px;cursor:pointer;
+      border:2px solid var(--border);transition:all .18s;text-align:center;user-select:none}
+    .card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.09)}
+    .card:active{transform:translateY(0)}
+    .card .icon{font-size:28px;display:block;margin-bottom:6px}
+    .card .label{font-size:14px;font-weight:700}
+    .card .hint{font-size:11px;color:var(--muted);margin-top:2px}
+    .card-capture:hover{background:#ECFDF5;border-color:var(--capture)}
+    .card-vocab:hover  {background:#F5F3FF;border-color:var(--vocab)}
+    .card-ledger:hover {background:#ECFEFF;border-color:var(--ledger)}
+    .card-stock:hover  {background:#FFF7ED;border-color:var(--stock)}
+    .card-plan:hover   {background:#EFF6FF;border-color:var(--plan)}
+    .card-aar:hover    {background:#F8FAFC;border-color:var(--aar)}
+    .card-review:hover {background:#F8FAFC;border-color:var(--review)}
+    .card-monthly:hover{background:#F0F9FF;border-color:var(--monthly)}
 
-    /* Template */
-    .tpl { display: none; }
-    .tpl.active { display: block; }
-    .home.hidden { display: none; }
-    .back {
-      background: none; border: none; cursor: pointer;
-      font-size: 14px; color: var(--muted);
-      display: flex; align-items: center; gap: 5px;
-      margin-bottom: 24px; padding: 0;
-    }
-    .back:hover { color: var(--text); }
-    .tpl-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
-    .tpl-header .big-icon { font-size: 40px; line-height: 1; }
-    .tpl-header h2 { font-size: 22px; font-weight: 800; }
-    .tpl-header .tag {
-      display: inline-block; font-size: 11px; font-weight: 600;
-      padding: 3px 10px; border-radius: 100px; margin-top: 5px;
-    }
+    .tpl{display:none}.tpl.active{display:block}.home.hidden{display:none}
+    .back{background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);
+      display:flex;align-items:center;gap:5px;margin-bottom:20px;padding:0}
+    .back:hover{color:var(--text)}
+    .tpl-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+    .tpl-header .big-icon{font-size:38px;line-height:1}
+    .tpl-header h2{font-size:22px;font-weight:800}
+    .tpl-header .tag{display:inline-block;font-size:11px;font-weight:600;
+      padding:3px 10px;border-radius:100px;margin-top:4px}
 
-    /* Fields */
-    .field { margin-bottom: 14px; }
-    .field label {
-      display: block; font-size: 11px; font-weight: 700;
-      letter-spacing: 0.6px; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 6px;
-    }
-    .field input, .field textarea {
-      width: 100%; border: 1.5px solid var(--border);
-      border-radius: 10px; padding: 12px 14px;
-      font-size: 15px; font-family: inherit; color: var(--text);
-      background: white; resize: vertical; transition: border-color .18s;
-    }
-    .field input:focus, .field textarea:focus { outline: none; border-color: #94A3B8; }
-    .field textarea { min-height: 88px; }
-    .field textarea.lg { min-height: 180px; }
+    .field{margin-bottom:12px}
+    .field label{display:block;font-size:11px;font-weight:700;letter-spacing:.6px;
+      text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+    .field input,.field textarea,.field select{width:100%;border:1.5px solid var(--border);
+      border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit;
+      color:var(--text);background:white;resize:vertical;transition:border-color .18s}
+    .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:#94A3B8}
+    .field textarea{min-height:80px}
+    .field textarea.lg{min-height:160px}
 
-    /* Buttons */
-    .copy-btn {
-      width: 100%; padding: 16px; border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 700; cursor: pointer; color: white;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      margin-top: 10px; transition: opacity .18s, transform .18s;
-    }
-    .copy-btn:hover  { opacity: .9; transform: translateY(-1px); }
-    .copy-btn:active { transform: translateY(0); }
-    .btn-review  { background: var(--review); }
-    .btn-monthly { background: var(--monthly); }
+    .btn-row{display:flex;gap:8px;margin-top:4px}
+    .btn-primary{flex:1;padding:14px;border:none;border-radius:12px;font-size:15px;
+      font-weight:700;cursor:pointer;color:white;transition:opacity .18s,transform .18s}
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-secondary{flex:1;padding:14px;border:1.5px solid var(--border);border-radius:12px;
+      font-size:14px;font-weight:600;cursor:pointer;color:var(--text);background:white}
+    .btn-secondary:hover{background:var(--bg)}
+    .full-btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;
+      font-weight:700;cursor:pointer;color:white;transition:opacity .18s,transform .18s;
+      display:flex;align-items:center;justify-content:center;gap:8px}
+    .full-btn:hover{opacity:.9;transform:translateY(-1px)}
+    .outline-btn{width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;
+      font-size:14px;font-weight:600;cursor:pointer;color:var(--text);background:white;margin-top:8px}
+    .outline-btn:hover{background:var(--bg)}
+
+    /* Segment / chip selectors */
+    .seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .chip{padding:6px 13px;border-radius:100px;border:1.5px solid var(--border);
+      background:white;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+    .chip.sel-green {background:#D1FAE5;border-color:var(--capture);color:#065F46}
+    .chip.sel-blue  {background:#DBEAFE;border-color:var(--plan);color:#1E40AF}
+    .chip.sel-cyan  {background:#CFFAFE;border-color:var(--ledger);color:#164E63}
+    .chip.sel-orange{background:#FED7AA;border-color:var(--stock);color:#7C2D12}
+    .chip.sel-purple{background:#EDE9FE;border-color:var(--vocab);color:#4C1D95}
 
     /* Toast */
-    .toast {
-      position: fixed; bottom: 28px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: #1E293B; color: white;
-      padding: 12px 24px; border-radius: 100px;
-      font-size: 14px; font-weight: 600;
-      transition: transform .28s ease; z-index: 99; white-space: nowrap;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
+      background:#1E293B;color:white;padding:12px 24px;border-radius:100px;
+      font-size:14px;font-weight:600;transition:transform .28s;z-index:99;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0)}
 
     /* NotebookLM box */
-    .nb-box {
-      border-radius: 12px; padding: 12px 14px; margin-bottom: 20px;
-      border: 1.5px dashed #CBD5E1; background: #F8FAFC;
-    }
-    .nb-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .nb-label { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
-    .nb-btn {
-      background: none; border: 1px solid var(--border);
-      border-radius: 6px; padding: 2px 10px;
-      font-size: 11px; font-weight: 600; cursor: pointer; color: var(--muted);
-    }
-    .nb-btn:hover { background: white; color: var(--text); }
-    .nb-display { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; cursor: pointer; min-height: 18px; }
-    .nb-empty { color: #94A3B8; font-style: italic; font-size: 13px; }
-    .nb-textarea {
-      width: 100%; border: 1px solid var(--border); border-radius: 8px;
-      padding: 10px 12px; font-size: 13px; font-family: inherit;
-      color: var(--text); resize: vertical; min-height: 100px;
-      background: white; display: none;
-    }
-    .nb-textarea:focus { outline: none; border-color: #94A3B8; }
+    .nb-box{border-radius:12px;padding:12px 14px;margin-bottom:18px;
+      border:1.5px dashed #CBD5E1;background:#F8FAFC}
+    .nb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+    .nb-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+    .nb-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:2px 10px;
+      font-size:11px;font-weight:600;cursor:pointer;color:var(--muted)}
+    .nb-btn:hover{background:white;color:var(--text)}
+    .nb-display{font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;cursor:pointer;min-height:16px}
+    .nb-empty{color:#94A3B8;font-style:italic;font-size:13px}
+    .nb-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;
+      font-size:13px;font-family:inherit;color:var(--text);resize:vertical;min-height:80px;
+      background:white;display:none}
+    .nb-textarea:focus{outline:none;border-color:#94A3B8}
 
-    /* ── 快速記錄 ── */
-    .cap-form {
-      background: white; border-radius: var(--radius);
-      padding: 16px; margin-bottom: 16px; border: 1.5px solid var(--border);
-    }
-    .cap-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .cap-cat {
-      padding: 6px 12px; border-radius: 100px;
-      border: 1.5px solid var(--border);
-      background: white; font-size: 12px; font-weight: 600;
-      cursor: pointer; color: var(--muted); transition: all .15s;
-    }
-    .cap-cat.sel { background: #D1FAE5; border-color: var(--capture); color: #065F46; }
-    .cap-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
-    .cap-time-group { display: flex; align-items: center; gap: 6px; flex: 1; }
-    .cap-time-input {
-      width: 68px; border: 1.5px solid var(--border); border-radius: 8px;
-      padding: 9px 10px; font-size: 16px;
-      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-      text-align: center; color: var(--text); background: white;
-    }
-    .cap-time-input:focus { outline: none; border-color: var(--capture); }
-    .cap-dash { color: var(--muted); font-size: 18px; }
-    .cap-attack {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 600; color: var(--text);
-      cursor: pointer; white-space: nowrap;
-    }
-    .cap-attack input { width: 17px; height: 17px; accent-color: #EF4444; cursor: pointer; }
+    /* Quick capture */
+    .cap-form{background:white;border-radius:var(--radius);padding:14px;
+      margin-bottom:14px;border:1.5px solid var(--border)}
+    .cap-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
+    .cap-time-group{display:flex;align-items:center;gap:6px;flex:1}
+    .cap-time-input{width:66px;border:1.5px solid var(--border);border-radius:8px;
+      padding:8px 10px;font-size:15px;font-family:'SF Mono','Courier New',monospace;
+      text-align:center;color:var(--text);background:white}
+    .cap-time-input:focus{outline:none;border-color:var(--capture)}
+    .cap-dash{color:var(--muted);font-size:16px}
+    .cap-attack{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;
+      color:var(--text);cursor:pointer;white-space:nowrap}
+    .cap-attack input{width:16px;height:16px;accent-color:#EF4444;cursor:pointer}
+    .cap-input-wrap{position:relative;margin-bottom:10px}
+    .cap-textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;
+      padding:11px 48px 11px 13px;font-size:15px;font-family:inherit;
+      color:var(--text);resize:vertical;min-height:90px;background:white}
+    .cap-textarea:focus{outline:none;border-color:var(--capture)}
+    .mic-btn{position:absolute;bottom:9px;right:9px;width:34px;height:34px;border-radius:50%;
+      border:none;background:#F1F5F9;cursor:pointer;font-size:17px;
+      display:flex;align-items:center;justify-content:center;transition:all .18s}
+    .mic-btn:hover{background:#E2E8F0}
+    .mic-btn.recording{background:#FEE2E2;animation:pulse 1.2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(239,68,68,.4)}
+      50%{transform:scale(1.1);box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+    .cap-submit{width:100%;padding:14px;border:none;border-radius:12px;
+      background:var(--capture);color:white;font-size:15px;font-weight:700;cursor:pointer;
+      transition:opacity .18s,transform .18s}
+    .cap-submit:hover{opacity:.9;transform:translateY(-1px)}
 
-    /* 語音按鈕 */
-    .cap-input-wrap { position: relative; margin-bottom: 12px; }
-    .cap-textarea {
-      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 12px 52px 12px 14px; font-size: 15px; font-family: inherit;
-      color: var(--text); resize: vertical; min-height: 100px; background: white;
-    }
-    .cap-textarea:focus { outline: none; border-color: var(--capture); }
-    .mic-btn {
-      position: absolute; bottom: 10px; right: 10px;
-      width: 36px; height: 36px; border-radius: 50%;
-      border: none; background: #F1F5F9; cursor: pointer;
-      font-size: 18px; display: flex; align-items: center; justify-content: center;
-      transition: all .18s; line-height: 1;
-    }
-    .mic-btn:hover { background: #E2E8F0; }
-    .mic-btn.recording {
-      background: #FEE2E2; color: #EF4444;
-      animation: pulse 1.2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
-      50%       { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(239,68,68,0); }
-    }
+    /* Record items (shared) */
+    .rec-item{background:white;border:1.5px solid var(--border);border-radius:12px;
+      padding:11px 13px;margin-bottom:8px}
+    .rec-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+    .rec-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+    .rec-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px}
+    .rec-time{font-size:12px;color:var(--muted);font-family:'SF Mono',monospace}
+    .rec-right{display:flex;align-items:center;gap:7px}
+    .synced    {font-size:11px;color:#10B981;font-weight:600}
+    .not-synced{font-size:11px;color:#F59E0B;font-weight:600}
+    .del-btn{background:none;border:none;cursor:pointer;color:#CBD5E1;font-size:13px;padding:2px 4px}
+    .del-btn:hover{color:var(--health)}
+    .rec-body{font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap}
+    .empty-msg{text-align:center;padding:24px 20px;color:var(--muted);font-size:14px}
+    .cap-settings{margin-top:24px;border-top:1px solid var(--border);padding-top:14px}
+    .settings-toggle{background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:0}
+    .settings-toggle:hover{color:var(--text)}
+    .settings-body{margin-top:10px}
 
-    .cap-submit {
-      width: 100%; padding: 15px; border: none; border-radius: 12px;
-      background: var(--capture); color: white;
-      font-size: 16px; font-weight: 700; cursor: pointer;
-      transition: opacity .18s, transform .18s;
-    }
-    .cap-submit:hover  { opacity: .9; transform: translateY(-1px); }
-    .cap-submit:active { opacity: 1; transform: translateY(0); }
+    /* Vocab */
+    .vocab-input{width:100%;border:1.5px solid var(--border);border-radius:10px;
+      padding:12px 14px;font-size:18px;font-family:inherit;font-weight:700;
+      color:var(--text);background:white;margin-bottom:10px}
+    .vocab-input:focus{outline:none;border-color:var(--vocab)}
+    .vocab-note{width:100%;border:1.5px solid var(--border);border-radius:10px;
+      padding:11px 13px;font-size:14px;font-family:inherit;color:var(--text);
+      resize:vertical;min-height:72px;background:white;margin-bottom:10px}
+    .vocab-note:focus{outline:none;border-color:var(--vocab)}
+    .vocab-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .vf-btn{padding:4px 12px;border-radius:100px;border:1.5px solid var(--border);
+      background:white;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted)}
+    .vf-btn.sel{background:var(--text);color:white;border-color:var(--text)}
+    .vocab-word{font-size:16px;font-weight:700;margin-bottom:3px}
+    .vocab-note-body{font-size:13px;line-height:1.6;color:var(--muted);white-space:pre-wrap}
 
-    .cap-item {
-      background: white; border: 1.5px solid var(--border);
-      border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-    }
-    .cap-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .cap-item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .cap-item-cat { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; }
-    .cap-item-time { font-size: 12px; color: var(--muted); font-family: 'SF Mono', monospace; }
-    .cap-item-attack { font-size: 12px; color: #EF4444; font-weight: 700; }
-    .cap-item-right { display: flex; align-items: center; gap: 8px; }
-    .cap-synced     { font-size: 11px; color: #10B981; font-weight: 600; }
-    .cap-not-synced { font-size: 11px; color: #F59E0B; font-weight: 600; }
-    .cap-item-del, .cap-item-edit {
-      background: none; border: none; cursor: pointer;
-      color: #CBD5E1; font-size: 14px; padding: 2px 4px;
-    }
-    .cap-item-del:hover  { color: var(--health); }
-    .cap-item-edit:hover { color: var(--capture); }
-    .cap-item-body { font-size: 14px; line-height: 1.6; color: var(--text); }
-    .cap-empty { text-align: center; padding: 28px 20px; color: var(--muted); font-size: 14px; }
-    .cap-settings { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px; }
-    .cap-settings-toggle { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); padding: 0; }
-    .cap-settings-toggle:hover { color: var(--text); }
-    .cap-settings-body { margin-top: 12px; }
-    .cap-retry-btn {
-      width: 100%; padding: 11px; margin-top: 8px;
-      background: #F1F5F9; color: var(--text);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-    }
-    .cap-retry-btn:hover { background: #E2E8F0; }
-    .cap-save-settings {
-      padding: 10px 24px; background: var(--text); color: white;
-      border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
-      cursor: pointer; margin-top: 8px;
-    }
-    .cap-save-settings:hover { opacity: .85; }
-    .cap-edit-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    /* Ledger */
+    .type-toggle{display:flex;background:#F1F5F9;border-radius:10px;padding:4px;margin-bottom:12px}
+    .type-btn{flex:1;padding:9px;border:none;border-radius:7px;font-size:14px;font-weight:600;
+      cursor:pointer;background:transparent;color:var(--muted);transition:all .18s}
+    .type-btn.sel{background:white;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+    .subcats{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+    .sub-chip{padding:5px 11px;border-radius:100px;border:1.5px solid var(--border);
+      background:white;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+    .sub-chip.sel{background:#CFFAFE;border-color:var(--ledger);color:#164E63}
+    .amount-input{font-size:22px;font-weight:700;text-align:right;letter-spacing:.5px}
+    .month-summary{background:#F8FAFC;border-radius:12px;padding:12px 14px;margin-top:14px;
+      border:1.5px solid var(--border)}
+    .ms-title{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+      color:var(--muted);margin-bottom:8px}
+    .ms-row{display:flex;justify-content:space-between;align-items:center;
+      padding:5px 0;border-bottom:1px solid var(--border);font-size:14px}
+    .ms-row:last-child{border-bottom:none;font-weight:700}
+    .ms-amount{font-weight:600;color:var(--text)}
+    .ms-expense{color:#EF4444}.ms-income{color:#10B981}
+    .ledger-date{font-size:11px;color:var(--muted);font-weight:600}
 
-    /* ── 英文單字庫 ── */
-    .vocab-form {
-      background: white; border-radius: var(--radius);
-      padding: 16px; margin-bottom: 16px; border: 1.5px solid var(--border);
-    }
-    .vocab-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .vocab-tag {
-      padding: 5px 12px; border-radius: 100px;
-      border: 1.5px solid var(--border);
-      background: white; font-size: 12px; font-weight: 600;
-      cursor: pointer; color: var(--muted); transition: all .15s;
-    }
-    .vocab-tag.sel { background: #EDE9FE; border-color: var(--vocab); color: #4C1D95; }
-    .vocab-input {
-      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 12px 14px; font-size: 18px; font-family: inherit;
-      color: var(--text); background: white; margin-bottom: 10px; font-weight: 600;
-    }
-    .vocab-input:focus { outline: none; border-color: var(--vocab); }
-    .vocab-note {
-      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 12px 14px; font-size: 14px; font-family: inherit;
-      color: var(--text); resize: vertical; min-height: 80px;
-      background: white; margin-bottom: 12px;
-    }
-    .vocab-note:focus { outline: none; border-color: var(--vocab); }
-    .vocab-submit {
-      width: 100%; padding: 14px; border: none; border-radius: 12px;
-      background: var(--vocab); color: white;
-      font-size: 15px; font-weight: 700; cursor: pointer;
-      transition: opacity .18s, transform .18s;
-    }
-    .vocab-submit:hover  { opacity: .9; transform: translateY(-1px); }
-    .vocab-submit:active { opacity: 1; transform: translateY(0); }
-    .vocab-item {
-      background: white; border: 1.5px solid var(--border);
-      border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-    }
-    .vocab-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .vocab-item-meta { display: flex; align-items: center; gap: 8px; }
-    .vocab-item-tag { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; background: #EDE9FE; color: #4C1D95; }
-    .vocab-item-date { font-size: 11px; color: var(--muted); }
-    .vocab-item-del { background: none; border: none; cursor: pointer; color: #CBD5E1; font-size: 14px; padding: 2px 4px; }
-    .vocab-item-del:hover { color: var(--health); }
-    .vocab-item-word { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-    .vocab-item-note { font-size: 13px; line-height: 1.6; color: var(--muted); white-space: pre-wrap; }
-    .vocab-empty { text-align: center; padding: 28px 20px; color: var(--muted); font-size: 14px; }
-    .vocab-copy-all {
-      width: 100%; padding: 13px; background: white; color: var(--text);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px;
-    }
-    .vocab-copy-all:hover { background: var(--bg); }
-    .vocab-synced     { font-size: 11px; color: #10B981; font-weight: 600; }
-    .vocab-not-synced { font-size: 11px; color: #F59E0B; font-weight: 600; }
-    .vocab-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .vf-btn {
-      padding: 4px 12px; border-radius: 100px; border: 1.5px solid var(--border);
-      background: white; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted);
-    }
-    .vf-btn.sel { background: var(--text); color: white; border-color: var(--text); }
+    /* Stock */
+    .stock-tabs{display:flex;gap:8px;margin-bottom:16px}
+    .stab{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;
+      text-align:center;font-size:13px;font-weight:600;cursor:pointer;
+      background:white;color:var(--muted);transition:all .15s}
+    .stab.sel{background:#FED7AA;border-color:var(--stock);color:#7C2D12}
+    .holding-card{background:white;border:1.5px solid var(--border);border-radius:12px;
+      padding:13px;margin-bottom:10px}
+    .holding-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+    .holding-code{font-size:18px;font-weight:800}
+    .holding-name{font-size:12px;color:var(--muted);margin-top:2px}
+    .holding-account{font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;
+      background:#FED7AA;color:#7C2D12}
+    .holding-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+    .hg-item label{font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:2px}
+    .hg-item span{font-size:14px;font-weight:600}
+    .price-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+    .price-row label{font-size:12px;color:var(--muted);white-space:nowrap}
+    .price-input{flex:1;border:1.5px solid var(--border);border-radius:8px;
+      padding:7px 10px;font-size:14px;font-weight:600;color:var(--text);
+      background:white;text-align:right}
+    .price-input:focus{outline:none;border-color:var(--stock)}
+    .pl-badge{padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap}
+    .pl-profit{background:#D1FAE5;color:#065F46}
+    .pl-loss  {background:#FEE2E2;color:#991B1B}
+    .pl-zero  {background:#F1F5F9;color:#475569}
+    .stock-rec-amount{font-size:13px;font-weight:700;color:var(--text)}
+
+    /* AAR */
+    .aar-range{display:flex;gap:6px;margin-bottom:12px}
+    .range-btn{padding:7px 14px;border-radius:100px;border:1.5px solid var(--border);
+      background:white;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted)}
+    .range-btn.sel{background:#F1F5F9;border-color:#94A3B8;color:var(--text)}
+    .date-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .date-input{flex:1;border:1.5px solid var(--border);border-radius:8px;
+      padding:9px 12px;font-size:14px;font-family:inherit;color:var(--text);background:white}
+    .date-input:focus{outline:none;border-color:var(--aar)}
+    .aar-day{margin-bottom:16px}
+    .aar-day-header{font-size:13px;font-weight:700;color:var(--muted);
+      margin-bottom:6px;padding:4px 0;border-bottom:1px solid var(--border)}
+    .aar-entry{display:flex;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px dashed var(--border)}
+    .aar-entry:last-child{border-bottom:none}
+    .aar-entry-cat{font-size:11px;font-weight:700;padding:1px 7px;border-radius:100px;
+      flex-shrink:0;align-self:flex-start;margin-top:2px}
+    .aar-entry-time{font-size:11px;color:var(--muted);font-family:'SF Mono',monospace;flex-shrink:0}
+    .aar-entry-body{flex:1;line-height:1.5;color:var(--text)}
+    .aar-loading{text-align:center;padding:32px;color:var(--muted);font-size:14px}
+    .copy-bar{display:flex;gap:8px;margin-top:16px}
+
+    /* Plan */
+    .plan-day{margin-bottom:20px}
+    .plan-day-header{padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;
+      margin-bottom:6px;background:#DBEAFE;color:#1E40AF}
+    .plan-day-header.today{background:#BFDBFE;color:#1E3A8A;border:2px solid var(--plan)}
+    .plan-row{display:flex;gap:0;border-bottom:1px solid var(--border)}
+    .plan-row:last-child{border-bottom:none}
+    .plan-time{font-size:12px;color:var(--muted);font-family:'SF Mono',monospace;
+      padding:6px 8px;flex-shrink:0;width:100px}
+    .plan-task{font-size:13px;padding:6px 8px;flex:1;line-height:1.5;color:var(--text)}
+    .plan-cat{font-size:11px;font-weight:600;padding:6px 6px;color:var(--muted);flex-shrink:0}
+    .plan-empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
   </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- HOME -->
-  <div class="home" id="home">
-    <header>
-      <h1>靜華 OS</h1>
-      <div class="sub" id="today-label"></div>
-    </header>
+<!-- HOME -->
+<div class="home" id="home">
+  <header>
+    <h1>靜華 OS</h1>
+    <div class="sub" id="today-label"></div>
+  </header>
 
-    <div class="section-label">隨手記錄</div>
-    <div class="grid">
-      <div class="card card-capture full" onclick="show('capture')">
-        <span class="icon">⚡</span>
-        <div class="label">快速記錄</div>
-        <div class="hint">靈感・財務・股票・健康・生活・支援語音 🎙️</div>
-      </div>
-    </div>
-
-    <div class="section-label">學習成長</div>
-    <div class="grid">
-      <div class="card card-vocab full" onclick="show('vocab')">
-        <span class="icon">📖</span>
-        <div class="label">英文單字庫</div>
-        <div class="hint">隨手記・累積複習素材・一鍵複製給 Claude 出題</div>
-      </div>
-    </div>
-
-    <div class="section-label">覆盤與成果</div>
-    <div class="grid">
-      <div class="card card-review" onclick="show('review')">
-        <span class="icon">📊</span>
-        <div class="label">週覆盤</div>
-        <div class="hint">每週日 · 30 分鐘</div>
-      </div>
-      <div class="card card-monthly" onclick="show('monthly')">
-        <span class="icon">📅</span>
-        <div class="label">月回顧</div>
-        <div class="hint">每月底 · 60 分鐘</div>
-      </div>
+  <div class="section-label">隨手記錄</div>
+  <div class="grid">
+    <div class="card card-capture full" onclick="show('capture')">
+      <span class="icon">⚡</span>
+      <div class="label">快速記錄</div>
+      <div class="hint">靈感・財務・健康・生活・語音 🎙️</div>
     </div>
   </div>
 
-  <!-- 週覆盤 -->
-  <div class="tpl" id="tpl-review">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">📊</span>
-      <div>
-        <h2>週覆盤</h2>
-        <span class="tag" style="background:#F1F5F9;color:#475569;">每週日 · 30 分鐘</span>
-      </div>
+  <div class="section-label">財務管理</div>
+  <div class="grid">
+    <div class="card card-ledger" onclick="show('ledger')">
+      <span class="icon">💰</span>
+      <div class="label">記帳</div>
+      <div class="hint">家用・個人・投資・定存</div>
     </div>
-    <div class="nb-box">
-      <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議</span>
-        <button class="nb-btn" id="nb-btn-review" onclick="toggleNb('review')">編輯</button>
-      </div>
-      <div class="nb-display" id="nb-disp-review" onclick="editNb('review')">
-        <span class="nb-empty">週覆盤做完後，把 NotebookLM 給的亮點、痛點、防呆行動貼進來</span>
-      </div>
-      <textarea class="nb-textarea" id="nb-ta-review" placeholder="貼上本週 NotebookLM 建議…"></textarea>
-    </div>
-    <div class="field"><label>週期</label><input type="text" id="r-week" /></div>
-    <div class="field">
-      <label>這週紀錄（貼上 Google Sheets 內容）</label>
-      <textarea class="lg" id="r-notes" placeholder="把這週的紀錄貼過來，流水帳也可以…"></textarea>
-    </div>
-    <button class="copy-btn btn-review" onclick="copyOnly('review')">複製內容 → NotebookLM</button>
-  </div>
-
-  <!-- 月回顧 -->
-  <div class="tpl" id="tpl-monthly">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">📅</span>
-      <div>
-        <h2>月回顧</h2>
-        <span class="tag" style="background:#E0F2FE;color:#075985;">每月底 · 60 分鐘</span>
-      </div>
-    </div>
-    <div class="nb-box">
-      <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議</span>
-        <button class="nb-btn" id="nb-btn-monthly" onclick="toggleNb('monthly')">編輯</button>
-      </div>
-      <div class="nb-display" id="nb-disp-monthly" onclick="editNb('monthly')">
-        <span class="nb-empty">月底覆盤後，把 NotebookLM 給的本月總結貼進來</span>
-      </div>
-      <textarea class="nb-textarea" id="nb-ta-monthly" placeholder="貼上本月 NotebookLM 建議…"></textarea>
-    </div>
-    <div class="field"><label>月份</label><input type="text" id="mo-month" /></div>
-    <div class="field"><label>🏢 事業成果</label><textarea id="mo-career" placeholder="這個月在工作上完成了什麼？"></textarea></div>
-    <div class="field"><label>📈 個人成長</label><textarea id="mo-growth" placeholder="英文進度、學習、個人發展有什麼推進？"></textarea></div>
-    <div class="field"><label>👨‍👩‍👧‍👦 家庭與關係</label><textarea id="mo-family" placeholder="家庭關係、與孩子互動有什麼亮點？"></textarea></div>
-    <div class="field"><label>💪 身心健康</label><textarea id="mo-health" placeholder="健身、飲食、睡眠、情緒整體狀態？"></textarea></div>
-    <div class="field"><label>下個月最重要的 1 件事</label><textarea id="mo-next" placeholder="下個月如果只能專注一件事，是什麼？"></textarea></div>
-    <button class="copy-btn btn-monthly" onclick="copyOnly('monthly')">複製內容 → NotebookLM</button>
-  </div>
-
-  <!-- 快速記錄 -->
-  <div class="tpl" id="tpl-capture">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">⚡</span>
-      <div>
-        <h2>快速記錄</h2>
-        <span class="tag" style="background:#D1FAE5;color:#065F46;">即時記下 · 自動同步 Sheets</span>
-      </div>
-    </div>
-
-    <div class="cap-form">
-      <div class="cap-cats">
-        <button class="cap-cat sel" data-cat="閱讀/Podcast 靈感" onclick="setCapCat('閱讀/Podcast 靈感')">📚 靈感</button>
-        <button class="cap-cat" data-cat="財務記帳" onclick="setCapCat('財務記帳')">💰 記帳</button>
-        <button class="cap-cat" data-cat="股票紀錄" onclick="setCapCat('股票紀錄')">📊 股票</button>
-        <button class="cap-cat" data-cat="健康管理" onclick="setCapCat('健康管理')">💪 健康</button>
-        <button class="cap-cat" data-cat="工作生活" onclick="setCapCat('工作生活')">💬 生活</button>
-      </div>
-
-      <div class="cap-row">
-        <div class="cap-time-group">
-          <input type="text" id="cap-start" inputmode="numeric" placeholder="0900" maxlength="4" class="cap-time-input" />
-          <span class="cap-dash">–</span>
-          <input type="text" id="cap-end" inputmode="numeric" placeholder="1000" maxlength="4" class="cap-time-input" />
-        </div>
-        <label class="cap-attack">
-          <input type="checkbox" id="cap-attack" />
-          <span>進攻 ⚔️</span>
-        </label>
-      </div>
-
-      <div class="cap-input-wrap">
-        <textarea id="cap-summary" class="cap-textarea"
-          placeholder="記下靈感・支出・股票觀察・運動紀錄…&#10;（或按右下角 🎙️ 說話）"></textarea>
-        <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="語音輸入（台灣中文）">🎙️</button>
-      </div>
-      <button class="cap-submit" onclick="submitCapture()">記錄下來</button>
-    </div>
-
-    <div class="section-label" style="margin-top:4px;">今天的紀錄</div>
-    <div id="cap-list"></div>
-
-    <div class="cap-settings">
-      <button class="cap-settings-toggle" onclick="toggleCapSettings()">⚙️ Google Sheets 同步設定</button>
-      <div id="cap-settings-body" class="cap-settings-body" style="display:none;">
-        <div class="field" style="margin-top:10px;">
-          <label>Apps Script 網址</label>
-          <input type="text" id="cap-gas-url" placeholder="https://script.google.com/macros/s/…/exec" />
-        </div>
-        <button class="cap-save-settings" onclick="saveCapSettings()">儲存</button>
-        <button class="cap-retry-btn" onclick="retrySyncAll()">重試未同步的項目</button>
-      </div>
+    <div class="card card-stock" onclick="show('stock')">
+      <span class="icon">📈</span>
+      <div class="label">股票追蹤</div>
+      <div class="hint">個人・家庭・台股・美股</div>
     </div>
   </div>
 
-  <!-- 英文單字庫 -->
-  <div class="tpl" id="tpl-vocab">
-    <button class="back" onclick="goHome()">← 返回</button>
-    <div class="tpl-header">
-      <span class="big-icon">📖</span>
-      <div>
-        <h2>英文單字庫</h2>
-        <span class="tag" style="background:#EDE9FE;color:#4C1D95;">隨手記 · 累積複習素材</span>
-      </div>
+  <div class="section-label">學習成長</div>
+  <div class="grid">
+    <div class="card card-vocab full" onclick="show('vocab')">
+      <span class="icon">📖</span>
+      <div class="label">英文單字庫</div>
+      <div class="hint">隨手記・一鍵複製給 Claude 出題</div>
     </div>
-
-    <div class="vocab-form">
-      <div class="vocab-tags">
-        <button class="vocab-tag sel" data-tag="好單字" onclick="setVocabTag('好單字')">⭐ 好單字</button>
-        <button class="vocab-tag" data-tag="好句子" onclick="setVocabTag('好句子')">💬 好句子</button>
-        <button class="vocab-tag" data-tag="TOEIC" onclick="setVocabTag('TOEIC')">📝 TOEIC</button>
-        <button class="vocab-tag" data-tag="工作用語" onclick="setVocabTag('工作用語')">🏢 工作用語</button>
-        <button class="vocab-tag" data-tag="課堂筆記" onclick="setVocabTag('課堂筆記')">📚 課堂</button>
-      </div>
-      <input type="text" id="vocab-word" class="vocab-input" placeholder="輸入單字或句子…" />
-      <textarea id="vocab-note" class="vocab-note"
-        placeholder="中文意思 / 例句 / 使用情境 / 老師糾正…"></textarea>
-      <button class="vocab-submit" onclick="submitVocab()">存進單字庫</button>
-    </div>
-
-    <div class="section-label" style="margin-top:4px;">
-      單字庫（<span id="vocab-count">0</span> 筆）
-    </div>
-    <div class="vocab-filter" id="vocab-filter"></div>
-    <div id="vocab-list"></div>
-    <button class="vocab-copy-all" onclick="copyAllVocab()">📋 複製全部 → 貼給 Claude 出題</button>
   </div>
 
+  <div class="section-label">工作規劃</div>
+  <div class="grid">
+    <div class="card card-plan full" onclick="show('plan')">
+      <span class="icon">🗓️</span>
+      <div class="label">本週計畫</div>
+      <div class="hint">從 Google Sheets 讀取・直接看今日任務</div>
+    </div>
+  </div>
+
+  <div class="section-label">資料讀取</div>
+  <div class="grid">
+    <div class="card card-aar full" onclick="show('aar')">
+      <span class="icon">📋</span>
+      <div class="label">讀取 AAR</div>
+      <div class="hint">從 Sheets 抓資料・一鍵複製給 NotebookLM</div>
+    </div>
+  </div>
+
+  <div class="section-label">覆盤與成果</div>
+  <div class="grid">
+    <div class="card card-review" onclick="show('review')">
+      <span class="icon">📊</span>
+      <div class="label">週覆盤</div>
+      <div class="hint">每週日 · 30 分鐘</div>
+    </div>
+    <div class="card card-monthly" onclick="show('monthly')">
+      <span class="icon">📅</span>
+      <div class="label">月回顧</div>
+      <div class="hint">每月底 · 60 分鐘</div>
+    </div>
+  </div>
 </div>
 
+<!-- 快速記錄 -->
+<div class="tpl" id="tpl-capture">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">⚡</span>
+    <div><h2>快速記錄</h2>
+      <span class="tag" style="background:#D1FAE5;color:#065F46;">即時記下 · 同步 Sheets</span>
+    </div>
+  </div>
+  <div class="cap-form">
+    <div class="seg" id="cap-cats">
+      <button class="chip sel-green" data-cat="閱讀/Podcast 靈感" onclick="setCapCat('閱讀/Podcast 靈感')">📚 靈感</button>
+      <button class="chip" data-cat="財務記帳" onclick="setCapCat('財務記帳')">💰 記帳</button>
+      <button class="chip" data-cat="股票紀錄" onclick="setCapCat('股票紀錄')">📊 股票</button>
+      <button class="chip" data-cat="健康管理" onclick="setCapCat('健康管理')">💪 健康</button>
+      <button class="chip" data-cat="工作生活" onclick="setCapCat('工作生活')">💬 生活</button>
+    </div>
+    <div class="cap-row">
+      <div class="cap-time-group">
+        <input type="text" id="cap-start" inputmode="numeric" placeholder="0900" maxlength="4" class="cap-time-input"/>
+        <span class="cap-dash">–</span>
+        <input type="text" id="cap-end" inputmode="numeric" placeholder="1000" maxlength="4" class="cap-time-input"/>
+      </div>
+      <label class="cap-attack">
+        <input type="checkbox" id="cap-attack"/><span>進攻 ⚔️</span>
+      </label>
+    </div>
+    <div class="cap-input-wrap">
+      <textarea id="cap-summary" class="cap-textarea" placeholder="記下靈感、支出、健康紀錄…（或按 🎙️ 說話）"></textarea>
+      <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="語音輸入">🎙️</button>
+    </div>
+    <button class="cap-submit" onclick="submitCapture()">記錄下來</button>
+  </div>
+  <div class="section-label" style="margin-top:4px">今天的紀錄</div>
+  <div id="cap-list"></div>
+  <div class="cap-settings">
+    <button class="settings-toggle" onclick="toggleCapSettings()">⚙️ Google Sheets 同步設定</button>
+    <div id="cap-settings-body" class="settings-body" style="display:none;margin-top:10px">
+      <div class="field"><label>Apps Script 網址</label>
+        <input type="text" id="cap-gas-url" placeholder="https://script.google.com/macros/s/…/exec"/></div>
+      <div class="btn-row">
+        <button class="btn-primary" style="background:var(--text)" onclick="saveCapSettings()">儲存</button>
+        <button class="btn-secondary" onclick="retrySyncAll()">重試未同步</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 英文單字庫 -->
+<div class="tpl" id="tpl-vocab">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">📖</span>
+    <div><h2>英文單字庫</h2>
+      <span class="tag" style="background:#EDE9FE;color:#4C1D95;">隨手記 · 累積複習素材</span>
+    </div>
+  </div>
+  <div class="cap-form">
+    <div class="seg" id="vocab-tags">
+      <button class="chip sel-purple" data-tag="好單字" onclick="setVocabTag('好單字')">⭐ 好單字</button>
+      <button class="chip" data-tag="好句子" onclick="setVocabTag('好句子')">💬 好句子</button>
+      <button class="chip" data-tag="TOEIC" onclick="setVocabTag('TOEIC')">📝 TOEIC</button>
+      <button class="chip" data-tag="工作用語" onclick="setVocabTag('工作用語')">🏢 工作用語</button>
+      <button class="chip" data-tag="課堂筆記" onclick="setVocabTag('課堂筆記')">📚 課堂</button>
+    </div>
+    <input type="text" id="vocab-word" class="vocab-input" placeholder="輸入單字或句子…"/>
+    <textarea id="vocab-note" class="vocab-note" placeholder="中文意思 / 例句 / 使用情境 / 老師糾正…"></textarea>
+    <button class="full-btn" style="background:var(--vocab)" onclick="submitVocab()">存進單字庫</button>
+  </div>
+  <div class="section-label">單字庫（<span id="vocab-count">0</span> 筆）</div>
+  <div class="vocab-filter" id="vocab-filter"></div>
+  <div id="vocab-list"></div>
+  <button class="outline-btn" onclick="copyAllVocab()">📋 複製全部 → 貼給 Claude 出題</button>
+</div>
+
+<!-- 記帳 -->
+<div class="tpl" id="tpl-ledger">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">💰</span>
+    <div><h2>記帳</h2>
+      <span class="tag" style="background:#CFFAFE;color:#164E63;">家用・個人・投資・定存</span>
+    </div>
+  </div>
+  <div class="cap-form">
+    <div class="type-toggle">
+      <button class="type-btn sel" id="type-expense" onclick="setLedgerType('支出')">支出</button>
+      <button class="type-btn" id="type-income" onclick="setLedgerType('收入')">收入</button>
+    </div>
+    <div class="seg" id="ledger-main-cats">
+      <button class="chip sel-cyan" data-mcat="家用" onclick="setLedgerCat('家用')">🏠 家用</button>
+      <button class="chip" data-mcat="個人" onclick="setLedgerCat('個人')">👤 個人</button>
+      <button class="chip" data-mcat="投資" onclick="setLedgerCat('投資')">📈 投資</button>
+      <button class="chip" data-mcat="定存" onclick="setLedgerCat('定存')">🏦 定存</button>
+    </div>
+    <div class="subcats" id="ledger-subcats"></div>
+    <div class="field" style="margin-top:10px"><label>金額（NT$）</label>
+      <input type="number" id="ledger-amount" class="amount-input" placeholder="0" inputmode="decimal"/>
+    </div>
+    <div class="field"><label>日期</label>
+      <input type="date" id="ledger-date"/>
+    </div>
+    <div class="field"><label>備註（選填）</label>
+      <input type="text" id="ledger-notes" placeholder="說明這筆支出…"/>
+    </div>
+    <button class="full-btn" style="background:var(--ledger)" onclick="submitLedger()">記帳</button>
+  </div>
+  <div id="ledger-monthly-summary"></div>
+  <div class="section-label" style="margin-top:4px">今天的記帳</div>
+  <div id="ledger-list"></div>
+  <button class="outline-btn" onclick="toggleLedgerSummary()">📊 查看本月支出報表</button>
+</div>
+
+<!-- 股票追蹤 -->
+<div class="tpl" id="tpl-stock">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">📈</span>
+    <div><h2>股票追蹤</h2>
+      <span class="tag" style="background:#FED7AA;color:#7C2D12;">個人・家庭・台股・美股</span>
+    </div>
+  </div>
+  <div class="stock-tabs">
+    <button class="stab sel" onclick="showStockTab('record')">新增交易</button>
+    <button class="stab" onclick="showStockTab('holdings')">持倉損益</button>
+    <button class="stab" onclick="showStockTab('history')">交易紀錄</button>
+  </div>
+  <!-- 新增交易 -->
+  <div id="stock-tab-record">
+    <div class="cap-form">
+      <div class="seg">
+        <button class="chip sel-orange" data-saccount="個人" onclick="setStockField('account','個人')">👤 個人</button>
+        <button class="chip" data-saccount="家庭" onclick="setStockField('account','家庭')">👨‍👩‍👧‍👦 家庭</button>
+      </div>
+      <div class="seg">
+        <button class="chip" data-smarket="台股" onclick="setStockField('market','台股')">🇹🇼 台股</button>
+        <button class="chip" data-smarket="美股" onclick="setStockField('market','美股')">🇺🇸 美股</button>
+      </div>
+      <div class="seg">
+        <button class="chip" data-saction="買入" onclick="setStockField('action','買入')">📥 買入</button>
+        <button class="chip" data-saction="賣出" onclick="setStockField('action','賣出')">📤 賣出</button>
+      </div>
+      <div class="field"><label>日期</label><input type="date" id="stock-date"/></div>
+      <div class="btn-row">
+        <div class="field" style="flex:1;margin-bottom:0"><label>股票代號</label>
+          <input type="text" id="stock-code" placeholder="例：2330 / AAPL"/></div>
+        <div class="field" style="flex:1;margin-bottom:0"><label>股票名稱</label>
+          <input type="text" id="stock-name" placeholder="例：台積電"/></div>
+      </div>
+      <div class="btn-row" style="margin-top:10px">
+        <div class="field" style="flex:1;margin-bottom:0"><label>數量（股）</label>
+          <input type="number" id="stock-qty" placeholder="0" inputmode="decimal" oninput="calcStockTotal()"/></div>
+        <div class="field" style="flex:1;margin-bottom:0"><label>成交價</label>
+          <input type="number" id="stock-price" placeholder="0" inputmode="decimal" oninput="calcStockTotal()"/></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>總金額（自動計算）</label>
+        <input type="text" id="stock-total" placeholder="0" readonly style="background:#F8FAFC;font-weight:700"/></div>
+      <div class="field"><label>備註（選填）</label>
+        <input type="text" id="stock-notes" placeholder="手續費、理由…"/></div>
+      <button class="full-btn" style="background:var(--stock)" onclick="submitStock()">記錄交易</button>
+    </div>
+  </div>
+  <!-- 持倉損益 -->
+  <div id="stock-tab-holdings" style="display:none">
+    <div id="stock-holdings-list"></div>
+  </div>
+  <!-- 交易紀錄 -->
+  <div id="stock-tab-history" style="display:none">
+    <div class="seg" style="margin-bottom:10px">
+      <button class="chip sel-orange" data-hfilter="全部" onclick="setStockHistFilter('全部')">全部</button>
+      <button class="chip" data-hfilter="個人" onclick="setStockHistFilter('個人')">👤 個人</button>
+      <button class="chip" data-hfilter="家庭" onclick="setStockHistFilter('家庭')">👨‍👩‍👧‍👦 家庭</button>
+    </div>
+    <div id="stock-history-list"></div>
+  </div>
+</div>
+
+<!-- AAR 讀取 -->
+<div class="tpl" id="tpl-aar">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">📋</span>
+    <div><h2>讀取 AAR</h2>
+      <span class="tag" style="background:#F1F5F9;color:#475569;">從 Sheets 抓資料</span>
+    </div>
+  </div>
+  <div class="aar-range">
+    <button class="range-btn sel" onclick="setAarRange('week')">本週</button>
+    <button class="range-btn" onclick="setAarRange('month')">本月</button>
+    <button class="range-btn" onclick="setAarRange('custom')">自訂</button>
+  </div>
+  <div class="date-row" id="aar-custom-dates" style="display:none">
+    <input type="date" id="aar-from" class="date-input"/>
+    <span style="color:var(--muted)">→</span>
+    <input type="date" id="aar-to" class="date-input"/>
+  </div>
+  <button class="full-btn" style="background:var(--aar);margin-bottom:14px" onclick="fetchAAR()">讀取 AAR 資料</button>
+  <div id="aar-content"><div class="plan-empty">點上方「讀取」按鈕開始</div></div>
+  <div class="copy-bar" id="aar-copy-bar" style="display:none">
+    <button class="btn-primary" style="background:var(--review)" onclick="copyAARFmt('week')">複製週覆盤格式</button>
+    <button class="btn-primary" style="background:var(--monthly)" onclick="copyAARFmt('month')">複製月回顧格式</button>
+  </div>
+</div>
+
+<!-- 本週計畫 -->
+<div class="tpl" id="tpl-plan">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">🗓️</span>
+    <div><h2>本週計畫</h2>
+      <span class="tag" style="background:#DBEAFE;color:#1E40AF;">按表操課</span>
+    </div>
+  </div>
+  <button class="full-btn" style="background:var(--plan);margin-bottom:16px" onclick="fetchPlan()">讀取本週計畫</button>
+  <div id="plan-content"><div class="plan-empty">點上方按鈕從 Google Sheets 讀取本週計畫</div></div>
+</div>
+
+<!-- 週覆盤 -->
+<div class="tpl" id="tpl-review">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">📊</span>
+    <div><h2>週覆盤</h2>
+      <span class="tag" style="background:#F1F5F9;color:#475569;">每週日 · 30 分鐘</span>
+    </div>
+  </div>
+  <div class="nb-box">
+    <div class="nb-header">
+      <span class="nb-label">📌 NotebookLM 建議</span>
+      <button class="nb-btn" id="nb-btn-review" onclick="toggleNb('review')">編輯</button>
+    </div>
+    <div class="nb-display" id="nb-disp-review" onclick="editNb('review')">
+      <span class="nb-empty">週覆盤後把 NotebookLM 建議貼進來</span>
+    </div>
+    <textarea class="nb-textarea" id="nb-ta-review" placeholder="貼上 NotebookLM 建議…"></textarea>
+  </div>
+  <div class="field"><label>週期</label><input type="text" id="r-week"/></div>
+  <div class="field"><label>這週紀錄</label>
+    <textarea class="lg" id="r-notes" placeholder="把這週的紀錄貼過來，流水帳也可以…"></textarea>
+  </div>
+  <button class="full-btn" style="background:var(--review)" onclick="copyOnly('review')">複製內容 → NotebookLM</button>
+</div>
+
+<!-- 月回顧 -->
+<div class="tpl" id="tpl-monthly">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">📅</span>
+    <div><h2>月回顧</h2>
+      <span class="tag" style="background:#E0F2FE;color:#075985;">每月底 · 60 分鐘</span>
+    </div>
+  </div>
+  <div class="nb-box">
+    <div class="nb-header">
+      <span class="nb-label">📌 NotebookLM 建議</span>
+      <button class="nb-btn" id="nb-btn-monthly" onclick="toggleNb('monthly')">編輯</button>
+    </div>
+    <div class="nb-display" id="nb-disp-monthly" onclick="editNb('monthly')">
+      <span class="nb-empty">月回顧後把 NotebookLM 建議貼進來</span>
+    </div>
+    <textarea class="nb-textarea" id="nb-ta-monthly" placeholder="貼上 NotebookLM 建議…"></textarea>
+  </div>
+  <div class="field"><label>月份</label><input type="text" id="mo-month"/></div>
+  <div class="field"><label>🏢 事業成果</label><textarea id="mo-career" placeholder="這個月工作完成了什麼？"></textarea></div>
+  <div class="field"><label>📈 個人成長</label><textarea id="mo-growth" placeholder="英文進度、學習、個人發展？"></textarea></div>
+  <div class="field"><label>👨‍👩‍👧‍👦 家庭關係</label><textarea id="mo-family" placeholder="與孩子互動、家庭關係？"></textarea></div>
+  <div class="field"><label>💪 身心健康</label><textarea id="mo-health" placeholder="健身、飲食、睡眠狀態？"></textarea></div>
+  <div class="field"><label>下月最重要 1 件事</label><textarea id="mo-next" placeholder="如果只能專注一件事，是什麼？"></textarea></div>
+  <button class="full-btn" style="background:var(--monthly)" onclick="copyOnly('monthly')">複製內容 → NotebookLM</button>
+</div>
+
+</div><!-- /wrap -->
 <div class="toast" id="toast"></div>
 
 <script>
-/* ── Taipei time ── */
-function taipeiNow() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+/* ════ Utils ════ */
+function taipeiNow(){return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Taipei'}))}
+function fmtDate(d){const w=['日','一','二','三','四','五','六'];return`${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日（週${w[d.getDay()]}）`}
+function fmtMonth(d){return`${d.getFullYear()} 年 ${d.getMonth()+1} 月`}
+function fmtYMD(d){return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`}
+function fmtInputDate(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function fmtHHMM(d){return String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')}
+function weekRange(){const d=taipeiNow(),dow=d.getDay();const mon=new Date(d);mon.setDate(d.getDate()-(dow===0?6:dow-1));const sun=new Date(mon);sun.setDate(mon.getDate()+6);const f=x=>`${x.getMonth()+1}/${x.getDate()}`;return`${d.getFullYear()} 年 ${f(mon)} – ${f(sun)}`}
+function mondayOf(d){const dow=d.getDay();const m=new Date(d);m.setDate(d.getDate()-(dow===0?6:dow-1));return m}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function fbCopy(text,cb){const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);cb()}
+function doCopy(text,msg){const done=()=>showToast(msg||'已複製！');navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(text).then(done).catch(()=>fbCopy(text,done)):fbCopy(text,done)}
+function gasUrl(){return localStorage.getItem('gas-url')||''}
+
+async function postGAS(payload){
+  const url=gasUrl();if(!url)return false;
+  try{await fetch(url,{method:'POST',mode:'no-cors',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});return true}
+  catch(e){return false}
 }
-function fmtDate(d) {
-  const days = ['日','一','二','三','四','五','六'];
-  return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日（週${days[d.getDay()]}）`;
-}
-function fmtMonth(d) { return `${d.getFullYear()} 年 ${d.getMonth()+1} 月`; }
-function weekRange() {
-  const d = taipeiNow(), dow = d.getDay();
-  const mon = new Date(d); mon.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  const f = x => `${x.getMonth()+1}/${x.getDate()}`;
-  return `${d.getFullYear()} 年 ${f(mon)} – ${f(sun)}`;
-}
-function fmtHHMM(d) {
-  return String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
-}
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+async function getGAS(params){
+  const url=gasUrl();if(!url)return null;
+  const q=new URLSearchParams({token:'graceos2026read',...params});
+  try{const r=await fetch(`${url}?${q}`);return await r.json()}
+  catch(e){return null}
 }
 
-/* ── Init ── */
-(function init() {
-  const now = taipeiNow();
-  document.getElementById('today-label').textContent = fmtDate(now);
-  document.getElementById('r-week').value   = weekRange();
-  document.getElementById('mo-month').value = fmtMonth(now);
+/* ════ Init ════ */
+(function init(){
+  const now=taipeiNow();
+  document.getElementById('today-label').textContent=fmtDate(now);
+  document.getElementById('r-week').value=weekRange();
+  document.getElementById('mo-month').value=fmtMonth(now);
 })();
 
-/* ── Navigation ── */
-function show(type) {
+/* ════ Navigation ════ */
+function show(type){
   document.getElementById('home').classList.add('hidden');
-  document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
-  document.getElementById('tpl-' + type).classList.add('active');
-  if      (type === 'capture') initCaptureForm();
-  else if (type === 'vocab')   initVocabPage();
+  document.querySelectorAll('.tpl').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tpl-'+type).classList.add('active');
+  if(type==='capture')initCaptureForm();
+  else if(type==='vocab')initVocabPage();
+  else if(type==='ledger')initLedger();
+  else if(type==='stock')initStock();
+  else if(type==='aar')initAAR();
+  else if(type==='plan'){}
   else loadNb(type);
-  window.scrollTo(0, 0);
+  window.scrollTo(0,0);
 }
-function goHome() {
+function goHome(){
   document.getElementById('home').classList.remove('hidden');
-  document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
-  window.scrollTo(0, 0);
+  document.querySelectorAll('.tpl').forEach(el=>el.classList.remove('active'));
+  window.scrollTo(0,0);
 }
 
-/* ── Copy helpers ── */
-function assemble(type) {
-  const v = id => (document.getElementById(id)||{}).value || '';
-  if (type === 'review')
-    return `週日覆盤，這週是 ${v('r-week')}。\n\n這週紀錄：\n${v('r-notes')||'（未填寫）'}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 公司目標與個人目標各佔日常多少比例\n3. 有沒有哪個流程可以優化`;
-  if (type === 'monthly')
-    return `月回顧，${v('mo-month')}。\n\n🏢 事業成果：${v('mo-career')||'（未填寫）'}\n📈 個人成長：${v('mo-growth')||'（未填寫）'}\n👨‍👩‍👧‍👦 家庭關係：${v('mo-family')||'（未填寫）'}\n💪 身心健康：${v('mo-health')||'（未填寫）'}\n下月重點：${v('mo-next')||'（未填寫）'}\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句可用於績效描述的成果句。`;
+/* ════ Review copy ════ */
+function assemble(type){
+  const v=id=>(document.getElementById(id)||{}).value||'';
+  if(type==='review')return`週日覆盤，這週是 ${v('r-week')}。\n\n這週紀錄：\n${v('r-notes')||'（未填寫）'}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 公司目標與個人目標各佔日常多少比例\n3. 有沒有哪個流程可以優化`;
+  if(type==='monthly')return`月回顧，${v('mo-month')}。\n\n🏢 事業：${v('mo-career')||'（未填）'}\n📈 成長：${v('mo-growth')||'（未填）'}\n👨‍👩‍👧‍👦 家庭：${v('mo-family')||'（未填）'}\n💪 健康：${v('mo-health')||'（未填）'}\n下月重點：${v('mo-next')||'（未填）'}\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句績效描述句。`;
 }
-function copyOnly(type) {
-  const text = assemble(type);
-  const done = () => showToast('已複製！貼到 NotebookLM 使用');
-  if (navigator.clipboard && navigator.clipboard.writeText)
-    navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
-  else fbCopy(text, done);
-}
-function fbCopy(text, cb) {
-  const ta = document.createElement('textarea');
-  ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
-  document.body.appendChild(ta); ta.focus(); ta.select();
-  document.execCommand('copy'); document.body.removeChild(ta); cb();
-}
+function copyOnly(type){doCopy(assemble(type),'已複製！貼到 NotebookLM')}
 
-/* ── Toast ── */
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+/* ════ NotebookLM box ════ */
+function loadNb(type){
+  const content=localStorage.getItem('nb-'+type)||'';
+  const disp=document.getElementById('nb-disp-'+type);
+  const ta=document.getElementById('nb-ta-'+type);
+  const btn=document.getElementById('nb-btn-'+type);
+  ta.style.display='none';disp.style.display='block';if(btn)btn.textContent='編輯';
+  ta.value=content;
+  if(content)disp.textContent=content;
+  else{const ph=type==='review'?'週覆盤後把 NotebookLM 建議貼進來':'月回顧後把 NotebookLM 建議貼進來';
+    disp.innerHTML=`<span class="nb-empty">${ph}</span>`}
 }
-
-/* ── NotebookLM box ── */
-function loadNb(type) {
-  const content = localStorage.getItem('nb-' + type) || '';
-  const disp = document.getElementById('nb-disp-' + type);
-  const ta   = document.getElementById('nb-ta-' + type);
-  const btn  = document.getElementById('nb-btn-' + type);
-  ta.style.display = 'none'; disp.style.display = 'block';
-  if (btn) btn.textContent = '編輯';
-  ta.value = content;
-  if (content) { disp.textContent = content; }
-  else {
-    const ph = type === 'review'
-      ? '週覆盤做完後，把 NotebookLM 給的亮點、痛點、防呆行動貼進來'
-      : '月底覆盤後，把 NotebookLM 給的本月總結貼進來';
-    disp.innerHTML = `<span class="nb-empty">${ph}</span>`;
-  }
-}
-function editNb(type) {
-  document.getElementById('nb-disp-' + type).style.display = 'none';
-  const ta = document.getElementById('nb-ta-' + type);
-  ta.style.display = 'block'; ta.focus();
-  const btn = document.getElementById('nb-btn-' + type);
-  if (btn) btn.textContent = '儲存';
-}
-function saveNb(type) {
-  localStorage.setItem('nb-' + type, document.getElementById('nb-ta-' + type).value.trim());
-  loadNb(type);
-}
-function toggleNb(type) {
-  const ta = document.getElementById('nb-ta-' + type);
-  if (ta.style.display === 'none' || ta.style.display === '') editNb(type);
-  else saveNb(type);
-}
+function editNb(type){document.getElementById('nb-disp-'+type).style.display='none';const ta=document.getElementById('nb-ta-'+type);ta.style.display='block';ta.focus();const btn=document.getElementById('nb-btn-'+type);if(btn)btn.textContent='儲存'}
+function saveNb(type){localStorage.setItem('nb-'+type,document.getElementById('nb-ta-'+type).value.trim());loadNb(type)}
+function toggleNb(type){const ta=document.getElementById('nb-ta-'+type);ta.style.display==='none'||ta.style.display===''?editNb(type):saveNb(type)}
 
 /* ════════════════════════════════
    快速記錄
 ════════════════════════════════ */
-const CAT_STYLE = {
-  '閱讀/Podcast 靈感': { bg: '#EDE9FE', color: '#4C1D95' },
-  '財務記帳':          { bg: '#D1FAE5', color: '#065F46' },
-  '股票紀錄':          { bg: '#FFF7ED', color: '#9A3412' },
-  '健康管理':          { bg: '#FEE2E2', color: '#991B1B' },
-  '工作生活':          { bg: '#F1F5F9', color: '#475569' },
-};
-const CAT_LABEL = {
-  '閱讀/Podcast 靈感': '📚 靈感',
-  '財務記帳': '💰 記帳',
-  '股票紀錄': '📊 股票',
-  '健康管理': '💪 健康',
-  '工作生活': '💬 生活',
-};
-let capCat = '閱讀/Podcast 靈感';
+const CAT_STYLE={'閱讀/Podcast 靈感':{bg:'#EDE9FE',color:'#4C1D95'},'財務記帳':{bg:'#D1FAE5',color:'#065F46'},'股票紀錄':{bg:'#FFF7ED',color:'#9A3412'},'健康管理':{bg:'#FEE2E2',color:'#991B1B'},'工作生活':{bg:'#F1F5F9',color:'#475569'}};
+let capCat='閱讀/Podcast 靈感';
+function setCapCat(cat){capCat=cat;document.querySelectorAll('#cap-cats .chip').forEach(b=>b.className='chip'+(b.dataset.cat===cat?' sel-green':''));  }
+function getCaptures(){try{return JSON.parse(localStorage.getItem('captures')||'[]')}catch(e){return[]}}
+function setCaptures(items){localStorage.setItem('captures',JSON.stringify(items))}
 
-function setCapCat(cat) {
-  capCat = cat;
-  document.querySelectorAll('.cap-cat').forEach(b =>
-    b.classList.toggle('sel', b.dataset.cat === cat));
-}
-function getCaptures() {
-  try { return JSON.parse(localStorage.getItem('captures') || '[]'); } catch(e) { return []; }
-}
-function setCaptures(items) { localStorage.setItem('captures', JSON.stringify(items)); }
-
-function initCaptureForm() {
-  const now = taipeiNow();
-  document.getElementById('cap-start').value = fmtHHMM(now);
-  document.getElementById('cap-end').value   = '';
-  document.getElementById('cap-summary').value = '';
-  document.getElementById('cap-attack').checked = false;
-  document.getElementById('cap-gas-url').value = localStorage.getItem('gas-url') || '';
+function initCaptureForm(){
+  const now=taipeiNow();
+  document.getElementById('cap-start').value=fmtHHMM(now);
+  document.getElementById('cap-end').value='';
+  document.getElementById('cap-summary').value='';
+  document.getElementById('cap-attack').checked=false;
+  document.getElementById('cap-gas-url').value=gasUrl();
   loadCaptureList();
 }
-
-async function submitCapture() {
-  const rawStart = document.getElementById('cap-start').value.replace(/\D/g,'').substring(0,4);
-  const rawEnd   = document.getElementById('cap-end').value.replace(/\D/g,'').substring(0,4);
-  const summary  = document.getElementById('cap-summary').value.trim();
-  const isAttack = document.getElementById('cap-attack').checked;
-  if (!summary) { showToast('請先輸入內容'); return; }
-
-  const now = taipeiNow();
-  const date = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
-  const time = rawStart && rawEnd ? `${rawStart}-${rawEnd}` : rawStart || '';
-  const capture = { id: Date.now(), date, time, category: capCat, summary, is_attack: isAttack, synced: false };
-
-  const items = getCaptures();
-  items.unshift(capture);
-  setCaptures(items);
-  document.getElementById('cap-start').value = rawEnd || fmtHHMM(taipeiNow());
-  document.getElementById('cap-end').value = '';
-  document.getElementById('cap-summary').value = '';
-  document.getElementById('cap-attack').checked = false;
-  loadCaptureList();
-  showToast('已記錄！');
-
-  const ok = await syncToSheets({ type:'capture', ...capture });
-  if (ok) {
-    const latest = getCaptures();
-    const idx = latest.findIndex(c => c.id === capture.id);
-    if (idx !== -1) { latest[idx].synced = true; setCaptures(latest); }
-    loadCaptureList();
-    showToast('已記錄並同步到 Google Sheets ✓');
-  }
+async function submitCapture(){
+  const rs=document.getElementById('cap-start').value.replace(/\D/g,'').substring(0,4);
+  const re=document.getElementById('cap-end').value.replace(/\D/g,'').substring(0,4);
+  const summary=document.getElementById('cap-summary').value.trim();
+  const isAttack=document.getElementById('cap-attack').checked;
+  if(!summary){showToast('請先輸入內容');return}
+  const now=taipeiNow();
+  const date=fmtYMD(now);const time=rs&&re?`${rs}-${re}`:rs||'';
+  const capture={id:Date.now(),date,time,category:capCat,summary,is_attack:isAttack,synced:false};
+  const items=getCaptures();items.unshift(capture);setCaptures(items);
+  document.getElementById('cap-start').value=re||fmtHHMM(taipeiNow());
+  document.getElementById('cap-end').value='';document.getElementById('cap-summary').value='';document.getElementById('cap-attack').checked=false;
+  loadCaptureList();showToast('已記錄！');
+  const ok=await postGAS({type:'capture',...capture});
+  if(ok){const latest=getCaptures();const idx=latest.findIndex(c=>c.id===capture.id);if(idx!==-1){latest[idx].synced=true;setCaptures(latest)}loadCaptureList();showToast('已記錄並同步 ✓')}
 }
-
-async function syncToSheets(payload) {
-  const url = localStorage.getItem('gas-url');
-  if (!url) return false;
-  try {
-    await fetch(url, {
-      method: 'POST', mode: 'no-cors',
-      body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'text/plain' }
-    });
-    return true;
-  } catch(e) { return false; }
+async function retrySyncAll(){
+  const items=getCaptures();const today=fmtYMD(taipeiNow());const pending=items.filter(c=>!c.synced&&c.date===today);
+  if(!pending.length){showToast('沒有待同步的項目');return}showToast(`正在重試 ${pending.length} 筆…`);
+  for(const c of pending){const ok=await postGAS({type:'capture',...c});if(ok){const idx=items.findIndex(x=>x.id===c.id);if(idx!==-1)items[idx].synced=true}}
+  setCaptures(items);loadCaptureList();showToast('重試完成');
 }
-
-async function retrySyncAll() {
-  const items = getCaptures();
-  const now   = taipeiNow();
-  const today = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
-  const pending = items.filter(c => !c.synced && c.date === today);
-  if (!pending.length) { showToast('沒有待同步的項目'); return; }
-  showToast(`正在重試 ${pending.length} 筆…`);
-  for (const c of pending) {
-    const ok = await syncToSheets({ type:'capture', ...c });
-    if (ok) { const idx = items.findIndex(x => x.id === c.id); if (idx !== -1) items[idx].synced = true; }
-  }
-  setCaptures(items); loadCaptureList(); showToast('重試完成');
+function loadCaptureList(){
+  const list=document.getElementById('cap-list');if(!list)return;
+  const today=fmtYMD(taipeiNow());const items=getCaptures().filter(c=>c.date===today);
+  if(!items.length){list.innerHTML='<div class="empty-msg">今天還沒有紀錄</div>';return}
+  list.innerHTML=items.map(c=>{const st=CAT_STYLE[c.category]||{bg:'#F1F5F9',color:'#475569'};
+    return`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:${st.bg};color:${st.color}">${esc(c.category)}</span>${c.time?`<span class="rec-time">${esc(c.time)}</span>`:''} ${c.is_attack?'<span style="color:#EF4444;font-size:12px;font-weight:700">⚔️</span>':''}</div><div class="rec-right">${c.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delCapture(${c.id})">✕</button></div></div><div class="rec-body">${esc(c.summary)}</div></div>`}).join('')
 }
+function delCapture(id){setCaptures(getCaptures().filter(c=>c.id!==id));loadCaptureList()}
+function toggleCapSettings(){const b=document.getElementById('cap-settings-body');b.style.display=b.style.display==='none'?'block':'none'}
+function saveCapSettings(){localStorage.setItem('gas-url',document.getElementById('cap-gas-url').value.trim());showToast('設定已儲存')}
 
-function loadCaptureList() {
-  const list = document.getElementById('cap-list');
-  if (!list) return;
-  const now   = taipeiNow();
-  const today = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
-  const items = getCaptures().filter(c => c.date === today);
-  if (!items.length) { list.innerHTML = '<div class="cap-empty">今天還沒有紀錄</div>'; return; }
-  list.innerHTML = items.map(c => {
-    const st = CAT_STYLE[c.category] || { bg:'#F1F5F9', color:'#475569' };
-    return `<div class="cap-item" id="cap-item-${c.id}">
-      <div class="cap-item-top">
-        <div class="cap-item-meta">
-          <span class="cap-item-cat" style="background:${st.bg};color:${st.color};">${esc(c.category)}</span>
-          ${c.time ? `<span class="cap-item-time">${esc(c.time)}</span>` : ''}
-          ${c.is_attack ? '<span class="cap-item-attack">⚔️</span>' : ''}
-        </div>
-        <div class="cap-item-right">
-          ${c.synced ? '<span class="cap-synced">已同步 ✓</span>' : '<span class="cap-not-synced">未同步</span>'}
-          <button class="cap-item-edit" onclick="editCapture(${c.id})" title="編輯">✏️</button>
-          <button class="cap-item-del" onclick="delCapture(${c.id})">✕</button>
-        </div>
-      </div>
-      <div class="cap-item-body">${esc(c.summary)}</div>
-    </div>`;
-  }).join('');
-}
-
-function editCapture(id) {
-  const items = getCaptures(), c = items.find(x => x.id === id);
-  if (!c) return;
-  const el = document.getElementById('cap-item-' + id);
-  if (!el) return;
-  el.dataset.editCat = c.category;
-  const ts = c.time ? c.time.split('-')[0] : '';
-  const te = c.time ? (c.time.split('-')[1] || '') : '';
-  el.innerHTML = `
-    <div class="cap-edit-cats">
-      ${Object.keys(CAT_STYLE).map(cat =>
-        `<button class="cap-cat ${cat === c.category ? 'sel' : ''}"
-          data-editcat="${cat}" onclick="setEditCat(${id},'${cat}')">${CAT_LABEL[cat]||cat}</button>`
-      ).join('')}
-    </div>
-    <div class="cap-row" style="margin-top:8px;">
-      <div class="cap-time-group">
-        <input type="text" id="edit-s-${id}" inputmode="numeric" value="${ts}" maxlength="4" class="cap-time-input" />
-        <span class="cap-dash">–</span>
-        <input type="text" id="edit-e-${id}" inputmode="numeric" value="${te}" maxlength="4" class="cap-time-input" />
-      </div>
-      <label class="cap-attack">
-        <input type="checkbox" id="edit-atk-${id}" ${c.is_attack ? 'checked' : ''} /><span>進攻 ⚔️</span>
-      </label>
-    </div>
-    <textarea id="edit-sum-${id}" class="cap-textarea" style="margin-top:8px;padding-right:14px;">${esc(c.summary)}</textarea>
-    <div style="display:flex;gap:8px;margin-top:4px;">
-      <button class="cap-submit" style="flex:1;padding:10px;font-size:14px;" onclick="saveEditCapture(${id})">儲存</button>
-      <button class="cap-retry-btn" style="flex:1;margin:0;padding:10px;" onclick="loadCaptureList()">取消</button>
-    </div>`;
-}
-function setEditCat(id, cat) {
-  const el = document.getElementById('cap-item-' + id);
-  if (!el) return;
-  el.dataset.editCat = cat;
-  el.querySelectorAll('[data-editcat]').forEach(b => b.classList.toggle('sel', b.dataset.editcat === cat));
-}
-function saveEditCapture(id) {
-  const el = document.getElementById('cap-item-' + id);
-  const items = getCaptures(), idx = items.findIndex(c => c.id === id);
-  if (idx === -1) return;
-  const s   = (document.getElementById('edit-s-'+id)?.value||'').replace(/\D/g,'').substring(0,4);
-  const e   = (document.getElementById('edit-e-'+id)?.value||'').replace(/\D/g,'').substring(0,4);
-  const sum = (document.getElementById('edit-sum-'+id)?.value||'').trim();
-  const atk = document.getElementById('edit-atk-'+id)?.checked||false;
-  const cat = el?.dataset.editCat || items[idx].category;
-  if (!sum) { showToast('摘要不能空白'); return; }
-  items[idx] = { ...items[idx], category:cat, time: s&&e?`${s}-${e}`:s||'', summary:sum, is_attack:atk, synced:false };
-  setCaptures(items); loadCaptureList(); showToast('已修改！');
-}
-function delCapture(id) {
-  setCaptures(getCaptures().filter(c => c.id !== id)); loadCaptureList();
-}
-function toggleCapSettings() {
-  const b = document.getElementById('cap-settings-body');
-  b.style.display = b.style.display === 'none' ? 'block' : 'none';
-}
-function saveCapSettings() {
-  localStorage.setItem('gas-url', document.getElementById('cap-gas-url').value.trim());
-  showToast('設定已儲存');
-}
-
-/* ════════════════════════════════
-   語音辨識
-════════════════════════════════ */
-let recognition = null, isRecording = false;
-
-function toggleVoice() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('此裝置不支援語音，請改用 Chrome 或 iOS Safari 13+'); return; }
-  if (isRecording) { recognition && recognition.stop(); return; }
-
-  recognition = new SR();
-  recognition.lang = 'zh-TW';
-  recognition.continuous = false;
-  recognition.interimResults = true;
-
-  const micBtn = document.getElementById('mic-btn');
-  const ta     = document.getElementById('cap-summary');
-  const base   = ta.value;
-  let   finalT = '';
-
-  recognition.onstart = () => {
-    isRecording = true;
-    micBtn.classList.add('recording');
-    micBtn.textContent = '⏹️';
-    showToast('🎙️ 聆聽中… 說完後會自動停止');
-  };
-  recognition.onresult = (e) => {
-    let interim = ''; finalT = '';
-    for (let i = 0; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalT += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    ta.value = base + (base && !base.endsWith('\n') ? '\n' : '') + finalT + interim;
-  };
-  recognition.onerror = (e) => {
-    isRecording = false; micBtn.classList.remove('recording'); micBtn.textContent = '🎙️';
-    const msgs = { 'not-allowed':'請在瀏覽器設定中允許麥克風存取', 'no-speech':'沒有偵測到聲音，請重試' };
-    showToast(msgs[e.error] || '語音辨識發生錯誤：' + e.error);
-  };
-  recognition.onend = () => {
-    isRecording = false; micBtn.classList.remove('recording'); micBtn.textContent = '🎙️';
-    if (finalT) ta.value = base + (base && !base.endsWith('\n') ? '\n' : '') + finalT;
-  };
-  try { recognition.start(); }
-  catch(err) { showToast('請確認已授予麥克風權限'); }
+/* ════ 語音辨識 ════ */
+let recognition=null,isRecording=false;
+function toggleVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showToast('此裝置不支援語音，請改用 Chrome 或 iOS Safari 13+');return}
+  if(isRecording){recognition&&recognition.stop();return}
+  recognition=new SR();recognition.lang='zh-TW';recognition.continuous=false;recognition.interimResults=true;
+  const micBtn=document.getElementById('mic-btn');const ta=document.getElementById('cap-summary');const base=ta.value;let finalT='';
+  recognition.onstart=()=>{isRecording=true;micBtn.classList.add('recording');micBtn.textContent='⏹️';showToast('🎙️ 聆聽中… 說完後會自動停止')};
+  recognition.onresult=e=>{let interim='';finalT='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)finalT+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript}ta.value=base+(base&&!base.endsWith('\n')?'\n':'')+finalT+interim};
+  recognition.onerror=e=>{isRecording=false;micBtn.classList.remove('recording');micBtn.textContent='🎙️';const m={'not-allowed':'請授予麥克風權限','no-speech':'沒有偵測到聲音'};showToast(m[e.error]||'語音錯誤：'+e.error)};
+  recognition.onend=()=>{isRecording=false;micBtn.classList.remove('recording');micBtn.textContent='🎙️';if(finalT)ta.value=base+(base&&!base.endsWith('\n')?'\n':'')+finalT};
+  try{recognition.start()}catch(err){showToast('請確認麥克風權限')}
 }
 
 /* ════════════════════════════════
    英文單字庫
 ════════════════════════════════ */
-let vocabTag    = '好單字';
-let vocabFilter = '全部';
-
-function setVocabTag(tag) {
-  vocabTag = tag;
-  document.querySelectorAll('.vocab-tag').forEach(b => b.classList.toggle('sel', b.dataset.tag === tag));
+let vocabTag='好單字',vocabFilter='全部';
+function setVocabTag(tag){vocabTag=tag;document.querySelectorAll('#vocab-tags .chip').forEach(b=>b.className='chip'+(b.dataset.tag===tag?' sel-purple':''))}
+function getVocabs(){try{return JSON.parse(localStorage.getItem('vocabs')||'[]')}catch(e){return[]}}
+function setVocabs(items){localStorage.setItem('vocabs',JSON.stringify(items))}
+function initVocabPage(){document.getElementById('vocab-word').value='';document.getElementById('vocab-note').value='';renderVocabFilter();loadVocabList()}
+function renderVocabFilter(){const tags=['全部',...new Set(getVocabs().map(v=>v.tag))];document.getElementById('vocab-filter').innerHTML=tags.map(t=>`<button class="vf-btn ${t===vocabFilter?'sel':''}" onclick="setVocabFilter('${t}')">${t}</button>`).join('')}
+function setVocabFilter(tag){vocabFilter=tag;renderVocabFilter();loadVocabList()}
+async function submitVocab(){
+  const word=document.getElementById('vocab-word').value.trim();const note=document.getElementById('vocab-note').value.trim();
+  if(!word){showToast('請輸入單字或句子');return}
+  const now=taipeiNow();const item={id:Date.now(),date:fmtYMD(now),time:fmtHHMM(now),word,note,tag:vocabTag,synced:false};
+  const items=getVocabs();items.unshift(item);setVocabs(items);
+  document.getElementById('vocab-word').value='';document.getElementById('vocab-note').value='';
+  renderVocabFilter();loadVocabList();showToast('已存入單字庫！');
+  const ok=await postGAS({type:'vocab',date:item.date,time:item.time,word,note,tag:vocabTag});
+  if(ok){const latest=getVocabs();const idx=latest.findIndex(v=>v.id===item.id);if(idx!==-1){latest[idx].synced=true;setVocabs(latest)}renderVocabFilter();loadVocabList();showToast('已存入並同步 ✓')}
 }
-function getVocabs() {
-  try { return JSON.parse(localStorage.getItem('vocabs') || '[]'); } catch(e) { return []; }
+function loadVocabList(){
+  const list=document.getElementById('vocab-list');const countEl=document.getElementById('vocab-count');const all=getVocabs();const items=vocabFilter==='全部'?all:all.filter(v=>v.tag===vocabFilter);countEl.textContent=all.length;
+  if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄，快記第一個！</div>';return}
+  list.innerHTML=items.map(v=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:#EDE9FE;color:#4C1D95">${esc(v.tag)}</span><span class="rec-time">${esc(v.date)}</span></div><div class="rec-right">${v.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delVocab(${v.id})">✕</button></div></div><div class="vocab-word">${esc(v.word)}</div>${v.note?`<div class="vocab-note-body">${esc(v.note)}</div>`:''}</div>`).join('')
 }
-function setVocabs(items) { localStorage.setItem('vocabs', JSON.stringify(items)); }
-
-function initVocabPage() {
-  document.getElementById('vocab-word').value = '';
-  document.getElementById('vocab-note').value = '';
-  renderVocabFilter();
-  loadVocabList();
-}
-
-function renderVocabFilter() {
-  const tags = ['全部', ...new Set(getVocabs().map(v => v.tag))];
-  document.getElementById('vocab-filter').innerHTML = tags.map(t =>
-    `<button class="vf-btn ${t === vocabFilter ? 'sel' : ''}" onclick="setVocabFilter('${t}')">${t}</button>`
-  ).join('');
-}
-function setVocabFilter(tag) {
-  vocabFilter = tag;
-  renderVocabFilter();
-  loadVocabList();
+function delVocab(id){setVocabs(getVocabs().filter(v=>v.id!==id));renderVocabFilter();loadVocabList()}
+function copyAllVocab(){
+  const items=getVocabs();if(!items.length){showToast('單字庫是空的');return}
+  const text=`【我的英文單字庫 — ${items.length} 筆】\n\n`+items.map((v,i)=>`${i+1}. [${v.tag}] ${v.word}`+(v.note?`\n   → ${v.note}`:'')).join('\n\n')+'\n\n---\n我是公關，TOEIC 目標 800 分。請出 3 題造句練習（選最適合公關工作的單字）+ 2 題 TOEIC 填空題。';
+  doCopy(text,`已複製 ${items.length} 筆！貼給 Claude 出題`)
 }
 
-async function submitVocab() {
-  const word = document.getElementById('vocab-word').value.trim();
-  const note = document.getElementById('vocab-note').value.trim();
-  if (!word) { showToast('請輸入單字或句子'); return; }
+/* ════════════════════════════════
+   記帳
+════════════════════════════════ */
+const LEDGER_SUBCATS={
+  '家用':['家庭飲食','孩子相關','家庭雜支','水電費','房租/房貸','其他家用'],
+  '個人':['飲食','交通','娛樂','保險','買車存款','其他個人'],
+  '投資':[],'定存':[]
+};
+let ledgerType='支出',ledgerMainCat='家用',ledgerSubCat='家庭飲食';
+let showMonthlySummary=false;
 
-  const now  = taipeiNow();
-  const date = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
-  const time = fmtHHMM(now);
-  const item = { id: Date.now(), date, time, word, note, tag: vocabTag, synced: false };
-
-  const items = getVocabs();
-  items.unshift(item);
-  setVocabs(items);
-  document.getElementById('vocab-word').value = '';
-  document.getElementById('vocab-note').value = '';
-  renderVocabFilter(); loadVocabList();
-  showToast('已存入單字庫！');
-
-  const ok = await syncToSheets({ type:'vocab', date, time, word, note, tag: vocabTag });
-  if (ok) {
-    const latest = getVocabs(), idx = latest.findIndex(v => v.id === item.id);
-    if (idx !== -1) { latest[idx].synced = true; setVocabs(latest); }
-    renderVocabFilter(); loadVocabList();
-    showToast('已存入並同步到 Google Sheets ✓');
-  }
+function setLedgerType(type){
+  ledgerType=type;
+  document.getElementById('type-expense').className='type-btn'+(type==='支出'?' sel':'');
+  document.getElementById('type-income').className='type-btn'+(type==='收入'?' sel':'');
+}
+function setLedgerCat(cat){
+  ledgerMainCat=cat;
+  document.querySelectorAll('#ledger-main-cats .chip').forEach(b=>b.className='chip'+(b.dataset.mcat===cat?' sel-cyan':''));
+  const subs=LEDGER_SUBCATS[cat]||[];ledgerSubCat=subs[0]||'';
+  const sc=document.getElementById('ledger-subcats');
+  sc.innerHTML=subs.map(s=>`<button class="sub-chip ${s===ledgerSubCat?'sel':''}" onclick="setLedgerSubCat('${s}')">${s}</button>`).join('');
+}
+function setLedgerSubCat(s){
+  ledgerSubCat=s;
+  document.querySelectorAll('#ledger-subcats .sub-chip').forEach(b=>b.className='sub-chip'+(b.textContent===s?'sel':''));
+}
+function initLedger(){
+  const now=taipeiNow();document.getElementById('ledger-date').value=fmtInputDate(now);
+  setLedgerCat('家用');loadLedgerList();
+  if(showMonthlySummary)renderMonthlySummary();
+}
+function getLedgers(){try{return JSON.parse(localStorage.getItem('ledgers')||'[]')}catch(e){return[]}}
+function setLedgers(items){localStorage.setItem('ledgers',JSON.stringify(items))}
+async function submitLedger(){
+  const amount=parseFloat(document.getElementById('ledger-amount').value);
+  const date=document.getElementById('ledger-date').value.replace(/-/g,'/');
+  const notes=document.getElementById('ledger-notes').value.trim();
+  if(!amount||isNaN(amount)){showToast('請輸入金額');return}
+  const category=ledgerMainCat+(ledgerSubCat?` · ${ledgerSubCat}`:'');
+  const item={id:Date.now(),date,type:ledgerType,mainCat:ledgerMainCat,subCat:ledgerSubCat,category,amount,notes,synced:false};
+  const items=getLedgers();items.unshift(item);setLedgers(items);
+  document.getElementById('ledger-amount').value='';document.getElementById('ledger-notes').value='';
+  loadLedgerList();showToast('已記帳！');
+  if(showMonthlySummary)renderMonthlySummary();
+  const ok=await postGAS({type:'ledger',date,ledger_type:ledgerType,main_cat:ledgerMainCat,sub_cat:ledgerSubCat,category,amount,notes});
+  if(ok){const latest=getLedgers();const idx=latest.findIndex(l=>l.id===item.id);if(idx!==-1){latest[idx].synced=true;setLedgers(latest)}loadLedgerList();showToast('已記帳並同步 ✓')}
+}
+function loadLedgerList(){
+  const list=document.getElementById('ledger-list');const today=fmtYMD(taipeiNow()).replace(/\//g,'/');
+  const items=getLedgers().filter(l=>l.date===today);
+  if(!items.length){list.innerHTML='<div class="empty-msg">今天還沒有記帳</div>';return}
+  const totalExp=items.filter(l=>l.type==='支出').reduce((s,l)=>s+l.amount,0);
+  list.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:8px">今日支出合計：<strong style="color:#EF4444">NT$ ${totalExp.toLocaleString()}</strong></div>`+
+    items.map(l=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:#CFFAFE;color:#164E63">${esc(l.mainCat)}</span>${l.subCat?`<span class="ledger-date">${esc(l.subCat)}</span>`:''}<span class="ledger-date">${esc(l.date)}</span></div><div class="rec-right">${l.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delLedger(${l.id})">✕</button></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="rec-body">${l.notes?esc(l.notes):'—'}</span><span style="font-size:16px;font-weight:700;color:${l.type==='支出'?'#EF4444':'#10B981'}">${l.type==='支出'?'- ':'+ '}NT$ ${l.amount.toLocaleString()}</span></div></div>`).join('')
+}
+function delLedger(id){setLedgers(getLedgers().filter(l=>l.id!==id));loadLedgerList();if(showMonthlySummary)renderMonthlySummary()}
+function toggleLedgerSummary(){showMonthlySummary=!showMonthlySummary;renderMonthlySummary()}
+function renderMonthlySummary(){
+  const el=document.getElementById('ledger-monthly-summary');
+  if(!showMonthlySummary){el.innerHTML='';return}
+  const now=taipeiNow();const ym=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
+  const items=getLedgers().filter(l=>l.date.startsWith(ym)&&l.type==='支出');
+  const byMain={};items.forEach(l=>{if(!byMain[l.mainCat])byMain[l.mainCat]=0;byMain[l.mainCat]+=l.amount});
+  const total=items.reduce((s,l)=>s+l.amount,0);
+  el.innerHTML=`<div class="month-summary"><div class="ms-title">本月支出報表（${ym}）</div>${Object.entries(byMain).map(([k,v])=>`<div class="ms-row"><span>${k}</span><span class="ms-amount ms-expense">NT$ ${v.toLocaleString()}</span></div>`).join('')}<div class="ms-row"><span>合計</span><span class="ms-amount ms-expense">NT$ ${total.toLocaleString()}</span></div></div>`;
 }
 
-function loadVocabList() {
-  const list  = document.getElementById('vocab-list');
-  const count = document.getElementById('vocab-count');
-  const all   = getVocabs();
-  const items = vocabFilter === '全部' ? all : all.filter(v => v.tag === vocabFilter);
-  count.textContent = all.length;
-  if (!items.length) {
-    list.innerHTML = '<div class="vocab-empty">還沒有紀錄，快記第一個！</div>'; return;
-  }
-  list.innerHTML = items.map(v => `
-    <div class="vocab-item">
-      <div class="vocab-item-top">
-        <div class="vocab-item-meta">
-          <span class="vocab-item-tag">${esc(v.tag)}</span>
-          <span class="vocab-item-date">${esc(v.date)}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          ${v.synced ? '<span class="vocab-synced">已同步 ✓</span>' : '<span class="vocab-not-synced">未同步</span>'}
-          <button class="vocab-item-del" onclick="delVocab(${v.id})">✕</button>
-        </div>
+/* ════════════════════════════════
+   股票追蹤
+════════════════════════════════ */
+let stockState={account:'個人',market:'台股',action:'買入'};
+let stockHistFilter='全部';
+function setStockField(field,val){
+  stockState[field]=val;
+  document.querySelectorAll(`[data-s${field}]`).forEach(b=>b.className='chip'+(b.dataset['s'+field]===val?' sel-orange':''));
+}
+function calcStockTotal(){
+  const qty=parseFloat(document.getElementById('stock-qty').value)||0;
+  const price=parseFloat(document.getElementById('stock-price').value)||0;
+  document.getElementById('stock-total').value=qty&&price?`NT$ ${(qty*price).toLocaleString()}`:'';
+}
+function getStocks(){try{return JSON.parse(localStorage.getItem('stocks')||'[]')}catch(e){return[]}}
+function setStocks(items){localStorage.setItem('stocks',JSON.stringify(items))}
+function getStockPrices(){try{return JSON.parse(localStorage.getItem('stock_prices')||'{}')}catch(e){return{}}}
+function setStockPrices(obj){localStorage.setItem('stock_prices',JSON.stringify(obj))}
+function initStock(){
+  const now=taipeiNow();document.getElementById('stock-date').value=fmtInputDate(now);
+  setStockField('account','個人');setStockField('market','台股');setStockField('action','買入');
+  loadStockHoldings();loadStockHistory();
+}
+async function submitStock(){
+  const date=document.getElementById('stock-date').value.replace(/-/g,'/');
+  const code=document.getElementById('stock-code').value.trim().toUpperCase();
+  const name=document.getElementById('stock-name').value.trim();
+  const qty=parseFloat(document.getElementById('stock-qty').value);
+  const price=parseFloat(document.getElementById('stock-price').value);
+  const notes=document.getElementById('stock-notes').value.trim();
+  if(!code||!qty||!price){showToast('請填寫代號、數量和價格');return}
+  const total=qty*price;
+  const item={id:Date.now(),date,...stockState,code,name,qty,price,total,notes,synced:false};
+  const items=getStocks();items.unshift(item);setStocks(items);
+  document.getElementById('stock-code').value='';document.getElementById('stock-name').value='';
+  document.getElementById('stock-qty').value='';document.getElementById('stock-price').value='';document.getElementById('stock-total').value='';document.getElementById('stock-notes').value='';
+  loadStockHoldings();loadStockHistory();showToast('已記錄交易！');
+  const ok=await postGAS({type:'stock',date,account:stockState.account,market:stockState.market,action:stockState.action,code,name,qty,price,total,notes});
+  if(ok){const latest=getStocks();const idx=latest.findIndex(s=>s.id===item.id);if(idx!==-1){latest[idx].synced=true;setStocks(latest)}showToast('已記錄並同步 ✓')}
+}
+function showStockTab(tab){
+  ['record','holdings','history'].forEach(t=>{
+    const el=document.getElementById('stock-tab-'+t);if(el)el.style.display=t===tab?'block':'none'});
+  document.querySelectorAll('.stab').forEach((b,i)=>b.className='stab'+([['record','holdings','history'][i]].includes(tab)?' sel':''));
+  document.querySelectorAll('.stab')[['record','holdings','history'].indexOf(tab)].className='stab sel';
+}
+function loadStockHoldings(){
+  const list=document.getElementById('stock-holdings-list');if(!list)return;
+  const items=getStocks();const prices=getStockPrices();
+  // group by account+market+code
+  const groups={};
+  items.forEach(s=>{const key=`${s.account}|${s.market}|${s.code}`;if(!groups[key])groups[key]={account:s.account,market:s.market,code:s.code,name:s.name,buyQty:0,sellQty:0,totalCost:0,totalSell:0};
+    if(s.action==='買入'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total}
+    else{groups[key].sellQty+=s.qty;groups[key].totalSell+=s.total}});
+  const holdings=Object.entries(groups).filter(([,g])=>g.buyQty>g.sellQty);
+  if(!holdings.length){list.innerHTML='<div class="empty-msg">目前沒有持倉紀錄</div>';return}
+  list.innerHTML=holdings.map(([key,g])=>{
+    const remaining=g.buyQty-g.sellQty;const avgCost=g.buyQty?g.totalCost/g.buyQty:0;
+    const priceKey=`${g.code}_${g.market}`;const curPrice=prices[priceKey]||0;
+    const unrealized=curPrice?(curPrice-avgCost)*remaining:null;
+    const plClass=unrealized===null?'pl-zero':unrealized>0?'pl-profit':'pl-loss';
+    const plText=unrealized===null?'輸入現價後顯示':`${unrealized>=0?'+ ':''}NT$ ${Math.round(unrealized).toLocaleString()}`;
+    return`<div class="holding-card">
+      <div class="holding-top">
+        <div><div class="holding-code">${esc(g.code)}</div><div class="holding-name">${esc(g.name||'—')}</div></div>
+        <span class="holding-account">${esc(g.account)} · ${esc(g.market)}</span>
       </div>
-      <div class="vocab-item-word">${esc(v.word)}</div>
-      ${v.note ? `<div class="vocab-item-note">${esc(v.note)}</div>` : ''}
-    </div>`).join('');
+      <div class="holding-grid">
+        <div class="hg-item"><label>持有股數</label><span>${remaining.toLocaleString()}</span></div>
+        <div class="hg-item"><label>平均成本</label><span>${avgCost.toFixed(2)}</span></div>
+        <div class="hg-item"><label>未實現損益</label><span class="pl-badge ${plClass}">${plText}</span></div>
+      </div>
+      <div class="price-row">
+        <label>現價（手動更新）</label>
+        <input class="price-input" type="number" placeholder="輸入現價" value="${curPrice||''}"
+          onchange="updateStockPrice('${priceKey}',this.value)" />
+      </div>
+    </div>`}).join('')
+}
+function updateStockPrice(key,val){const prices=getStockPrices();prices[key]=parseFloat(val)||0;setStockPrices(prices);loadStockHoldings();showToast('現價已更新，損益重算完成')}
+function setStockHistFilter(f){stockHistFilter=f;document.querySelectorAll('[data-hfilter]').forEach(b=>b.className='chip'+(b.dataset.hfilter===f?' sel-orange':''));loadStockHistory()}
+function loadStockHistory(){
+  const list=document.getElementById('stock-history-list');if(!list)return;
+  let items=getStocks();if(stockHistFilter!=='全部')items=items.filter(s=>s.account===stockHistFilter);
+  if(!items.length){list.innerHTML='<div class="empty-msg">沒有交易紀錄</div>';return}
+  list.innerHTML=items.map(s=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:${s.action==='買入'?'#D1FAE5':'#FEE2E2'};color:${s.action==='買入'?'#065F46':'#991B1B'}">${esc(s.action)}</span><span class="rec-badge" style="background:#F1F5F9;color:#475569">${esc(s.account)}</span><span class="rec-badge" style="background:#FED7AA;color:#7C2D12">${esc(s.market)}</span><span class="rec-time">${esc(s.date)}</span></div><div class="rec-right">${s.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delStock(${s.id})">✕</button></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="rec-body"><strong>${esc(s.code)}</strong> ${esc(s.name||'')} × ${s.qty} 股 @ ${s.price}</span><span class="stock-rec-amount">NT$ ${s.total.toLocaleString()}</span></div>${s.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(s.notes)}</div>`:''}</div>`).join('')
+}
+function delStock(id){setStocks(getStocks().filter(s=>s.id!==id));loadStockHoldings();loadStockHistory()}
+
+/* ════════════════════════════════
+   AAR 讀取
+════════════════════════════════ */
+let aarRange='week',aarData=[];
+function initAAR(){
+  const now=taipeiNow();const mon=mondayOf(now);
+  document.getElementById('aar-from').value=fmtInputDate(mon);
+  document.getElementById('aar-to').value=fmtInputDate(now);
+}
+function setAarRange(r){
+  aarRange=r;document.querySelectorAll('.range-btn').forEach(b=>b.className='range-btn'+(b.getAttribute('onclick').includes(`'${r}'`)?' sel':''));
+  document.getElementById('aar-custom-dates').style.display=r==='custom'?'flex':'none';
+  if(r==='week'){const now=taipeiNow();const mon=mondayOf(now);document.getElementById('aar-from').value=fmtInputDate(mon);document.getElementById('aar-to').value=fmtInputDate(now)}
+  if(r==='month'){const now=taipeiNow();const first=new Date(now.getFullYear(),now.getMonth(),1);document.getElementById('aar-from').value=fmtInputDate(first);document.getElementById('aar-to').value=fmtInputDate(now)}
+}
+async function fetchAAR(){
+  if(!gasUrl()){showToast('請先在快速記錄中設定 Apps Script 網址');return}
+  const from=document.getElementById('aar-from').value.replace(/-/g,'/');
+  const to=document.getElementById('aar-to').value.replace(/-/g,'/');
+  document.getElementById('aar-content').innerHTML='<div class="aar-loading">讀取中…</div>';
+  document.getElementById('aar-copy-bar').style.display='none';
+  const result=await getGAS({from,to});
+  if(!result||!result.ok){document.getElementById('aar-content').innerHTML='<div class="empty-msg">讀取失敗，請確認 Apps Script 網址與部署設定</div>';return}
+  aarData=result.data||[];
+  if(!aarData.length){document.getElementById('aar-content').innerHTML='<div class="empty-msg">這段期間沒有紀錄</div>';return}
+  renderAAR();document.getElementById('aar-copy-bar').style.display='flex';showToast(`讀取完成，共 ${aarData.length} 筆`)
+}
+function renderAAR(){
+  const byDate={};aarData.forEach(r=>{if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r)});
+  const CAT_COLORS={'閱讀/Podcast 靈感':'#EDE9FE:#4C1D95','財務記帳':'#D1FAE5:#065F46','股票紀錄':'#FFF7ED:#9A3412','健康管理':'#FEE2E2:#991B1B','工作生活':'#F1F5F9:#475569','公司目標':'#DBEAFE:#1E40AF','個人目標':'#EDE9FE:#4C1D95','個人生活':'#D1FAE5:#065F46','瑣務':'#F1F5F9:#475569'};
+  document.getElementById('aar-content').innerHTML=Object.entries(byDate).sort(([a],[b])=>a.localeCompare(b)).map(([date,rows])=>`<div class="aar-day"><div class="aar-day-header">${esc(date)}</div>${rows.map(r=>{const cc=(CAT_COLORS[r.category]||'#F1F5F9:#475569').split(':');return`<div class="aar-entry"><span class="aar-entry-cat" style="background:${cc[0]};color:${cc[1]}">${esc(r.category||'')}</span><span class="aar-entry-time">${esc(r.time||'')}</span><span class="aar-entry-body">${esc(r.summary||'')}</span></div>`}).join('')}</div>`).join('')
+}
+function copyAARFmt(mode){
+  if(!aarData.length){showToast('請先讀取資料');return}
+  const from=document.getElementById('aar-from').value.replace(/-/g,'/');
+  const to=document.getElementById('aar-to').value.replace(/-/g,'/');
+  const byDate={};aarData.forEach(r=>{if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r)});
+  const body=Object.entries(byDate).sort(([a],[b])=>a.localeCompare(b)).map(([date,rows])=>`【${date}】\n${rows.map(r=>`・[${r.category||''}] ${r.time?r.time+' ':''} ${r.summary||''}`).join('\n')}`).join('\n\n');
+  const prompt=mode==='week'
+    ?`\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 各類別各佔多少比例\n3. 有沒有哪個流程可以優化`
+    :`\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句績效描述句。`;
+  doCopy(`【AAR 紀錄 ${from} – ${to}】\n\n${body}${prompt}`,`已複製 ${aarData.length} 筆！貼到 NotebookLM`)
 }
 
-function delVocab(id) {
-  setVocabs(getVocabs().filter(v => v.id !== id));
-  renderVocabFilter(); loadVocabList();
+/* ════════════════════════════════
+   本週計畫
+════════════════════════════════ */
+async function fetchPlan(){
+  if(!gasUrl()){showToast('請先在快速記錄中設定 Apps Script 網址');return}
+  document.getElementById('plan-content').innerHTML='<div class="plan-empty">讀取中…</div>';
+  const result=await getGAS({type:'plan'});
+  if(!result||!result.ok||!result.data||!result.data.length){document.getElementById('plan-content').innerHTML='<div class="plan-empty">尚未建立本週計畫，請先執行 /週計畫</div>';return}
+  renderPlan(result.data);showToast('本週計畫讀取完成')
 }
-
-function copyAllVocab() {
-  const items = getVocabs();
-  if (!items.length) { showToast('單字庫是空的'); return; }
-  const text = `【我的英文單字庫 — ${items.length} 筆，截至 ${new Date().toLocaleDateString('zh-TW')}】\n\n` +
-    items.map((v, i) =>
-      `${i+1}. [${v.tag}] ${v.word}` + (v.note ? `\n   → ${v.note}` : '')
-    ).join('\n\n') +
-    '\n\n---\n我是公關，英文目標 TOEIC 800 分。請針對以上單字：\n' +
-    '1. 出 3 題造句練習（選最適合公關工作情境的單字）\n' +
-    '2. 出 2 題 TOEIC 風格填空題\n' +
-    '3. 給我 2 個可以在下次英文課直接用的完整句子';
-  const done = () => showToast(`已複製 ${items.length} 筆！貼給 Claude 出題`);
-  if (navigator.clipboard && navigator.clipboard.writeText)
-    navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
-  else fbCopy(text, done);
+function renderPlan(rows){
+  const now=taipeiNow();const todayLabel=`${now.getMonth()+1}/${now.getDate()}`;
+  let html='';let currentDay='';let dayRows='';let isToday=false;
+  const flush=()=>{if(currentDay){html+=`<div class="plan-day"><div class="plan-day-header ${isToday?'today':''}">${isToday?'📍 今天｜':''} ${esc(currentDay)}</div>${dayRows}</div>`;dayRows=''}};
+  rows.forEach(row=>{
+    const cell0=String(row[0]||'').trim();
+    if(/\d+\/\d+/.test(cell0)&&(cell0.includes('（')||cell0.includes('(')||/[一二三四五六日]/.test(cell0))){flush();currentDay=cell0;isToday=cell0.includes(todayLabel)}
+    else if(cell0==='時段'||!cell0||row.every(c=>!String(c||'').trim())){}
+    else if(currentDay){const time=String(row[0]||'');const task=String(row[1]||'');const cat=String(row[2]||'');if(time||task)dayRows+=`<div class="plan-row"><span class="plan-time">${esc(time)}</span><span class="plan-task">${esc(task)}</span><span class="plan-cat">${esc(cat)}</span></div>`}
+  });flush();
+  document.getElementById('plan-content').innerHTML=html||'<div class="plan-empty">計畫格式無法解析</div>';
 }
 </script>
 </body>

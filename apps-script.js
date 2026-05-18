@@ -8,14 +8,29 @@ const CACHE_TAB      = '手機快取';
 const PLAN_TAB       = '本週計畫';
 const REVIEW_TAB     = '復盤紀錄';
 const VOCAB_TAB      = '英文單字庫';
+const LEDGER_TAB     = '記帳明細';
+const STOCK_TAB      = '股票紀錄';
 const MAIN_GID       = 974288665;
 const READ_TOKEN     = 'graceos2026read';
 
-// ── doGet：供 Claude 讀取 AAR 主紀錄 ────────────────────────────
-// 呼叫格式：?token=graceos2026read&from=2026/04/28&to=2026/05/04
+// ── doGet：供 Grace OS 讀取資料 ─────────────────────────────────
+// AAR：?token=graceos2026read&from=2026/04/28&to=2026/05/04
+// 本週計畫：?token=graceos2026read&type=plan
 function doGet(e) {
   const params = e.parameter || {};
   if (params.token !== READ_TOKEN) return out({ error: 'unauthorized' });
+
+  // ── 讀取本週計畫 ──
+  if (params.type === 'plan') {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const planSheet = ss.getSheetByName(PLAN_TAB);
+    if (!planSheet || planSheet.getLastRow() === 0)
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, data: [], message: '尚未建立本週計畫' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    const data = planSheet.getDataRange().getValues().map(r => r.map(c => String(c)));
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, data }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 
   const from = params.from || '';
   const to   = params.to   || '';
@@ -64,6 +79,38 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const type = data.type || 'capture';
     const ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+    // ── 記帳明細 ──
+    if (type === 'ledger') {
+      const sheet = getOrCreateLedgerSheet(ss);
+      sheet.appendRow([
+        data.date        || fmt(new Date()),  // A: 日期
+        data.ledger_type || '支出',           // B: 支出/收入
+        data.main_cat    || '',               // C: 主分類
+        data.sub_cat     || '',               // D: 子分類
+        data.amount      || 0,               // E: 金額
+        data.notes       || '',               // F: 備註
+      ]);
+      return out({ ok: true });
+    }
+
+    // ── 股票紀錄 ──
+    if (type === 'stock') {
+      const sheet = getOrCreateStockSheet(ss);
+      sheet.appendRow([
+        data.date    || fmt(new Date()),  // A: 日期
+        data.account || '',               // B: 個人/家庭
+        data.market  || '',               // C: 台股/美股
+        data.action  || '',               // D: 買入/賣出
+        data.code    || '',               // E: 股票代號
+        data.name    || '',               // F: 股票名稱
+        data.qty     || 0,               // G: 數量
+        data.price   || 0,               // H: 成交價
+        data.total   || 0,               // I: 總金額
+        data.notes   || '',               // J: 備註
+      ]);
+      return out({ ok: true });
+    }
 
     // ── 英文單字庫 ──
     if (type === 'vocab') {
@@ -212,6 +259,31 @@ function mergeToday() {
 }
 
 // ── 工具函式 ────────────────────────────────────────────────────
+function getOrCreateLedgerSheet(ss) {
+  let s = ss.getSheetByName(LEDGER_TAB);
+  if (!s) {
+    s = ss.insertSheet(LEDGER_TAB);
+    s.appendRow(['日期', '支出/收入', '主分類', '子分類', '金額', '備註']);
+    s.setFrozenRows(1);
+    s.setColumnWidths(1, 6, 100);
+    s.setColumnWidth(6, 200);
+  }
+  return s;
+}
+
+function getOrCreateStockSheet(ss) {
+  let s = ss.getSheetByName(STOCK_TAB);
+  if (!s) {
+    s = ss.insertSheet(STOCK_TAB);
+    s.appendRow(['日期', '帳戶', '市場', '動作', '代號', '名稱', '數量', '成交價', '總金額', '備註']);
+    s.setFrozenRows(1);
+    s.setColumnWidths(1, 10, 90);
+    s.setColumnWidth(9, 110);
+    s.setColumnWidth(10, 180);
+  }
+  return s;
+}
+
 function getOrCreateVocabSheet(ss) {
   let s = ss.getSheetByName(VOCAB_TAB);
   if (!s) {
@@ -460,8 +532,14 @@ function onOpen() {
     .addItem('合併所有未合併快取', 'mergeAll')
     .addItem('診斷手機快取', 'diagnoseCache')
     .addItem('設定每日 18:45 自動合併', 'setupDailyMerge')
+    .addSeparator()
+    .addItem('初始化記帳明細分頁', 'initLedgerSheet')
+    .addItem('初始化股票紀錄分頁', 'initStockSheet')
     .addToUi();
 }
+
+function initLedgerSheet() { getOrCreateLedgerSheet(SpreadsheetApp.openById(SPREADSHEET_ID)); safeAlert('記帳明細分頁已就緒 ✓'); }
+function initStockSheet()  { getOrCreateStockSheet(SpreadsheetApp.openById(SPREADSHEET_ID));  safeAlert('股票紀錄分頁已就緒 ✓');  }
 
 function setupDailyMerge() {
   ScriptApp.getProjectTriggers().forEach(t => {
