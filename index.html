@@ -11,54 +11,37 @@
   <meta name="theme-color" content="#1E293B" />
   <style>
     :root {
-      --morning:   #F59E0B;
-      --career:    #3B82F6;
-      --family:    #10B981;
-      --growth:    #8B5CF6;
-      --health:    #EF4444;
-      --review:    #64748B;
-      --monthly:   #0EA5E9;
-      --portfolio: #F97316;
-      --capture:   #059669;
-      --bg:        #F8FAFC;
-      --card:      #FFFFFF;
-      --text:      #1E293B;
-      --muted:     #64748B;
-      --border:    #E2E8F0;
-      --radius:    16px;
+      --capture: #059669; --vocab: #7C3AED;
+      --review:  #64748B; --monthly: #0EA5E9;
+      --health:  #EF4444;
+      --bg: #F8FAFC; --card: #FFFFFF;
+      --text: #1E293B; --muted: #64748B;
+      --border: #E2E8F0; --radius: 16px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 28px 16px 48px;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 28px 16px 48px;
     }
-
     .wrap { max-width: 480px; margin: 0 auto; }
 
-    /* ── Header ── */
+    /* Header */
     header { text-align: center; margin-bottom: 32px; }
     header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
     header .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
-    /* ── Home grid ── */
+    /* Grid */
     .section-label {
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-      color: var(--muted); margin: 20px 0 10px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--muted); margin: 20px 0 10px;
     }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .full { grid-column: 1 / -1; }
-
     .card {
       background: var(--card); border-radius: var(--radius);
       padding: 18px 14px; cursor: pointer;
-      border: 2px solid var(--border);
-      transition: all 0.18s ease;
+      border: 2px solid var(--border); transition: all 0.18s ease;
       text-align: center; user-select: none;
     }
     .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.09); }
@@ -66,22 +49,15 @@
     .card .icon { font-size: 30px; display: block; margin-bottom: 8px; }
     .card .label { font-size: 15px; font-weight: 700; }
     .card .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .card-capture:hover { background: #ECFDF5; border-color: var(--capture); }
+    .card-vocab:hover   { background: #F5F3FF; border-color: var(--vocab); }
+    .card-review:hover  { background: #F8FAFC; border-color: var(--review); }
+    .card-monthly:hover { background: #F0F9FF; border-color: var(--monthly); }
 
-    .card-morning:hover   { background: #FFFBEB; border-color: var(--morning); }
-    .card-career:hover    { background: #EFF6FF; border-color: var(--career);  }
-    .card-family:hover    { background: #ECFDF5; border-color: var(--family);  }
-    .card-growth:hover    { background: #F5F3FF; border-color: var(--growth);  }
-    .card-health:hover    { background: #FEF2F2; border-color: var(--health);  }
-    .card-review:hover    { background: #F8FAFC; border-color: var(--review);  }
-    .card-monthly:hover   { background: #F0F9FF; border-color: var(--monthly); }
-    .card-portfolio:hover { background: #FFF7ED; border-color: var(--portfolio); }
-    .card-capture:hover   { background: #ECFDF5; border-color: var(--capture);   }
-
-    /* ── Template view ── */
+    /* Template */
     .tpl { display: none; }
     .tpl.active { display: block; }
     .home.hidden { display: none; }
-
     .back {
       background: none; border: none; cursor: pointer;
       font-size: 14px; color: var(--muted);
@@ -89,7 +65,6 @@
       margin-bottom: 24px; padding: 0;
     }
     .back:hover { color: var(--text); }
-
     .tpl-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
     .tpl-header .big-icon { font-size: 40px; line-height: 1; }
     .tpl-header h2 { font-size: 22px; font-weight: 800; }
@@ -98,6 +73,7 @@
       padding: 3px 10px; border-radius: 100px; margin-top: 5px;
     }
 
+    /* Fields */
     .field { margin-bottom: 14px; }
     .field label {
       display: block; font-size: 11px; font-weight: 700;
@@ -114,6 +90,7 @@
     .field textarea { min-height: 88px; }
     .field textarea.lg { min-height: 180px; }
 
+    /* Buttons */
     .copy-btn {
       width: 100%; padding: 16px; border: none; border-radius: 12px;
       font-size: 16px; font-weight: 700; cursor: pointer; color: white;
@@ -122,53 +99,34 @@
     }
     .copy-btn:hover  { opacity: .9; transform: translateY(-1px); }
     .copy-btn:active { transform: translateY(0); }
+    .btn-review  { background: var(--review); }
+    .btn-monthly { background: var(--monthly); }
 
-    .btn-morning   { background: var(--morning); }
-    .btn-career    { background: var(--career);  }
-    .btn-family    { background: var(--family);  }
-    .btn-growth    { background: var(--growth);  }
-    .btn-health    { background: var(--health);  }
-    .btn-review    { background: var(--review);  }
-    .btn-monthly   { background: var(--monthly); }
-    .btn-portfolio { background: var(--portfolio); }
-
-    /* ── Toast ── */
+    /* Toast */
     .toast {
       position: fixed; bottom: 28px; left: 50%;
       transform: translateX(-50%) translateY(80px);
       background: #1E293B; color: white;
       padding: 12px 24px; border-radius: 100px;
       font-size: 14px; font-weight: 600;
-      transition: transform .28s ease; z-index: 99;
-      white-space: nowrap;
+      transition: transform .28s ease; z-index: 99; white-space: nowrap;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* ── NotebookLM 建議欄 ── */
+    /* NotebookLM box */
     .nb-box {
-      border-radius: 12px; padding: 12px 14px;
-      margin-bottom: 20px;
-      border: 1.5px dashed #CBD5E1;
-      background: #F8FAFC;
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 20px;
+      border: 1.5px dashed #CBD5E1; background: #F8FAFC;
     }
-    .nb-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 6px;
-    }
-    .nb-label {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
-      text-transform: uppercase; color: var(--muted);
-    }
+    .nb-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .nb-label { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
     .nb-btn {
       background: none; border: 1px solid var(--border);
       border-radius: 6px; padding: 2px 10px;
       font-size: 11px; font-weight: 600; cursor: pointer; color: var(--muted);
     }
     .nb-btn:hover { background: white; color: var(--text); }
-    .nb-display {
-      font-size: 13px; line-height: 1.7; color: var(--text);
-      white-space: pre-wrap; cursor: pointer; min-height: 18px;
-    }
+    .nb-display { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; cursor: pointer; min-height: 18px; }
     .nb-empty { color: #94A3B8; font-style: italic; font-size: 13px; }
     .nb-textarea {
       width: 100%; border: 1px solid var(--border); border-radius: 8px;
@@ -177,139 +135,21 @@
       background: white; display: none;
     }
     .nb-textarea:focus { outline: none; border-color: #94A3B8; }
-    .nb-suggest { margin-top: 8px; }
-    .nb-sug-generic {
-      font-size: 12px; font-weight: 600;
-      background: #F1F5F9; color: #475569;
-      border: 1px solid #CBD5E1; border-radius: 20px;
-      padding: 4px 14px; cursor: pointer; transition: background .15s;
-    }
-    .nb-sug-generic:hover { background: #E2E8F0; }
-    .nb-sep {
-      border: none; border-top: 1px dashed #E2E8F0;
-      margin: 12px 0 10px;
-    }
-    .nb-perf-label {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
-      text-transform: uppercase; color: #F97316; margin-bottom: 6px;
-    }
-    .nb-perf-ta {
-      width: 100%; border: 1.5px solid #FED7AA; border-radius: 8px;
-      padding: 10px 12px; font-size: 13px; font-family: inherit;
-      color: var(--text); resize: vertical; min-height: 70px;
-      background: #FFFBF5;
-    }
-    .nb-perf-ta:focus { outline: none; border-color: #F97316; }
-    .nb-perf-btn {
-      margin-top: 8px; padding: 7px 18px;
-      background: #F97316; color: white;
-      border: none; border-radius: 20px;
-      font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity .15s;
-    }
-    .nb-perf-btn:hover { opacity: .85; }
-
-    /* ── 績效素材庫 ── */
-    .pf-add {
-      background: white; border: 2px dashed var(--border);
-      border-radius: var(--radius); padding: 16px; margin-bottom: 20px;
-    }
-    .pf-add-title {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
-      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
-    }
-    .pf-cats {
-      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;
-    }
-    .cat-btn {
-      padding: 5px 12px; border-radius: 100px;
-      border: 1.5px solid var(--border);
-      background: white; font-size: 12px; font-weight: 600;
-      cursor: pointer; color: var(--muted); transition: all .15s;
-    }
-    .cat-btn.sel.c-career  { background: #DBEAFE; border-color: var(--career);    color: #1E40AF; }
-    .cat-btn.sel.c-family  { background: #D1FAE5; border-color: var(--family);    color: #065F46; }
-    .cat-btn.sel.c-growth  { background: #EDE9FE; border-color: var(--growth);    color: #4C1D95; }
-    .cat-btn.sel.c-health  { background: #FEE2E2; border-color: var(--health);    color: #991B1B; }
-    .cat-btn.sel.c-general { background: #F1F5F9; border-color: var(--muted);     color: #334155; }
-    .pf-add textarea {
-      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 10px 12px; font-size: 14px; font-family: inherit;
-      resize: vertical; min-height: 80px; margin-bottom: 10px; background: white;
-    }
-    .pf-add textarea:focus { outline: none; border-color: #94A3B8; }
-    .pf-add-btn {
-      width: 100%; padding: 12px; background: var(--text); color: white;
-      border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: opacity .15s;
-    }
-    .pf-add-btn:hover { opacity: .85; }
-
-    .pf-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .f-btn {
-      padding: 5px 12px; border-radius: 100px;
-      border: 1.5px solid var(--border);
-      background: white; font-size: 12px; font-weight: 600;
-      cursor: pointer; color: var(--muted); transition: all .15s;
-    }
-    .f-btn.sel { background: var(--text); color: white; border-color: var(--text); }
-
-    .pf-count { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
-    .pf-list { display: flex; flex-direction: column; gap: 10px; }
-
-    .pf-item {
-      background: white; border: 1.5px solid var(--border);
-      border-radius: 12px; padding: 14px 16px;
-    }
-    .pf-item-top {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .pf-item-meta { display: flex; align-items: center; gap: 8px; }
-    .pf-item-cat {
-      font-size: 11px; font-weight: 700;
-      padding: 2px 8px; border-radius: 100px;
-    }
-    .pf-item-date { font-size: 11px; color: var(--muted); }
-    .pf-item-del {
-      background: none; border: none; cursor: pointer;
-      color: #CBD5E1; font-size: 14px; padding: 2px 4px;
-    }
-    .pf-item-del:hover { color: var(--health); }
-    .pf-item-body {
-      font-size: 14px; line-height: 1.6;
-      color: var(--text); white-space: pre-wrap;
-    }
-    .pf-empty {
-      text-align: center; padding: 36px 20px;
-      color: var(--muted); font-size: 14px; line-height: 1.8;
-    }
-    .pf-copy-all {
-      width: 100%; padding: 13px; background: white; color: var(--text);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px;
-    }
-    .pf-copy-all:hover { background: var(--bg); }
 
     /* ── 快速記錄 ── */
     .cap-form {
       background: white; border-radius: var(--radius);
-      padding: 16px; margin-bottom: 16px;
-      border: 1.5px solid var(--border);
+      padding: 16px; margin-bottom: 16px; border: 1.5px solid var(--border);
     }
-    .cap-cats {
-      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
-    }
+    .cap-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
     .cap-cat {
       padding: 6px 12px; border-radius: 100px;
       border: 1.5px solid var(--border);
-      background: white; font-size: 13px; font-weight: 600;
+      background: white; font-size: 12px; font-weight: 600;
       cursor: pointer; color: var(--muted); transition: all .15s;
     }
     .cap-cat.sel { background: #D1FAE5; border-color: var(--capture); color: #065F46; }
-    .cap-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 12px; gap: 10px;
-    }
+    .cap-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
     .cap-time-group { display: flex; align-items: center; gap: 6px; flex: 1; }
     .cap-time-input {
       width: 68px; border: 1.5px solid var(--border); border-radius: 8px;
@@ -325,13 +165,32 @@
       cursor: pointer; white-space: nowrap;
     }
     .cap-attack input { width: 17px; height: 17px; accent-color: #EF4444; cursor: pointer; }
+
+    /* 語音按鈕 */
+    .cap-input-wrap { position: relative; margin-bottom: 12px; }
     .cap-textarea {
       width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 12px 14px; font-size: 15px; font-family: inherit;
-      color: var(--text); resize: vertical; min-height: 100px;
-      margin-bottom: 12px; background: white;
+      padding: 12px 52px 12px 14px; font-size: 15px; font-family: inherit;
+      color: var(--text); resize: vertical; min-height: 100px; background: white;
     }
     .cap-textarea:focus { outline: none; border-color: var(--capture); }
+    .mic-btn {
+      position: absolute; bottom: 10px; right: 10px;
+      width: 36px; height: 36px; border-radius: 50%;
+      border: none; background: #F1F5F9; cursor: pointer;
+      font-size: 18px; display: flex; align-items: center; justify-content: center;
+      transition: all .18s; line-height: 1;
+    }
+    .mic-btn:hover { background: #E2E8F0; }
+    .mic-btn.recording {
+      background: #FEE2E2; color: #EF4444;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+      50%       { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+    }
+
     .cap-submit {
       width: 100%; padding: 15px; border: none; border-radius: 12px;
       background: var(--capture); color: white;
@@ -345,67 +204,108 @@
       background: white; border: 1.5px solid var(--border);
       border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
     }
-    .cap-item-top {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 6px;
-    }
+    .cap-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
     .cap-item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .cap-item-cat {
-      font-size: 11px; font-weight: 700;
-      padding: 2px 9px; border-radius: 100px;
-    }
-    .cap-item-time {
-      font-size: 12px; color: var(--muted);
-      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-    }
+    .cap-item-cat { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; }
+    .cap-item-time { font-size: 12px; color: var(--muted); font-family: 'SF Mono', monospace; }
     .cap-item-attack { font-size: 12px; color: #EF4444; font-weight: 700; }
-    .cap-item-right  { display: flex; align-items: center; gap: 8px; }
+    .cap-item-right { display: flex; align-items: center; gap: 8px; }
     .cap-synced     { font-size: 11px; color: #10B981; font-weight: 600; }
     .cap-not-synced { font-size: 11px; color: #F59E0B; font-weight: 600; }
-    .cap-item-del {
+    .cap-item-del, .cap-item-edit {
       background: none; border: none; cursor: pointer;
       color: #CBD5E1; font-size: 14px; padding: 2px 4px;
     }
-    .cap-item-del:hover { color: var(--health); }
+    .cap-item-del:hover  { color: var(--health); }
+    .cap-item-edit:hover { color: var(--capture); }
     .cap-item-body { font-size: 14px; line-height: 1.6; color: var(--text); }
-    .cap-empty {
-      text-align: center; padding: 28px 20px;
-      color: var(--muted); font-size: 14px;
-    }
-    .cap-settings {
-      margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px;
-    }
-    .cap-settings-toggle {
-      background: none; border: none; cursor: pointer;
-      font-size: 13px; color: var(--muted); padding: 0;
-    }
+    .cap-empty { text-align: center; padding: 28px 20px; color: var(--muted); font-size: 14px; }
+    .cap-settings { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .cap-settings-toggle { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); padding: 0; }
     .cap-settings-toggle:hover { color: var(--text); }
     .cap-settings-body { margin-top: 12px; }
     .cap-retry-btn {
       width: 100%; padding: 11px; margin-top: 8px;
       background: #F1F5F9; color: var(--text);
       border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s;
+      font-size: 14px; font-weight: 600; cursor: pointer;
     }
     .cap-retry-btn:hover { background: #E2E8F0; }
     .cap-save-settings {
       padding: 10px 24px; background: var(--text); color: white;
       border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
-      cursor: pointer; margin-top: 8px; transition: opacity .15s;
+      cursor: pointer; margin-top: 8px;
     }
     .cap-save-settings:hover { opacity: .85; }
-    .cap-item-edit {
-      background: none; border: none; cursor: pointer;
-      color: #CBD5E1; font-size: 14px; padding: 2px 4px;
-    }
-    .cap-item-edit:hover { color: var(--capture); }
     .cap-edit-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+
+    /* ── 英文單字庫 ── */
+    .vocab-form {
+      background: white; border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px; border: 1.5px solid var(--border);
+    }
+    .vocab-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .vocab-tag {
+      padding: 5px 12px; border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: white; font-size: 12px; font-weight: 600;
+      cursor: pointer; color: var(--muted); transition: all .15s;
+    }
+    .vocab-tag.sel { background: #EDE9FE; border-color: var(--vocab); color: #4C1D95; }
+    .vocab-input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; font-size: 18px; font-family: inherit;
+      color: var(--text); background: white; margin-bottom: 10px; font-weight: 600;
+    }
+    .vocab-input:focus { outline: none; border-color: var(--vocab); }
+    .vocab-note {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; font-size: 14px; font-family: inherit;
+      color: var(--text); resize: vertical; min-height: 80px;
+      background: white; margin-bottom: 12px;
+    }
+    .vocab-note:focus { outline: none; border-color: var(--vocab); }
+    .vocab-submit {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: var(--vocab); color: white;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: opacity .18s, transform .18s;
+    }
+    .vocab-submit:hover  { opacity: .9; transform: translateY(-1px); }
+    .vocab-submit:active { opacity: 1; transform: translateY(0); }
+    .vocab-item {
+      background: white; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+    }
+    .vocab-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .vocab-item-meta { display: flex; align-items: center; gap: 8px; }
+    .vocab-item-tag { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; background: #EDE9FE; color: #4C1D95; }
+    .vocab-item-date { font-size: 11px; color: var(--muted); }
+    .vocab-item-del { background: none; border: none; cursor: pointer; color: #CBD5E1; font-size: 14px; padding: 2px 4px; }
+    .vocab-item-del:hover { color: var(--health); }
+    .vocab-item-word { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .vocab-item-note { font-size: 13px; line-height: 1.6; color: var(--muted); white-space: pre-wrap; }
+    .vocab-empty { text-align: center; padding: 28px 20px; color: var(--muted); font-size: 14px; }
+    .vocab-copy-all {
+      width: 100%; padding: 13px; background: white; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px;
+    }
+    .vocab-copy-all:hover { background: var(--bg); }
+    .vocab-synced     { font-size: 11px; color: #10B981; font-weight: 600; }
+    .vocab-not-synced { font-size: 11px; color: #F59E0B; font-weight: 600; }
+    .vocab-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .vf-btn {
+      padding: 4px 12px; border-radius: 100px; border: 1.5px solid var(--border);
+      background: white; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted);
+    }
+    .vf-btn.sel { background: var(--text); color: white; border-color: var(--text); }
   </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- ════ HOME ════ -->
+  <!-- HOME -->
   <div class="home" id="home">
     <header>
       <h1>靜華 OS</h1>
@@ -417,7 +317,16 @@
       <div class="card card-capture full" onclick="show('capture')">
         <span class="icon">⚡</span>
         <div class="label">快速記錄</div>
-        <div class="hint">即時記下 · 自動同步 Google Sheets</div>
+        <div class="hint">靈感・財務・股票・健康・生活・支援語音 🎙️</div>
+      </div>
+    </div>
+
+    <div class="section-label">學習成長</div>
+    <div class="grid">
+      <div class="card card-vocab full" onclick="show('vocab')">
+        <span class="icon">📖</span>
+        <div class="label">英文單字庫</div>
+        <div class="hint">隨手記・累積複習素材・一鍵複製給 Claude 出題</div>
       </div>
     </div>
 
@@ -436,9 +345,7 @@
     </div>
   </div>
 
-
-
-  <!-- ════ 週覆盤 ════ -->
+  <!-- 週覆盤 -->
   <div class="tpl" id="tpl-review">
     <button class="back" onclick="goHome()">← 返回</button>
     <div class="tpl-header">
@@ -450,7 +357,7 @@
     </div>
     <div class="nb-box">
       <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議（亮點 / 痛點 / 防呆行動）</span>
+        <span class="nb-label">📌 NotebookLM 建議</span>
         <button class="nb-btn" id="nb-btn-review" onclick="toggleNb('review')">編輯</button>
       </div>
       <div class="nb-display" id="nb-disp-review" onclick="editNb('review')">
@@ -458,18 +365,15 @@
       </div>
       <textarea class="nb-textarea" id="nb-ta-review" placeholder="貼上本週 NotebookLM 建議…"></textarea>
     </div>
-    <div class="field">
-      <label>週期</label>
-      <input type="text" id="r-week" />
-    </div>
+    <div class="field"><label>週期</label><input type="text" id="r-week" /></div>
     <div class="field">
       <label>這週紀錄（貼上 Google Sheets 內容）</label>
       <textarea class="lg" id="r-notes" placeholder="把這週的紀錄貼過來，流水帳也可以…"></textarea>
     </div>
-    <button class="copy-btn btn-review" onclick="copyOnly('review')">複製內容</button>
+    <button class="copy-btn btn-review" onclick="copyOnly('review')">複製內容 → NotebookLM</button>
   </div>
 
-  <!-- ════ 月回顧 ════ -->
+  <!-- 月回顧 -->
   <div class="tpl" id="tpl-monthly">
     <button class="back" onclick="goHome()">← 返回</button>
     <div class="tpl-header">
@@ -481,7 +385,7 @@
     </div>
     <div class="nb-box">
       <div class="nb-header">
-        <span class="nb-label">📌 NotebookLM 建議（本月覆盤）</span>
+        <span class="nb-label">📌 NotebookLM 建議</span>
         <button class="nb-btn" id="nb-btn-monthly" onclick="toggleNb('monthly')">編輯</button>
       </div>
       <div class="nb-display" id="nb-disp-monthly" onclick="editNb('monthly')">
@@ -489,36 +393,16 @@
       </div>
       <textarea class="nb-textarea" id="nb-ta-monthly" placeholder="貼上本月 NotebookLM 建議…"></textarea>
     </div>
-    <div class="field">
-      <label>月份</label>
-      <input type="text" id="mo-month" />
-    </div>
-    <div class="field">
-      <label>🏢 事業成果</label>
-      <textarea id="mo-career" placeholder="這個月在工作上完成了什麼？有什麼值得記錄的？"></textarea>
-    </div>
-    <div class="field">
-      <label>📈 個人成長</label>
-      <textarea id="mo-growth" placeholder="英文進度、學習、個人發展有什麼推進？"></textarea>
-    </div>
-    <div class="field">
-      <label>👨‍👩‍👧‍👦 家庭與關係</label>
-      <textarea id="mo-family" placeholder="家庭關係、與孩子互動有什麼亮點或需要調整的？"></textarea>
-    </div>
-    <div class="field">
-      <label>💪 身心健康</label>
-      <textarea id="mo-health" placeholder="健身、飲食、睡眠、情緒這個月的整體狀態？"></textarea>
-    </div>
-    <div class="field">
-      <label>下個月最重要的 1 件事</label>
-      <textarea id="mo-next" placeholder="下個月如果只能專注一件事，是什麼？"></textarea>
-    </div>
-    <button class="copy-btn btn-monthly" onclick="copyOnly('monthly')">複製內容</button>
+    <div class="field"><label>月份</label><input type="text" id="mo-month" /></div>
+    <div class="field"><label>🏢 事業成果</label><textarea id="mo-career" placeholder="這個月在工作上完成了什麼？"></textarea></div>
+    <div class="field"><label>📈 個人成長</label><textarea id="mo-growth" placeholder="英文進度、學習、個人發展有什麼推進？"></textarea></div>
+    <div class="field"><label>👨‍👩‍👧‍👦 家庭與關係</label><textarea id="mo-family" placeholder="家庭關係、與孩子互動有什麼亮點？"></textarea></div>
+    <div class="field"><label>💪 身心健康</label><textarea id="mo-health" placeholder="健身、飲食、睡眠、情緒整體狀態？"></textarea></div>
+    <div class="field"><label>下個月最重要的 1 件事</label><textarea id="mo-next" placeholder="下個月如果只能專注一件事，是什麼？"></textarea></div>
+    <button class="copy-btn btn-monthly" onclick="copyOnly('monthly')">複製內容 → NotebookLM</button>
   </div>
 
-
-
-  <!-- ════ 快速記錄 ════ -->
+  <!-- 快速記錄 -->
   <div class="tpl" id="tpl-capture">
     <button class="back" onclick="goHome()">← 返回</button>
     <div class="tpl-header">
@@ -531,10 +415,11 @@
 
     <div class="cap-form">
       <div class="cap-cats">
-        <button class="cap-cat sel" data-cat="公司目標" onclick="setCapCat('公司目標')">🏢 公司目標</button>
-        <button class="cap-cat" data-cat="個人目標" onclick="setCapCat('個人目標')">📈 個人目標</button>
-        <button class="cap-cat" data-cat="個人生活" onclick="setCapCat('個人生活')">🏠 個人生活</button>
-        <button class="cap-cat" data-cat="瑣務" onclick="setCapCat('瑣務')">📋 瑣務</button>
+        <button class="cap-cat sel" data-cat="閱讀/Podcast 靈感" onclick="setCapCat('閱讀/Podcast 靈感')">📚 靈感</button>
+        <button class="cap-cat" data-cat="財務記帳" onclick="setCapCat('財務記帳')">💰 記帳</button>
+        <button class="cap-cat" data-cat="股票紀錄" onclick="setCapCat('股票紀錄')">📊 股票</button>
+        <button class="cap-cat" data-cat="健康管理" onclick="setCapCat('健康管理')">💪 健康</button>
+        <button class="cap-cat" data-cat="工作生活" onclick="setCapCat('工作生活')">💬 生活</button>
       </div>
 
       <div class="cap-row">
@@ -549,7 +434,11 @@
         </label>
       </div>
 
-      <textarea id="cap-summary" class="cap-textarea" placeholder="記下你做了什麼、遇到了什麼、想到了什麼…"></textarea>
+      <div class="cap-input-wrap">
+        <textarea id="cap-summary" class="cap-textarea"
+          placeholder="記下靈感・支出・股票觀察・運動紀錄…&#10;（或按右下角 🎙️ 說話）"></textarea>
+        <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="語音輸入（台灣中文）">🎙️</button>
+      </div>
       <button class="cap-submit" onclick="submitCapture()">記錄下來</button>
     </div>
 
@@ -569,369 +458,496 @@
     </div>
   </div>
 
+  <!-- 英文單字庫 -->
+  <div class="tpl" id="tpl-vocab">
+    <button class="back" onclick="goHome()">← 返回</button>
+    <div class="tpl-header">
+      <span class="big-icon">📖</span>
+      <div>
+        <h2>英文單字庫</h2>
+        <span class="tag" style="background:#EDE9FE;color:#4C1D95;">隨手記 · 累積複習素材</span>
+      </div>
+    </div>
+
+    <div class="vocab-form">
+      <div class="vocab-tags">
+        <button class="vocab-tag sel" data-tag="好單字" onclick="setVocabTag('好單字')">⭐ 好單字</button>
+        <button class="vocab-tag" data-tag="好句子" onclick="setVocabTag('好句子')">💬 好句子</button>
+        <button class="vocab-tag" data-tag="TOEIC" onclick="setVocabTag('TOEIC')">📝 TOEIC</button>
+        <button class="vocab-tag" data-tag="工作用語" onclick="setVocabTag('工作用語')">🏢 工作用語</button>
+        <button class="vocab-tag" data-tag="課堂筆記" onclick="setVocabTag('課堂筆記')">📚 課堂</button>
+      </div>
+      <input type="text" id="vocab-word" class="vocab-input" placeholder="輸入單字或句子…" />
+      <textarea id="vocab-note" class="vocab-note"
+        placeholder="中文意思 / 例句 / 使用情境 / 老師糾正…"></textarea>
+      <button class="vocab-submit" onclick="submitVocab()">存進單字庫</button>
+    </div>
+
+    <div class="section-label" style="margin-top:4px;">
+      單字庫（<span id="vocab-count">0</span> 筆）
+    </div>
+    <div class="vocab-filter" id="vocab-filter"></div>
+    <div id="vocab-list"></div>
+    <button class="vocab-copy-all" onclick="copyAllVocab()">📋 複製全部 → 貼給 Claude 出題</button>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  /* ── 時間 (Taipei UTC+8) ── */
-  function taipeiNow() {
-    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
-  }
-  function fmtDate(d) {
-    const days = ['日','一','二','三','四','五','六'];
-    return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日（週${days[d.getDay()]}）`;
-  }
-  function fmtMonth(d) {
-    return `${d.getFullYear()} 年 ${d.getMonth()+1} 月`;
-  }
-  function weekRange() {
-    const d = taipeiNow(), dow = d.getDay();
-    const mon = new Date(d); mon.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    const f = x => `${x.getMonth()+1}/${x.getDate()}`;
-    return `${d.getFullYear()} 年 ${f(mon)} – ${f(sun)}`;
-  }
+/* ── Taipei time ── */
+function taipeiNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+}
+function fmtDate(d) {
+  const days = ['日','一','二','三','四','五','六'];
+  return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日（週${days[d.getDay()]}）`;
+}
+function fmtMonth(d) { return `${d.getFullYear()} 年 ${d.getMonth()+1} 月`; }
+function weekRange() {
+  const d = taipeiNow(), dow = d.getDay();
+  const mon = new Date(d); mon.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const f = x => `${x.getMonth()+1}/${x.getDate()}`;
+  return `${d.getFullYear()} 年 ${f(mon)} – ${f(sun)}`;
+}
+function fmtHHMM(d) {
+  return String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-  /* ── 初始化 ── */
-  (function init() {
-    const now = taipeiNow();
-    document.getElementById('today-label').textContent = fmtDate(now);
-    document.getElementById('r-week').value   = weekRange();
-    document.getElementById('mo-month').value = fmtMonth(now);
-  })();
+/* ── Init ── */
+(function init() {
+  const now = taipeiNow();
+  document.getElementById('today-label').textContent = fmtDate(now);
+  document.getElementById('r-week').value   = weekRange();
+  document.getElementById('mo-month').value = fmtMonth(now);
+})();
 
-  /* ── 頁面切換 ── */
-  function show(type) {
-    document.getElementById('home').classList.add('hidden');
-    document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
-    document.getElementById('tpl-' + type).classList.add('active');
-    if (type === 'capture') initCaptureForm();
-    else loadNb(type);
-    window.scrollTo(0, 0);
-  }
-  function goHome() {
-    document.getElementById('home').classList.remove('hidden');
-    document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
-    window.scrollTo(0, 0);
-  }
+/* ── Navigation ── */
+function show(type) {
+  document.getElementById('home').classList.add('hidden');
+  document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
+  document.getElementById('tpl-' + type).classList.add('active');
+  if      (type === 'capture') initCaptureForm();
+  else if (type === 'vocab')   initVocabPage();
+  else loadNb(type);
+  window.scrollTo(0, 0);
+}
+function goHome() {
+  document.getElementById('home').classList.remove('hidden');
+  document.querySelectorAll('.tpl').forEach(el => el.classList.remove('active'));
+  window.scrollTo(0, 0);
+}
 
-  /* ── 組裝複製文字 ── */
-  function assemble(type) {
-    const v = id => (document.getElementById(id)||{}).value || '';
-    switch (type) {
-      case 'review':
-        return `週日覆盤，這週是 ${v('r-week')}。\n\n這週紀錄：\n${v('r-notes')||'（未填寫）'}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 公司目標與個人目標各佔日常多少比例\n3. 有沒有哪個流程可以優化`;
-      case 'monthly':
-        return `月回顧，${v('mo-month')}。\n\n🏢 事業成果：${v('mo-career')||'（未填寫）'}\n📈 個人成長：${v('mo-growth')||'（未填寫）'}\n👨‍👩‍👧‍👦 家庭關係：${v('mo-family')||'（未填寫）'}\n💪 身心健康：${v('mo-health')||'（未填寫）'}\n下月重點：${v('mo-next')||'（未填寫）'}\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句可用於績效描述的成果句。`;
-    }
-  }
+/* ── Copy helpers ── */
+function assemble(type) {
+  const v = id => (document.getElementById(id)||{}).value || '';
+  if (type === 'review')
+    return `週日覆盤，這週是 ${v('r-week')}。\n\n這週紀錄：\n${v('r-notes')||'（未填寫）'}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 公司目標與個人目標各佔日常多少比例\n3. 有沒有哪個流程可以優化`;
+  if (type === 'monthly')
+    return `月回顧，${v('mo-month')}。\n\n🏢 事業成果：${v('mo-career')||'（未填寫）'}\n📈 個人成長：${v('mo-growth')||'（未填寫）'}\n👨‍👩‍👧‍👦 家庭關係：${v('mo-family')||'（未填寫）'}\n💪 身心健康：${v('mo-health')||'（未填寫）'}\n下月重點：${v('mo-next')||'（未填寫）'}\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句可用於績效描述的成果句。`;
+}
+function copyOnly(type) {
+  const text = assemble(type);
+  const done = () => showToast('已複製！貼到 NotebookLM 使用');
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
+  else fbCopy(text, done);
+}
+function fbCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta); cb();
+}
 
-  function copyOnly(type) {
-    const text = assemble(type);
-    const done = () => showToast('已複製！貼到 NotebookLM 使用');
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
-    } else fbCopy(text, done);
-  }
-  function fbCopy(text, cb) {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(ta); ta.focus(); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta); cb();
-  }
+/* ── Toast ── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 
-  /* ── Toast ── */
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
+/* ── NotebookLM box ── */
+function loadNb(type) {
+  const content = localStorage.getItem('nb-' + type) || '';
+  const disp = document.getElementById('nb-disp-' + type);
+  const ta   = document.getElementById('nb-ta-' + type);
+  const btn  = document.getElementById('nb-btn-' + type);
+  ta.style.display = 'none'; disp.style.display = 'block';
+  if (btn) btn.textContent = '編輯';
+  ta.value = content;
+  if (content) { disp.textContent = content; }
+  else {
+    const ph = type === 'review'
+      ? '週覆盤做完後，把 NotebookLM 給的亮點、痛點、防呆行動貼進來'
+      : '月底覆盤後，把 NotebookLM 給的本月總結貼進來';
+    disp.innerHTML = `<span class="nb-empty">${ph}</span>`;
   }
+}
+function editNb(type) {
+  document.getElementById('nb-disp-' + type).style.display = 'none';
+  const ta = document.getElementById('nb-ta-' + type);
+  ta.style.display = 'block'; ta.focus();
+  const btn = document.getElementById('nb-btn-' + type);
+  if (btn) btn.textContent = '儲存';
+}
+function saveNb(type) {
+  localStorage.setItem('nb-' + type, document.getElementById('nb-ta-' + type).value.trim());
+  loadNb(type);
+}
+function toggleNb(type) {
+  const ta = document.getElementById('nb-ta-' + type);
+  if (ta.style.display === 'none' || ta.style.display === '') editNb(type);
+  else saveNb(type);
+}
 
-  /* ── NotebookLM 建議欄 ── */
-  function loadNb(type) {
-    const content = localStorage.getItem('nb-' + type) || '';
-    const disp = document.getElementById('nb-disp-' + type);
-    const ta   = document.getElementById('nb-ta-' + type);
-    const btn  = document.getElementById('nb-btn-' + type);
-    ta.style.display = 'none';
-    disp.style.display = 'block';
-    if (btn) btn.textContent = '編輯';
-    ta.value = content;
-    if (content) {
-      disp.textContent = content;
-    } else {
-      const ph = type === 'review'
-        ? '週覆盤做完後，把 NotebookLM 給的亮點、痛點、防呆行動貼進來'
-        : type === 'monthly'
-        ? '月底覆盤後，把 NotebookLM 給的本月總結貼進來'
-        : '點此貼上 NotebookLM 的建議，下次開啟仍會顯示';
-      disp.innerHTML = `<span class="nb-empty">${ph}</span>`;
-    }
+/* ════════════════════════════════
+   快速記錄
+════════════════════════════════ */
+const CAT_STYLE = {
+  '閱讀/Podcast 靈感': { bg: '#EDE9FE', color: '#4C1D95' },
+  '財務記帳':          { bg: '#D1FAE5', color: '#065F46' },
+  '股票紀錄':          { bg: '#FFF7ED', color: '#9A3412' },
+  '健康管理':          { bg: '#FEE2E2', color: '#991B1B' },
+  '工作生活':          { bg: '#F1F5F9', color: '#475569' },
+};
+const CAT_LABEL = {
+  '閱讀/Podcast 靈感': '📚 靈感',
+  '財務記帳': '💰 記帳',
+  '股票紀錄': '📊 股票',
+  '健康管理': '💪 健康',
+  '工作生活': '💬 生活',
+};
+let capCat = '閱讀/Podcast 靈感';
+
+function setCapCat(cat) {
+  capCat = cat;
+  document.querySelectorAll('.cap-cat').forEach(b =>
+    b.classList.toggle('sel', b.dataset.cat === cat));
+}
+function getCaptures() {
+  try { return JSON.parse(localStorage.getItem('captures') || '[]'); } catch(e) { return []; }
+}
+function setCaptures(items) { localStorage.setItem('captures', JSON.stringify(items)); }
+
+function initCaptureForm() {
+  const now = taipeiNow();
+  document.getElementById('cap-start').value = fmtHHMM(now);
+  document.getElementById('cap-end').value   = '';
+  document.getElementById('cap-summary').value = '';
+  document.getElementById('cap-attack').checked = false;
+  document.getElementById('cap-gas-url').value = localStorage.getItem('gas-url') || '';
+  loadCaptureList();
+}
+
+async function submitCapture() {
+  const rawStart = document.getElementById('cap-start').value.replace(/\D/g,'').substring(0,4);
+  const rawEnd   = document.getElementById('cap-end').value.replace(/\D/g,'').substring(0,4);
+  const summary  = document.getElementById('cap-summary').value.trim();
+  const isAttack = document.getElementById('cap-attack').checked;
+  if (!summary) { showToast('請先輸入內容'); return; }
+
+  const now = taipeiNow();
+  const date = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+  const time = rawStart && rawEnd ? `${rawStart}-${rawEnd}` : rawStart || '';
+  const capture = { id: Date.now(), date, time, category: capCat, summary, is_attack: isAttack, synced: false };
+
+  const items = getCaptures();
+  items.unshift(capture);
+  setCaptures(items);
+  document.getElementById('cap-start').value = rawEnd || fmtHHMM(taipeiNow());
+  document.getElementById('cap-end').value = '';
+  document.getElementById('cap-summary').value = '';
+  document.getElementById('cap-attack').checked = false;
+  loadCaptureList();
+  showToast('已記錄！');
+
+  const ok = await syncToSheets({ type:'capture', ...capture });
+  if (ok) {
+    const latest = getCaptures();
+    const idx = latest.findIndex(c => c.id === capture.id);
+    if (idx !== -1) { latest[idx].synced = true; setCaptures(latest); }
+    loadCaptureList();
+    showToast('已記錄並同步到 Google Sheets ✓');
   }
+}
 
-  function editNb(type) {
-    const disp = document.getElementById('nb-disp-' + type);
-    const ta   = document.getElementById('nb-ta-' + type);
-    const btn  = document.getElementById('nb-btn-' + type);
-    disp.style.display = 'none';
-    ta.style.display = 'block';
-    ta.focus();
-    if (btn) btn.textContent = '儲存';
-  }
-
-  function saveNb(type) {
-    const ta = document.getElementById('nb-ta-' + type);
-    localStorage.setItem('nb-' + type, ta.value.trim());
-    loadNb(type);
-  }
-
-  function toggleNb(type) {
-    const ta = document.getElementById('nb-ta-' + type);
-    if (ta.style.display === 'none' || ta.style.display === '') editNb(type);
-    else saveNb(type);
-  }
-
-  function esc(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  /* ── 快速記錄 ── */
-  const CAT_STYLE = {
-    '公司目標': { bg: '#DBEAFE', color: '#1E40AF' },
-    '個人目標': { bg: '#EDE9FE', color: '#4C1D95' },
-    '個人生活': { bg: '#D1FAE5', color: '#065F46' },
-    '瑣務':     { bg: '#F1F5F9', color: '#475569' },
-  };
-  let capCat = '公司目標';
-
-  function setCapCat(cat) {
-    capCat = cat;
-    document.querySelectorAll('.cap-cat').forEach(b => {
-      b.classList.toggle('sel', b.dataset.cat === cat);
+async function syncToSheets(payload) {
+  const url = localStorage.getItem('gas-url');
+  if (!url) return false;
+  try {
+    await fetch(url, {
+      method: 'POST', mode: 'no-cors',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' }
     });
+    return true;
+  } catch(e) { return false; }
+}
+
+async function retrySyncAll() {
+  const items = getCaptures();
+  const now   = taipeiNow();
+  const today = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+  const pending = items.filter(c => !c.synced && c.date === today);
+  if (!pending.length) { showToast('沒有待同步的項目'); return; }
+  showToast(`正在重試 ${pending.length} 筆…`);
+  for (const c of pending) {
+    const ok = await syncToSheets({ type:'capture', ...c });
+    if (ok) { const idx = items.findIndex(x => x.id === c.id); if (idx !== -1) items[idx].synced = true; }
   }
+  setCaptures(items); loadCaptureList(); showToast('重試完成');
+}
 
-  function getCaptures() {
-    try { return JSON.parse(localStorage.getItem('captures') || '[]'); }
-    catch(e) { return []; }
-  }
-  function setCaptures(items) { localStorage.setItem('captures', JSON.stringify(items)); }
-
-  function fmtHHMM(d) {
-    return String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
-  }
-
-  function initCaptureForm() {
-    const now = taipeiNow();
-    document.getElementById('cap-start').value = fmtHHMM(now);
-    document.getElementById('cap-end').value   = '';
-    document.getElementById('cap-summary').value = '';
-    document.getElementById('cap-attack').checked = false;
-    const url = localStorage.getItem('gas-url') || '';
-    document.getElementById('cap-gas-url').value = url;
-    loadCaptureList();
-  }
-
-  async function submitCapture() {
-    const rawStart = document.getElementById('cap-start').value.replace(/\D/g,'').substring(0,4);
-    const rawEnd   = document.getElementById('cap-end').value.replace(/\D/g,'').substring(0,4);
-    const summary  = document.getElementById('cap-summary').value.trim();
-    const isAttack = document.getElementById('cap-attack').checked;
-
-    if (!summary) { showToast('請先輸入摘要內容'); return; }
-
-    const now  = taipeiNow();
-    const date = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
-    const time = rawStart && rawEnd ? `${rawStart}-${rawEnd}` : rawStart || '';
-
-    const capture = {
-      id: Date.now(), date, time,
-      category: capCat, summary,
-      is_attack: isAttack, synced: false
-    };
-
-    const items = getCaptures();
-    items.unshift(capture);
-    setCaptures(items);
-
-    // 重設表單，開始時間 = 結束時間（連續記錄很方便）
-    document.getElementById('cap-start').value = rawEnd || fmtHHMM(taipeiNow());
-    document.getElementById('cap-end').value   = '';
-    document.getElementById('cap-summary').value = '';
-    document.getElementById('cap-attack').checked = false;
-    loadCaptureList();
-    showToast('已記錄！');
-
-    const ok = await syncToSheets(capture);
-    if (ok) {
-      const latest = getCaptures();
-      const idx = latest.findIndex(c => c.id === capture.id);
-      if (idx !== -1) { latest[idx].synced = true; setCaptures(latest); }
-      loadCaptureList();
-      showToast('已記錄並同步到 Google Sheets ✓');
-    }
-  }
-
-  async function syncToSheets(capture) {
-    const url = localStorage.getItem('gas-url');
-    if (!url) return false;
-    try {
-      await fetch(url, {
-        method:  'POST',
-        mode:    'no-cors',
-        body:    JSON.stringify({
-          date:      capture.date,
-          time:      capture.time,
-          category:  capture.category,
-          summary:   capture.summary,
-          is_attack: capture.is_attack
-        }),
-        headers: { 'Content-Type': 'text/plain' }
-      });
-      return true;
-    } catch(e) { return false; }
-  }
-
-  async function retrySyncAll() {
-    const items = getCaptures();
-    const now   = taipeiNow();
-    const today = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
-    const pending = items.filter(c => !c.synced && c.date === today);
-    if (!pending.length) { showToast('沒有待同步的項目'); return; }
-    showToast(`正在重試 ${pending.length} 筆…`);
-    for (const c of pending) {
-      const ok = await syncToSheets(c);
-      if (ok) {
-        const idx = items.findIndex(x => x.id === c.id);
-        if (idx !== -1) items[idx].synced = true;
-      }
-    }
-    setCaptures(items);
-    loadCaptureList();
-    showToast('重試完成');
-  }
-
-  function loadCaptureList() {
-    const list = document.getElementById('cap-list');
-    if (!list) return;
-    const now   = taipeiNow();
-    const today = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
-    const items = getCaptures().filter(c => c.date === today);
-    if (!items.length) {
-      list.innerHTML = '<div class="cap-empty">今天還沒有紀錄</div>'; return;
-    }
-    list.innerHTML = items.map(c => {
-      const st = CAT_STYLE[c.category] || { bg:'#F1F5F9', color:'#475569' };
-      return `<div class="cap-item" id="cap-item-${c.id}">
-        <div class="cap-item-top">
-          <div class="cap-item-meta">
-            <span class="cap-item-cat" style="background:${st.bg};color:${st.color};">${esc(c.category)}</span>
-            ${c.time ? `<span class="cap-item-time">${esc(c.time)}</span>` : ''}
-            ${c.is_attack ? '<span class="cap-item-attack">⚔️</span>' : ''}
-          </div>
-          <div class="cap-item-right">
-            ${c.synced
-              ? '<span class="cap-synced">已同步 ✓</span>'
-              : '<span class="cap-not-synced">未同步</span>'}
-            <button class="cap-item-edit" onclick="editCapture(${c.id})" title="編輯">✏️</button>
-            <button class="cap-item-del" onclick="delCapture(${c.id})">✕</button>
-          </div>
+function loadCaptureList() {
+  const list = document.getElementById('cap-list');
+  if (!list) return;
+  const now   = taipeiNow();
+  const today = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+  const items = getCaptures().filter(c => c.date === today);
+  if (!items.length) { list.innerHTML = '<div class="cap-empty">今天還沒有紀錄</div>'; return; }
+  list.innerHTML = items.map(c => {
+    const st = CAT_STYLE[c.category] || { bg:'#F1F5F9', color:'#475569' };
+    return `<div class="cap-item" id="cap-item-${c.id}">
+      <div class="cap-item-top">
+        <div class="cap-item-meta">
+          <span class="cap-item-cat" style="background:${st.bg};color:${st.color};">${esc(c.category)}</span>
+          ${c.time ? `<span class="cap-item-time">${esc(c.time)}</span>` : ''}
+          ${c.is_attack ? '<span class="cap-item-attack">⚔️</span>' : ''}
         </div>
-        <div class="cap-item-body">${esc(c.summary)}</div>
-      </div>`;
-    }).join('');
-  }
-
-  function getCatLabel(cat) {
-    return { '公司目標':'🏢 公司目標', '個人目標':'📈 個人目標',
-             '個人生活':'🏠 個人生活', '瑣務':'📋 瑣務' }[cat] || cat;
-  }
-
-  function editCapture(id) {
-    const items = getCaptures();
-    const c = items.find(x => x.id === id);
-    if (!c) return;
-    const el = document.getElementById('cap-item-' + id);
-    if (!el) return;
-    el.dataset.editCat = c.category;
-    const timeStart = c.time ? c.time.split('-')[0] : '';
-    const timeEnd   = c.time ? (c.time.split('-')[1] || '') : '';
-    el.innerHTML = `
-      <div class="cap-edit-cats">
-        ${Object.keys(CAT_STYLE).map(cat =>
-          `<button class="cap-cat ${cat === c.category ? 'sel' : ''}"
-            data-editcat="${cat}" data-editid="${id}"
-            onclick="setEditCat(${id},'${cat}')">${getCatLabel(cat)}</button>`
-        ).join('')}
-      </div>
-      <div class="cap-row" style="margin-top:8px;">
-        <div class="cap-time-group">
-          <input type="text" id="edit-s-${id}" inputmode="numeric"
-            value="${timeStart}" maxlength="4" class="cap-time-input" />
-          <span class="cap-dash">–</span>
-          <input type="text" id="edit-e-${id}" inputmode="numeric"
-            value="${timeEnd}" maxlength="4" class="cap-time-input" />
+        <div class="cap-item-right">
+          ${c.synced ? '<span class="cap-synced">已同步 ✓</span>' : '<span class="cap-not-synced">未同步</span>'}
+          <button class="cap-item-edit" onclick="editCapture(${c.id})" title="編輯">✏️</button>
+          <button class="cap-item-del" onclick="delCapture(${c.id})">✕</button>
         </div>
-        <label class="cap-attack">
-          <input type="checkbox" id="edit-atk-${id}" ${c.is_attack ? 'checked' : ''} />
-          <span>進攻 ⚔️</span>
-        </label>
       </div>
-      <textarea id="edit-sum-${id}" class="cap-textarea" style="margin-top:8px;">${esc(c.summary)}</textarea>
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <button class="cap-submit" style="flex:1;padding:10px;font-size:14px;"
-          onclick="saveEditCapture(${id})">儲存</button>
-        <button class="cap-retry-btn" style="flex:1;margin:0;padding:10px;"
-          onclick="loadCaptureList()">取消</button>
-      </div>`;
+      <div class="cap-item-body">${esc(c.summary)}</div>
+    </div>`;
+  }).join('');
+}
+
+function editCapture(id) {
+  const items = getCaptures(), c = items.find(x => x.id === id);
+  if (!c) return;
+  const el = document.getElementById('cap-item-' + id);
+  if (!el) return;
+  el.dataset.editCat = c.category;
+  const ts = c.time ? c.time.split('-')[0] : '';
+  const te = c.time ? (c.time.split('-')[1] || '') : '';
+  el.innerHTML = `
+    <div class="cap-edit-cats">
+      ${Object.keys(CAT_STYLE).map(cat =>
+        `<button class="cap-cat ${cat === c.category ? 'sel' : ''}"
+          data-editcat="${cat}" onclick="setEditCat(${id},'${cat}')">${CAT_LABEL[cat]||cat}</button>`
+      ).join('')}
+    </div>
+    <div class="cap-row" style="margin-top:8px;">
+      <div class="cap-time-group">
+        <input type="text" id="edit-s-${id}" inputmode="numeric" value="${ts}" maxlength="4" class="cap-time-input" />
+        <span class="cap-dash">–</span>
+        <input type="text" id="edit-e-${id}" inputmode="numeric" value="${te}" maxlength="4" class="cap-time-input" />
+      </div>
+      <label class="cap-attack">
+        <input type="checkbox" id="edit-atk-${id}" ${c.is_attack ? 'checked' : ''} /><span>進攻 ⚔️</span>
+      </label>
+    </div>
+    <textarea id="edit-sum-${id}" class="cap-textarea" style="margin-top:8px;padding-right:14px;">${esc(c.summary)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="cap-submit" style="flex:1;padding:10px;font-size:14px;" onclick="saveEditCapture(${id})">儲存</button>
+      <button class="cap-retry-btn" style="flex:1;margin:0;padding:10px;" onclick="loadCaptureList()">取消</button>
+    </div>`;
+}
+function setEditCat(id, cat) {
+  const el = document.getElementById('cap-item-' + id);
+  if (!el) return;
+  el.dataset.editCat = cat;
+  el.querySelectorAll('[data-editcat]').forEach(b => b.classList.toggle('sel', b.dataset.editcat === cat));
+}
+function saveEditCapture(id) {
+  const el = document.getElementById('cap-item-' + id);
+  const items = getCaptures(), idx = items.findIndex(c => c.id === id);
+  if (idx === -1) return;
+  const s   = (document.getElementById('edit-s-'+id)?.value||'').replace(/\D/g,'').substring(0,4);
+  const e   = (document.getElementById('edit-e-'+id)?.value||'').replace(/\D/g,'').substring(0,4);
+  const sum = (document.getElementById('edit-sum-'+id)?.value||'').trim();
+  const atk = document.getElementById('edit-atk-'+id)?.checked||false;
+  const cat = el?.dataset.editCat || items[idx].category;
+  if (!sum) { showToast('摘要不能空白'); return; }
+  items[idx] = { ...items[idx], category:cat, time: s&&e?`${s}-${e}`:s||'', summary:sum, is_attack:atk, synced:false };
+  setCaptures(items); loadCaptureList(); showToast('已修改！');
+}
+function delCapture(id) {
+  setCaptures(getCaptures().filter(c => c.id !== id)); loadCaptureList();
+}
+function toggleCapSettings() {
+  const b = document.getElementById('cap-settings-body');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+function saveCapSettings() {
+  localStorage.setItem('gas-url', document.getElementById('cap-gas-url').value.trim());
+  showToast('設定已儲存');
+}
+
+/* ════════════════════════════════
+   語音辨識
+════════════════════════════════ */
+let recognition = null, isRecording = false;
+
+function toggleVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('此裝置不支援語音，請改用 Chrome 或 iOS Safari 13+'); return; }
+  if (isRecording) { recognition && recognition.stop(); return; }
+
+  recognition = new SR();
+  recognition.lang = 'zh-TW';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  const micBtn = document.getElementById('mic-btn');
+  const ta     = document.getElementById('cap-summary');
+  const base   = ta.value;
+  let   finalT = '';
+
+  recognition.onstart = () => {
+    isRecording = true;
+    micBtn.classList.add('recording');
+    micBtn.textContent = '⏹️';
+    showToast('🎙️ 聆聽中… 說完後會自動停止');
+  };
+  recognition.onresult = (e) => {
+    let interim = ''; finalT = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalT += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    ta.value = base + (base && !base.endsWith('\n') ? '\n' : '') + finalT + interim;
+  };
+  recognition.onerror = (e) => {
+    isRecording = false; micBtn.classList.remove('recording'); micBtn.textContent = '🎙️';
+    const msgs = { 'not-allowed':'請在瀏覽器設定中允許麥克風存取', 'no-speech':'沒有偵測到聲音，請重試' };
+    showToast(msgs[e.error] || '語音辨識發生錯誤：' + e.error);
+  };
+  recognition.onend = () => {
+    isRecording = false; micBtn.classList.remove('recording'); micBtn.textContent = '🎙️';
+    if (finalT) ta.value = base + (base && !base.endsWith('\n') ? '\n' : '') + finalT;
+  };
+  try { recognition.start(); }
+  catch(err) { showToast('請確認已授予麥克風權限'); }
+}
+
+/* ════════════════════════════════
+   英文單字庫
+════════════════════════════════ */
+let vocabTag    = '好單字';
+let vocabFilter = '全部';
+
+function setVocabTag(tag) {
+  vocabTag = tag;
+  document.querySelectorAll('.vocab-tag').forEach(b => b.classList.toggle('sel', b.dataset.tag === tag));
+}
+function getVocabs() {
+  try { return JSON.parse(localStorage.getItem('vocabs') || '[]'); } catch(e) { return []; }
+}
+function setVocabs(items) { localStorage.setItem('vocabs', JSON.stringify(items)); }
+
+function initVocabPage() {
+  document.getElementById('vocab-word').value = '';
+  document.getElementById('vocab-note').value = '';
+  renderVocabFilter();
+  loadVocabList();
+}
+
+function renderVocabFilter() {
+  const tags = ['全部', ...new Set(getVocabs().map(v => v.tag))];
+  document.getElementById('vocab-filter').innerHTML = tags.map(t =>
+    `<button class="vf-btn ${t === vocabFilter ? 'sel' : ''}" onclick="setVocabFilter('${t}')">${t}</button>`
+  ).join('');
+}
+function setVocabFilter(tag) {
+  vocabFilter = tag;
+  renderVocabFilter();
+  loadVocabList();
+}
+
+async function submitVocab() {
+  const word = document.getElementById('vocab-word').value.trim();
+  const note = document.getElementById('vocab-note').value.trim();
+  if (!word) { showToast('請輸入單字或句子'); return; }
+
+  const now  = taipeiNow();
+  const date = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+  const time = fmtHHMM(now);
+  const item = { id: Date.now(), date, time, word, note, tag: vocabTag, synced: false };
+
+  const items = getVocabs();
+  items.unshift(item);
+  setVocabs(items);
+  document.getElementById('vocab-word').value = '';
+  document.getElementById('vocab-note').value = '';
+  renderVocabFilter(); loadVocabList();
+  showToast('已存入單字庫！');
+
+  const ok = await syncToSheets({ type:'vocab', date, time, word, note, tag: vocabTag });
+  if (ok) {
+    const latest = getVocabs(), idx = latest.findIndex(v => v.id === item.id);
+    if (idx !== -1) { latest[idx].synced = true; setVocabs(latest); }
+    renderVocabFilter(); loadVocabList();
+    showToast('已存入並同步到 Google Sheets ✓');
   }
+}
 
-  function setEditCat(id, cat) {
-    const el = document.getElementById('cap-item-' + id);
-    if (!el) return;
-    el.dataset.editCat = cat;
-    el.querySelectorAll('[data-editcat]').forEach(b =>
-      b.classList.toggle('sel', b.dataset.editcat === cat));
+function loadVocabList() {
+  const list  = document.getElementById('vocab-list');
+  const count = document.getElementById('vocab-count');
+  const all   = getVocabs();
+  const items = vocabFilter === '全部' ? all : all.filter(v => v.tag === vocabFilter);
+  count.textContent = all.length;
+  if (!items.length) {
+    list.innerHTML = '<div class="vocab-empty">還沒有紀錄，快記第一個！</div>'; return;
   }
+  list.innerHTML = items.map(v => `
+    <div class="vocab-item">
+      <div class="vocab-item-top">
+        <div class="vocab-item-meta">
+          <span class="vocab-item-tag">${esc(v.tag)}</span>
+          <span class="vocab-item-date">${esc(v.date)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${v.synced ? '<span class="vocab-synced">已同步 ✓</span>' : '<span class="vocab-not-synced">未同步</span>'}
+          <button class="vocab-item-del" onclick="delVocab(${v.id})">✕</button>
+        </div>
+      </div>
+      <div class="vocab-item-word">${esc(v.word)}</div>
+      ${v.note ? `<div class="vocab-item-note">${esc(v.note)}</div>` : ''}
+    </div>`).join('');
+}
 
-  function saveEditCapture(id) {
-    const el   = document.getElementById('cap-item-' + id);
-    const items = getCaptures();
-    const idx  = items.findIndex(c => c.id === id);
-    if (idx === -1) return;
-    const s   = (document.getElementById('edit-s-' + id)?.value || '').replace(/\D/g,'').substring(0,4);
-    const e   = (document.getElementById('edit-e-' + id)?.value || '').replace(/\D/g,'').substring(0,4);
-    const sum = (document.getElementById('edit-sum-' + id)?.value || '').trim();
-    const atk = document.getElementById('edit-atk-' + id)?.checked || false;
-    const cat = el?.dataset.editCat || items[idx].category;
-    if (!sum) { showToast('摘要不能空白'); return; }
-    const wasSynced = items[idx].synced;
-    items[idx] = { ...items[idx], category: cat,
-      time: s && e ? `${s}-${e}` : s || '', summary: sum,
-      is_attack: atk, synced: false };
-    setCaptures(items);
-    loadCaptureList();
-    showToast(wasSynced ? '已修改（請在手機快取分頁刪除舊的一筆）' : '已修改！');
-  }
+function delVocab(id) {
+  setVocabs(getVocabs().filter(v => v.id !== id));
+  renderVocabFilter(); loadVocabList();
+}
 
-  function delCapture(id) {
-    setCaptures(getCaptures().filter(c => c.id !== id));
-    loadCaptureList();
-  }
-
-  function toggleCapSettings() {
-    const b = document.getElementById('cap-settings-body');
-    b.style.display = b.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function saveCapSettings() {
-    const url = document.getElementById('cap-gas-url').value.trim();
-    localStorage.setItem('gas-url', url);
-    showToast('設定已儲存');
-  }
-
-
+function copyAllVocab() {
+  const items = getVocabs();
+  if (!items.length) { showToast('單字庫是空的'); return; }
+  const text = `【我的英文單字庫 — ${items.length} 筆，截至 ${new Date().toLocaleDateString('zh-TW')}】\n\n` +
+    items.map((v, i) =>
+      `${i+1}. [${v.tag}] ${v.word}` + (v.note ? `\n   → ${v.note}` : '')
+    ).join('\n\n') +
+    '\n\n---\n我是公關，英文目標 TOEIC 800 分。請針對以上單字：\n' +
+    '1. 出 3 題造句練習（選最適合公關工作情境的單字）\n' +
+    '2. 出 2 題 TOEIC 風格填空題\n' +
+    '3. 給我 2 個可以在下次英文課直接用的完整句子';
+  const done = () => showToast(`已複製 ${items.length} 筆！貼給 Claude 出題`);
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(done).catch(() => fbCopy(text, done));
+  else fbCopy(text, done);
+}
 </script>
 </body>
 </html>
