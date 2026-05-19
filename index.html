@@ -42,6 +42,17 @@
     .card-vocab:hover  {background:#F5F3FF;border-color:var(--vocab)}
     .card-ledger:hover {background:#ECFEFF;border-color:var(--ledger)}
     .card-stock:hover  {background:#FFF7ED;border-color:var(--stock)}
+    .card-finance:hover{background:#ECFDF5;border-color:#059669}
+    .chip.sel-green{background:#D1FAE5;border-color:#10B981;color:#065F46}
+    .bank-card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .bank-name{font-size:14px;font-weight:700}
+    .finance-stat{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+    .fin-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+    .fin-stat-row:last-child{border-bottom:none}
+    .fin-income{color:#10B981;font-weight:700}
+    .fin-expense{color:#EF4444;font-weight:700}
+    .fin-net{font-size:18px;font-weight:800}
+    .fin-asset-card{background:linear-gradient(135deg,#1E40AF,#7C3AED);border-radius:16px;padding:18px;color:white;margin-bottom:10px}
     .card-plan:hover   {background:#EFF6FF;border-color:var(--plan)}
     .card-aar:hover    {background:#F8FAFC;border-color:var(--aar)}
     .card-review:hover {background:#F8FAFC;border-color:var(--review)}
@@ -356,10 +367,15 @@
 
   <div class="section-label">財務管理</div>
   <div class="grid">
+    <div class="card card-finance full" onclick="show('finance')">
+      <span class="icon">💎</span>
+      <div class="label">財務總覽</div>
+      <div class="hint" id="home-finance-hint">本月收支・銀行存款・股票資產</div>
+    </div>
     <div class="card card-ledger" onclick="show('ledger')">
       <span class="icon">💰</span>
       <div class="label">記帳</div>
-      <div class="hint">家用・個人・投資・定存</div>
+      <div class="hint">家用・個人・收入・支出</div>
     </div>
     <div class="card card-stock" onclick="show('stock')">
       <span class="icon">📈</span>
@@ -583,7 +599,7 @@
   <div class="tpl-header">
     <span class="big-icon">💰</span>
     <div><h2>記帳</h2>
-      <span class="tag" style="background:#CFFAFE;color:#164E63;">家用・個人・投資・定存</span>
+      <span class="tag" style="background:#CFFAFE;color:#164E63;">支出・收入・家用・個人</span>
     </div>
   </div>
   <div class="cap-form">
@@ -642,6 +658,7 @@
       </div>
       <div class="seg">
         <button class="chip" data-saction="買入" onclick="setStockField('action','買入')">📥 買入</button>
+        <button class="chip" data-saction="定期定額" onclick="setStockField('action','定期定額')">🔄 定期定額</button>
         <button class="chip" data-saction="賣出" onclick="setStockField('action','賣出')">📤 賣出</button>
       </div>
       <div class="field"><label>日期</label><input type="date" id="stock-date"/></div>
@@ -666,6 +683,11 @@
   </div>
   <!-- 持倉損益 -->
   <div id="stock-tab-holdings" style="display:none">
+    <div class="seg" style="margin-bottom:10px">
+      <button class="chip sel-orange" data-haccfilter="全部" onclick="setHoldingsFilter('全部')">全部</button>
+      <button class="chip" data-haccfilter="個人" onclick="setHoldingsFilter('個人')">👤 個人</button>
+      <button class="chip" data-haccfilter="家庭" onclick="setHoldingsFilter('家庭')">👨‍👩‍👧‍👦 家庭</button>
+    </div>
     <div id="stock-holdings-list"></div>
   </div>
   <!-- 交易紀錄 -->
@@ -677,6 +699,34 @@
     </div>
     <div id="stock-history-list"></div>
   </div>
+</div>
+
+<!-- 財務總覽 -->
+<div class="tpl" id="tpl-finance">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">💎</span>
+    <div><h2>財務總覽</h2>
+      <span class="tag" style="background:#D1FAE5;color:#065F46;">收入・支出・資產</span>
+    </div>
+  </div>
+  <div id="finance-monthly"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px">
+    <div class="section-label" style="margin:0">🏦 銀行帳戶</div>
+    <button class="nb-btn" onclick="toggleBankForm()">+ 新增</button>
+  </div>
+  <div id="bank-add-form" style="display:none;background:white;border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+    <div class="field"><label>銀行名稱</label>
+      <input type="text" id="bank-name-input" placeholder="例：台新、玉山、國泰世華"
+        style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit"/></div>
+    <div class="field"><label>目前餘額（NT$）</label>
+      <input type="number" id="bank-balance-input" placeholder="0" inputmode="decimal"
+        style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit"/></div>
+    <button class="full-btn" style="background:#059669" onclick="addBank()">儲存帳戶 ✓</button>
+  </div>
+  <div id="bank-list"></div>
+  <div class="section-label" style="margin-top:16px">📊 資產快照</div>
+  <div id="finance-assets"></div>
 </div>
 
 <!-- AAR 讀取 -->
@@ -831,6 +881,7 @@ function show(type){
   else if(type==='vocab')initEngCenter();
   else if(type==='ledger')initLedger();
   else if(type==='stock')initStock();
+  else if(type==='finance')initFinance();
   else if(type==='aar')initAAR();
   else if(type==='plan'){}
   else loadNb(type);
@@ -1653,6 +1704,7 @@ const LEDGER_SUBCATS={
   '個人':['飲食','交通','娛樂','保險','買車存款','其他個人'],
   '投資':[],'定存':[]
 };
+const INCOME_CATS=['薪資','獎金','年終獎金','股利','利息','其他收入'];
 let ledgerType='支出',ledgerMainCat='家用',ledgerSubCat='家庭飲食';
 let showMonthlySummary=false;
 
@@ -1660,6 +1712,23 @@ function setLedgerType(type){
   ledgerType=type;
   document.getElementById('type-expense').className='type-btn'+(type==='支出'?' sel':'');
   document.getElementById('type-income').className='type-btn'+(type==='收入'?' sel':'');
+  const mainCatsEl=document.getElementById('ledger-main-cats');
+  const notesEl=document.getElementById('ledger-notes');
+  if(type==='收入'){
+    ledgerMainCat=INCOME_CATS[0];ledgerSubCat='';
+    mainCatsEl.innerHTML=INCOME_CATS.map(c=>`<button class="chip${c===ledgerMainCat?' sel-green':''}" data-mcat="${c}" onclick="setIncomeCat('${c}')">${c}</button>`).join('');
+    document.getElementById('ledger-subcats').innerHTML='';
+    if(notesEl)notesEl.placeholder='說明這筆收入…';
+  }else{
+    ledgerMainCat='家用';ledgerSubCat='家庭飲食';
+    mainCatsEl.innerHTML=`<button class="chip sel-cyan" data-mcat="家用" onclick="setLedgerCat('家用')">🏠 家用</button><button class="chip" data-mcat="個人" onclick="setLedgerCat('個人')">👤 個人</button><button class="chip" data-mcat="投資" onclick="setLedgerCat('投資')">📈 投資</button><button class="chip" data-mcat="定存" onclick="setLedgerCat('定存')">🏦 定存</button>`;
+    setLedgerCat('家用');
+    if(notesEl)notesEl.placeholder='說明這筆支出…';
+  }
+}
+function setIncomeCat(cat){
+  ledgerMainCat=cat;ledgerSubCat='';
+  document.querySelectorAll('#ledger-main-cats .chip').forEach(b=>b.className='chip'+(b.dataset.mcat===cat?' sel-green':''));
 }
 function setLedgerCat(cat){
   ledgerMainCat=cat;
@@ -1674,7 +1743,7 @@ function setLedgerSubCat(s){
 }
 function initLedger(){
   const now=taipeiNow();document.getElementById('ledger-date').value=fmtInputDate(now);
-  setLedgerCat('家用');loadLedgerList();
+  setLedgerType('支出');loadLedgerList();
   if(showMonthlySummary)renderMonthlySummary();
 }
 function getLedgers(){try{return JSON.parse(localStorage.getItem('ledgers')||'[]')}catch(e){return[]}}
@@ -1707,10 +1776,20 @@ function renderMonthlySummary(){
   const el=document.getElementById('ledger-monthly-summary');
   if(!showMonthlySummary){el.innerHTML='';return}
   const now=taipeiNow();const ym=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
-  const items=getLedgers().filter(l=>l.date.startsWith(ym)&&l.type==='支出');
-  const byMain={};items.forEach(l=>{if(!byMain[l.mainCat])byMain[l.mainCat]=0;byMain[l.mainCat]+=l.amount});
-  const total=items.reduce((s,l)=>s+l.amount,0);
-  el.innerHTML=`<div class="month-summary"><div class="ms-title">本月支出報表（${ym}）</div>${Object.entries(byMain).map(([k,v])=>`<div class="ms-row"><span>${k}</span><span class="ms-amount ms-expense">NT$ ${v.toLocaleString()}</span></div>`).join('')}<div class="ms-row"><span>合計</span><span class="ms-amount ms-expense">NT$ ${total.toLocaleString()}</span></div></div>`;
+  const allItems=getLedgers().filter(l=>l.date.startsWith(ym));
+  const expItems=allItems.filter(l=>l.type==='支出');const incItems=allItems.filter(l=>l.type==='收入');
+  const byMainExp={};expItems.forEach(l=>{if(!byMainExp[l.mainCat])byMainExp[l.mainCat]=0;byMainExp[l.mainCat]+=l.amount});
+  const byMainInc={};incItems.forEach(l=>{if(!byMainInc[l.mainCat])byMainInc[l.mainCat]=0;byMainInc[l.mainCat]+=l.amount});
+  const totalExp=expItems.reduce((s,l)=>s+l.amount,0);
+  const totalInc=incItems.reduce((s,l)=>s+l.amount,0);
+  const net=totalInc-totalExp;
+  el.innerHTML=`<div class="month-summary"><div class="ms-title">本月收支報表（${ym}）</div>
+    ${Object.entries(byMainInc).map(([k,v])=>`<div class="ms-row"><span>💚 ${k}</span><span class="ms-amount ms-income">+ NT$ ${v.toLocaleString()}</span></div>`).join('')}
+    ${totalInc?`<div class="ms-row"><span>收入合計</span><span class="ms-amount ms-income">NT$ ${totalInc.toLocaleString()}</span></div>`:''}
+    ${Object.entries(byMainExp).map(([k,v])=>`<div class="ms-row"><span>❤️ ${k}</span><span class="ms-amount ms-expense">- NT$ ${v.toLocaleString()}</span></div>`).join('')}
+    <div class="ms-row"><span>支出合計</span><span class="ms-amount ms-expense">NT$ ${totalExp.toLocaleString()}</span></div>
+    <div class="ms-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:6px"><span>💰 結餘</span><span class="ms-amount" style="color:${net>=0?'#10B981':'#EF4444'};font-size:15px">${net>=0?'+ ':''}NT$ ${net.toLocaleString()}</span></div>
+  </div>`;
 }
 
 /* ════════════════════════════════
@@ -1718,6 +1797,12 @@ function renderMonthlySummary(){
 ════════════════════════════════ */
 let stockState={account:'個人',market:'台股',action:'買入'};
 let stockHistFilter='全部';
+let holdingsFilter='全部';
+function setHoldingsFilter(f){
+  holdingsFilter=f;
+  document.querySelectorAll('[data-haccfilter]').forEach(b=>b.className='chip'+(b.dataset.haccfilter===f?' sel-orange':''));
+  loadStockHoldings();
+}
 function setStockField(field,val){
   stockState[field]=val;
   document.querySelectorAll(`[data-s${field}]`).forEach(b=>b.className='chip'+(b.dataset['s'+field]===val?' sel-orange':''));
@@ -1761,36 +1846,56 @@ function showStockTab(tab){
 }
 function loadStockHoldings(){
   const list=document.getElementById('stock-holdings-list');if(!list)return;
-  const items=getStocks();const prices=getStockPrices();
-  // group by account+market+code
+  const allItems=getStocks();const prices=getStockPrices();
   const groups={};
-  items.forEach(s=>{const key=`${s.account}|${s.market}|${s.code}`;if(!groups[key])groups[key]={account:s.account,market:s.market,code:s.code,name:s.name,buyQty:0,sellQty:0,totalCost:0,totalSell:0};
-    if(s.action==='買入'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total}
-    else{groups[key].sellQty+=s.qty;groups[key].totalSell+=s.total}});
-  const holdings=Object.entries(groups).filter(([,g])=>g.buyQty>g.sellQty);
+  allItems.forEach(s=>{
+    const key=`${s.account}|${s.market}|${s.code}`;
+    if(!groups[key])groups[key]={account:s.account,market:s.market,code:s.code,name:s.name,buyQty:0,sellQty:0,totalCost:0,totalSell:0};
+    if(s.action==='買入'||s.action==='定期定額'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total}
+    else if(s.action==='賣出'){groups[key].sellQty+=s.qty;groups[key].totalSell+=s.total}
+  });
+  let holdings=Object.entries(groups).filter(([,g])=>g.buyQty>g.sellQty);
+  if(holdingsFilter!=='全部')holdings=holdings.filter(([,g])=>g.account===holdingsFilter);
   if(!holdings.length){list.innerHTML='<div class="empty-msg">目前沒有持倉紀錄</div>';return}
-  list.innerHTML=holdings.map(([key,g])=>{
-    const remaining=g.buyQty-g.sellQty;const avgCost=g.buyQty?g.totalCost/g.buyQty:0;
-    const priceKey=`${g.code}_${g.market}`;const curPrice=prices[priceKey]||0;
-    const unrealized=curPrice?(curPrice-avgCost)*remaining:null;
-    const plClass=unrealized===null?'pl-zero':unrealized>0?'pl-profit':'pl-loss';
-    const plText=unrealized===null?'輸入現價後顯示':`${unrealized>=0?'+ ':''}NT$ ${Math.round(unrealized).toLocaleString()}`;
-    return`<div class="holding-card">
-      <div class="holding-top">
-        <div><div class="holding-code">${esc(g.code)}</div><div class="holding-name">${esc(g.name||'—')}</div></div>
-        <span class="holding-account">${esc(g.account)} · ${esc(g.market)}</span>
-      </div>
-      <div class="holding-grid">
-        <div class="hg-item"><label>持有股數</label><span>${remaining.toLocaleString()}</span></div>
-        <div class="hg-item"><label>平均成本</label><span>${avgCost.toFixed(2)}</span></div>
-        <div class="hg-item"><label>未實現損益</label><span class="pl-badge ${plClass}">${plText}</span></div>
-      </div>
-      <div class="price-row">
-        <label>現價（手動更新）</label>
-        <input class="price-input" type="number" placeholder="輸入現價" value="${curPrice||''}"
-          onchange="updateStockPrice('${priceKey}',this.value)" />
-      </div>
-    </div>`}).join('')
+  // Group by account for subtotals
+  const byAcc={};holdings.forEach(([key,g])=>{if(!byAcc[g.account])byAcc[g.account]=[];byAcc[g.account].push([key,g])});
+  let html='';
+  Object.entries(byAcc).forEach(([acc,rows])=>{
+    let accCost=0,accValue=0;
+    const cards=rows.map(([,g])=>{
+      const remaining=g.buyQty-g.sellQty;const avgCost=g.buyQty?g.totalCost/g.buyQty:0;
+      const priceKey=`${g.code}_${g.market}`;const curPrice=prices[priceKey]||0;
+      const unrealized=curPrice?(curPrice-avgCost)*remaining:null;
+      const costBasis=avgCost*remaining;
+      accCost+=costBasis;accValue+=curPrice?curPrice*remaining:costBasis;
+      const plClass=unrealized===null?'pl-zero':unrealized>0?'pl-profit':'pl-loss';
+      const plText=unrealized===null?'輸入現價後顯示':`${unrealized>=0?'+ ':''}NT$ ${Math.round(unrealized).toLocaleString()}`;
+      const realPL=g.totalSell-(avgCost*g.sellQty);
+      return`<div class="holding-card">
+        <div class="holding-top">
+          <div><div class="holding-code">${esc(g.code)}</div><div class="holding-name">${esc(g.name||'—')}</div></div>
+          <span class="holding-account">${esc(g.market)}</span>
+        </div>
+        <div class="holding-grid">
+          <div class="hg-item"><label>持有股數</label><span>${remaining.toLocaleString()}</span></div>
+          <div class="hg-item"><label>平均成本</label><span>${avgCost.toFixed(2)}</span></div>
+          <div class="hg-item"><label>未實現損益</label><span class="pl-badge ${plClass}">${plText}</span></div>
+        </div>
+        ${g.sellQty>0?`<div style="font-size:12px;color:var(--muted);margin:4px 0">已實現損益：<strong style="color:${realPL>=0?'#10B981':'#EF4444'}">${realPL>=0?'+ ':''}NT$ ${Math.round(realPL).toLocaleString()}</strong></div>`:''}
+        <div class="price-row">
+          <label>現價（手動更新）</label>
+          <input class="price-input" type="number" placeholder="輸入現價" value="${curPrice||''}"
+            onchange="updateStockPrice('${priceKey}',this.value)"/>
+        </div>
+      </div>`;
+    }).join('');
+    const accPnl=accValue-accCost;
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 2px 4px;font-size:13px;font-weight:700">
+      <span>${esc(acc)}</span>
+      <span style="color:${accPnl>=0?'#10B981':'#EF4444'}">${accPnl>=0?'+ ':''}NT$ ${Math.round(accPnl).toLocaleString()}</span>
+    </div>${cards}`;
+  });
+  list.innerHTML=html;
 }
 function updateStockPrice(key,val){const prices=getStockPrices();prices[key]=parseFloat(val)||0;setStockPrices(prices);loadStockHoldings();showToast('現價已更新，損益重算完成')}
 function setStockHistFilter(f){stockHistFilter=f;document.querySelectorAll('[data-hfilter]').forEach(b=>b.className='chip'+(b.dataset.hfilter===f?' sel-orange':''));loadStockHistory()}
@@ -1844,6 +1949,136 @@ function copyAARFmt(mode){
     ?`\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 各類別各佔多少比例\n3. 有沒有哪個流程可以優化`
     :`\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句績效描述句。`;
   doCopy(`【AAR 紀錄 ${from} – ${to}】\n\n${body}${prompt}`,`已複製 ${aarData.length} 筆！貼到 NotebookLM`)
+}
+
+/* ════════════════════════════════
+   財務總覽
+════════════════════════════════ */
+const BANKS_KEY='bank_accounts_v1';
+function getBanks(){try{return JSON.parse(localStorage.getItem(BANKS_KEY)||'[]')}catch{return[]}}
+function setBanks(a){localStorage.setItem(BANKS_KEY,JSON.stringify(a))}
+
+function initFinance(){
+  renderFinanceMonthly();
+  renderBankList();
+  document.getElementById('bank-add-form').style.display='none';
+}
+
+function renderFinanceMonthly(){
+  const el=document.getElementById('finance-monthly');if(!el)return;
+  const now=taipeiNow();const ym=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
+  const all=getLedgers().filter(l=>l.date.startsWith(ym));
+  const incItems=all.filter(l=>l.type==='收入');const expItems=all.filter(l=>l.type==='支出');
+  const totalInc=incItems.reduce((s,l)=>s+l.amount,0);
+  const totalExp=expItems.reduce((s,l)=>s+l.amount,0);
+  const net=totalInc-totalExp;
+  const byInc={};incItems.forEach(l=>{if(!byInc[l.mainCat])byInc[l.mainCat]=0;byInc[l.mainCat]+=l.amount});
+  const byExp={};expItems.forEach(l=>{if(!byExp[l.mainCat])byExp[l.mainCat]=0;byExp[l.mainCat]+=l.amount});
+  const monthLabel=`${now.getFullYear()} 年 ${now.getMonth()+1} 月`;
+  el.innerHTML=`<div class="finance-stat">
+    <div class="ms-title">📅 ${monthLabel} 收支概覽</div>
+    <div class="fin-stat-row"><span style="font-weight:700">💚 本月收入</span><span class="fin-income fin-net">NT$ ${totalInc.toLocaleString()}</span></div>
+    ${Object.entries(byInc).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${k}</span><span class="fin-income">+ NT$ ${v.toLocaleString()}</span></div>`).join('')}
+    ${!totalInc?'<div class="fin-stat-row"><span style="color:var(--muted);font-size:13px">尚無收入記錄</span><span style="font-size:12px;color:#94A3B8">→ 去「記帳」記收入</span></div>':''}
+    <div class="fin-stat-row" style="margin-top:4px"><span style="font-weight:700">❤️ 本月支出</span><span class="fin-expense fin-net">NT$ ${totalExp.toLocaleString()}</span></div>
+    ${Object.entries(byExp).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${k}</span><span class="fin-expense">- NT$ ${v.toLocaleString()}</span></div>`).join('')}
+    ${!totalExp?'<div class="fin-stat-row"><span style="color:var(--muted);font-size:13px">尚無支出記錄</span><span></span></div>':''}
+    <div class="fin-stat-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px">
+      <span style="font-weight:800;font-size:15px">💰 本月結餘</span>
+      <span class="fin-net" style="color:${net>=0?'#10B981':'#EF4444'}">${net>=0?'+ ':''}NT$ ${net.toLocaleString()}</span>
+    </div>
+  </div>`;
+  renderFinanceAssets();
+}
+
+function renderBankList(){
+  const list=document.getElementById('bank-list');if(!list)return;
+  const banks=getBanks();
+  if(!banks.length){
+    list.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">尚未新增銀行帳戶<br><span style="font-size:12px">點「+ 新增」加入你的帳戶</span></div>';
+    renderFinanceAssets();return;
+  }
+  list.innerHTML=banks.map(b=>`<div class="bank-card">
+    <div style="flex:1">
+      <div class="bank-name">🏦 ${esc(b.name)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">更新於 ${esc(b.updatedAt||b.addedAt||'—')}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="text-align:right">
+        <input type="number" value="${b.balance||0}" placeholder="餘額"
+          style="width:110px;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;text-align:right;background:white;font-family:inherit;color:var(--text)"
+          onchange="updateBankBalance(${b.id},this.value)"/>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">NT$</div>
+      </div>
+      <button class="del-btn" onclick="delBank(${b.id})" style="font-size:16px">✕</button>
+    </div>
+  </div>`).join('');
+  renderFinanceAssets();
+}
+
+function renderFinanceAssets(){
+  const el=document.getElementById('finance-assets');if(!el)return;
+  const banks=getBanks();
+  const totalBank=banks.reduce((s,b)=>s+(parseFloat(b.balance)||0),0);
+  const stocks=getStocks();const prices=getStockPrices();
+  const groups={};
+  stocks.forEach(s=>{
+    const key=`${s.code}_${s.market}`;
+    if(!groups[key])groups[key]={code:s.code,market:s.market,buyQty:0,sellQty:0,totalCost:0};
+    if(s.action==='買入'||s.action==='定期定額'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total}
+    else if(s.action==='賣出')groups[key].sellQty+=s.qty;
+  });
+  let totalStockValue=0,totalStockCost=0;
+  Object.values(groups).filter(g=>g.buyQty>g.sellQty).forEach(g=>{
+    const remaining=g.buyQty-g.sellQty;
+    const avgCost=g.buyQty?g.totalCost/g.buyQty:0;
+    const curPrice=prices[`${g.code}_${g.market}`]||0;
+    totalStockCost+=avgCost*remaining;
+    totalStockValue+=curPrice?curPrice*remaining:avgCost*remaining;
+  });
+  const stockPnl=totalStockValue-totalStockCost;
+  const totalAssets=totalBank+totalStockValue;
+  el.innerHTML=`<div class="fin-asset-card">
+    <div style="font-size:13px;opacity:.75;margin-bottom:6px">總資產快照 · ${fmtMonth(taipeiNow())}</div>
+    <div style="font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:16px">NT$ ${Math.round(totalAssets).toLocaleString()}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:rgba(255,255,255,.18);border-radius:10px;padding:12px">
+        <div style="font-size:11px;opacity:.8;margin-bottom:5px">🏦 銀行存款</div>
+        <div style="font-size:17px;font-weight:700">NT$ ${totalBank.toLocaleString()}</div>
+        <div style="font-size:11px;opacity:.65;margin-top:3px">${banks.length} 個帳戶</div>
+      </div>
+      <div style="background:rgba(255,255,255,.18);border-radius:10px;padding:12px">
+        <div style="font-size:11px;opacity:.8;margin-bottom:5px">📈 股票市值</div>
+        <div style="font-size:17px;font-weight:700">NT$ ${Math.round(totalStockValue).toLocaleString()}</div>
+        <div style="font-size:11px;margin-top:3px;color:${stockPnl>=0?'#6EE7B7':'#FCA5A5'}">${stockPnl>=0?'▲ +':'▼ '}NT$ ${Math.round(stockPnl).toLocaleString()}</div>
+      </div>
+    </div>
+  </div>
+  ${!banks.length&&!Object.keys(groups).length?'<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:4px">新增銀行帳戶 + 記錄股票交易後，這裡會顯示完整資產</div>':'<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px">股票以手動輸入現價計算 · 若未輸入則以成本計</div>'}`;
+}
+
+function toggleBankForm(){
+  const f=document.getElementById('bank-add-form');
+  const open=f.style.display==='none';
+  f.style.display=open?'block':'none';
+  if(open){document.getElementById('bank-name-input').value='';document.getElementById('bank-balance-input').value='';document.getElementById('bank-name-input').focus()}
+}
+function addBank(){
+  const name=(document.getElementById('bank-name-input').value||'').trim();
+  const balance=parseFloat(document.getElementById('bank-balance-input').value)||0;
+  if(!name){showToast('請輸入銀行名稱');return}
+  const now=fmtYMD(taipeiNow());
+  const banks=getBanks();banks.push({id:Date.now(),name,balance,addedAt:now,updatedAt:now});
+  setBanks(banks);toggleBankForm();renderBankList();showToast(`「${name}」已新增 ✓`);
+}
+function updateBankBalance(id,val){
+  const banks=getBanks();const idx=banks.findIndex(b=>b.id===id);if(idx<0)return;
+  banks[idx].balance=parseFloat(val)||0;banks[idx].updatedAt=fmtYMD(taipeiNow());
+  setBanks(banks);renderFinanceAssets();showToast('餘額已更新 ✓');
+}
+function delBank(id){
+  if(!confirm('確定要刪除這個銀行帳戶嗎？'))return;
+  setBanks(getBanks().filter(b=>b.id!==id));renderBankList();showToast('已刪除');
 }
 
 /* ════════════════════════════════
