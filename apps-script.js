@@ -174,7 +174,88 @@ function doPost(e) {
   }
 }
 
-// ── mergeToday：將今日手機快取合併至主紀錄 ──────────────────────
+// ── setupTodayTemplate：複製上一天範本到今天 ────────────────────
+// 會完整複製格式（checkbox、下拉選單、欄寬），並清除內容留空
+function setupTodayTemplate() {
+  const ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const main = getMainSheet(ss);
+  const today = fmt(new Date());
+  const lastRow = main.getLastRow();
+
+  if (lastRow === 0) {
+    safeAlert('主分頁是空的，請先手動建立第一天的格式後再執行。'); return;
+  }
+
+  const numCols = Math.max(main.getLastColumn(), 8);
+  const allVals = main.getRange(1, 1, lastRow, numCols).getValues();
+
+  // 今天已存在？
+  for (let i = 0; i < allVals.length; i++) {
+    if (normDate(allVals[i].join('')).includes(normDate(today))) {
+      safeAlert('今天（' + today + '）的範本已存在！'); return;
+    }
+  }
+
+  // 找最後一個日期 header（0-indexed）
+  let lastDateIdx = -1;
+  for (let i = allVals.length - 1; i >= 0; i--) {
+    if (/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(allVals[i].join(''))) {
+      lastDateIdx = i; break;
+    }
+  }
+  if (lastDateIdx === -1) {
+    safeAlert('找不到上一天的格式，請手動建立後再執行。'); return;
+  }
+
+  const srcStartRow = lastDateIdx + 1;       // 1-indexed，上一天範本起始列
+  const srcRows     = lastRow - srcStartRow + 1;
+
+  // 在最下方插入空列：2 列分隔 + srcRows 複製空間
+  main.insertRowsAfter(lastRow, srcRows + 2);
+
+  // 完整複製（含格式、checkbox、下拉選單）
+  const dstStartRow = lastRow + 3;
+  main.getRange(srcStartRow, 1, srcRows, numCols)
+      .copyTo(main.getRange(dstStartRow, 1, srcRows, numCols));
+
+  // 更新日期
+  main.getRange(dstStartRow, 1).setValue(today);
+
+  // 清除內容，保留格式：找到欄位標題列（含「分類」字樣）後清除資料列
+  const dstVals = main.getRange(dstStartRow, 1, srcRows, numCols).getValues();
+  let colHeaderOffset = -1;
+  for (let i = 0; i < dstVals.length; i++) {
+    const joined = dstVals[i].join('');
+    if (joined.includes('分類')) { colHeaderOffset = i; break; }
+  }
+
+  if (colHeaderOffset >= 0) {
+    // 清除「每日重點貼」內文（日期列之後到欄位標題之前）
+    if (colHeaderOffset > 1) {
+      main.getRange(dstStartRow + 1, 1, colHeaderOffset - 1, numCols).clearContent();
+    }
+    // 清除 AAR 資料列內容（保留 checkbox 和下拉選單格式）
+    const aarDataRows = srcRows - colHeaderOffset - 1;
+    if (aarDataRows > 0) {
+      main.getRange(dstStartRow + colHeaderOffset + 1, 1, aarDataRows, 4).clearContent();
+    }
+  }
+
+  safeAlert('✓ 已建立 ' + today + ' 的範本！可以開始記錄了。');
+}
+
+// ── setupMorningTrigger：設定每天早上 7 點自動建立範本 ───────────
+function setupMorningTrigger() {
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === 'setupTodayTemplate') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('setupTodayTemplate')
+    .timeBased().everyDays(1).atHour(7)
+    .inTimezone('Asia/Taipei').create();
+  safeAlert('設定完成！每天早上 7:00-8:00 會自動建立當天範本 ✓');
+}
+
+// ── mergeToday：將今日手機快取合併至 AAR 區塊（正確位置）────────
 function mergeToday() {
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const cache = ss.getSheetByName(CACHE_TAB);
@@ -210,31 +291,44 @@ function mergeToday() {
     return;
   }
 
-  const vals = main.getRange(1, 1, main.getLastRow(), 4).getValues();
+  const numCols = Math.max(main.getLastColumn(), 4);
+  const vals    = main.getRange(1, 1, main.getLastRow(), numCols).getValues();
 
+  // 找今日日期 header
   let headerIdx = -1;
   for (let i = 0; i < vals.length; i++) {
     if (normDate(vals[i].join('')).includes(normDate(today))) { headerIdx = i; break; }
   }
 
   if (headerIdx === -1) {
-    appendSection(main, today, toMerge);
-    markMerged(cache, toMerge);
-    safeAlert('已建立今日區塊並合併 ' + toMerge.length + ' 筆 ✓');
+    // 今天的範本不存在，先建立再合併
+    safeAlert('找不到今天的範本，先執行「建立今日範本」再合併。\n（或先手動複製一天的格式）');
     return;
   }
 
+  // 找今天這個 section 的結束位置
   let sectionEnd = vals.length;
   for (let i = headerIdx + 1; i < vals.length; i++) {
     if (isDateHeader(vals[i])) { sectionEnd = i; break; }
   }
 
-  const existing = [];
+  // ★ 關鍵修正：找到欄位標題列（含「分類」），資料插在它之後
+  let aarDataStart = headerIdx + 1; // 預設值：date 行之後
   for (let i = headerIdx + 1; i < sectionEnd; i++) {
-    const t = startTime(vals[i][2]);
+    if (vals[i].join('').includes('分類')) {
+      aarDataStart = i + 1; // 欄位標題的下一行才是資料區
+      break;
+    }
+  }
+
+  // 收集 AAR 資料區已有的有時間的列
+  const existing = [];
+  for (let i = aarDataStart; i < sectionEnd; i++) {
+    const t = startTime(vals[i][2]); // 時間在第 C 欄（index 2）
     if (t !== null) existing.push({ rowNum: i + 1, t });
   }
 
+  // 按時間排序插入（由大到小，確保插入順序正確）
   const inserts = toMerge
     .map(({ row }) => ({
       t:    startTime(row[2]) !== null ? startTime(row[2]) : 9999,
@@ -246,7 +340,7 @@ function mergeToday() {
     const before   = existing.filter(e => e.t <= t);
     const afterRow = before.length
       ? before[before.length - 1].rowNum
-      : headerIdx + 1;
+      : aarDataStart; // 沒有比它早的，就插在 AAR 資料區第一列
 
     main.insertRowAfter(afterRow);
     main.getRange(afterRow + 1, 1, 1, 4).setValues([data]);
@@ -255,7 +349,7 @@ function mergeToday() {
   });
 
   markMerged(cache, toMerge);
-  safeAlert('已合併 ' + toMerge.length + ' 筆到日常紀錄，並按時間排序 ✓');
+  safeAlert('已合併 ' + toMerge.length + ' 筆到今日 AAR 區塊，並按時間排序 ✓');
 }
 
 // ── 工具函式 ────────────────────────────────────────────────────
@@ -528,11 +622,14 @@ function mergeAll() {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('靜華 OS')
-    .addItem('合併今日手機快取', 'mergeToday')
+    .addItem('① 建立今日範本（手動）', 'setupTodayTemplate')
+    .addItem('② 合併今日手機快取', 'mergeToday')
     .addItem('合併所有未合併快取', 'mergeAll')
-    .addItem('診斷手機快取', 'diagnoseCache')
-    .addItem('設定每日 18:45 自動合併', 'setupDailyMerge')
     .addSeparator()
+    .addItem('⏰ 設定每早 7 點自動建立範本', 'setupMorningTrigger')
+    .addItem('⏰ 設定每日 18:45 自動合併', 'setupDailyMerge')
+    .addSeparator()
+    .addItem('診斷手機快取', 'diagnoseCache')
     .addItem('初始化記帳明細分頁', 'initLedgerSheet')
     .addItem('初始化股票紀錄分頁', 'initStockSheet')
     .addToUi();
