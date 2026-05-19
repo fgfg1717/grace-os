@@ -789,10 +789,11 @@
     <textarea class="nb-textarea" id="nb-ta-review" placeholder="貼上 NotebookLM 建議…"></textarea>
   </div>
   <div class="field"><label>週期</label><input type="text" id="r-week"/></div>
-  <div class="field"><label>這週紀錄</label>
-    <textarea class="lg" id="r-notes" placeholder="把這週的紀錄貼過來，流水帳也可以…"></textarea>
+  <div id="review-insights-section" style="margin-bottom:12px"></div>
+  <div class="field"><label>這週其他補充（選填）</label>
+    <textarea class="lg" id="r-notes" placeholder="其他想補充的…（靈感紀錄已自動帶入上方）"></textarea>
   </div>
-  <button class="full-btn" style="background:var(--review)" onclick="copyOnly('review')">複製內容 → NotebookLM</button>
+  <button class="full-btn" style="background:var(--review)" onclick="copyOnly('review')">複製內容 → Claude 分析</button>
 </div>
 
 <!-- 月回顧 -->
@@ -884,6 +885,7 @@ function show(type){
   else if(type==='finance')initFinance();
   else if(type==='aar')initAAR();
   else if(type==='plan'){}
+  else if(type==='review'){loadNb(type);initReview();}
   else loadNb(type);
   window.scrollTo(0,0);
 }
@@ -908,12 +910,45 @@ function goHome(){
 }
 
 /* ════ Review copy ════ */
+function getWeekInsights(){
+  const now=taipeiNow();const mon=mondayOf(now);
+  const captures=getCaptures();
+  const result=[];
+  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const ds=fmtYMD(d);
+    captures.filter(c=>c.date===ds&&c.category==='閱讀/Podcast 靈感').forEach(c=>result.push({date:ds,summary:c.summary}));
+  }
+  return result;
+}
+
+function initReview(){
+  const insights=getWeekInsights();
+  const el=document.getElementById('review-insights-section');if(!el)return;
+  if(!insights.length){
+    el.innerHTML=`<div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted)">本週還沒有「靈感」紀錄 — 有想法時在「快速記錄」選「📚 靈感」分類記下來，週覆盤時會自動出現在這裡。</div>`;
+    return;
+  }
+  el.innerHTML=`<div style="background:#EDE9FE;border:1.5px solid #A78BFA;border-radius:12px;padding:12px 14px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#4C1D95;margin-bottom:8px">📚 本週靈感紀錄（${insights.length} 則）· 複製時自動帶入</div>
+    ${insights.map(i=>`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #C4B5FD">
+      <span style="font-size:11px;color:#7C3AED;white-space:nowrap;font-weight:600">${esc(i.date)}</span>
+      <span style="font-size:13px;color:#1E293B;line-height:1.5">${esc(i.summary)}</span>
+    </div>`).join('')}
+  </div>`;
+}
+
 function assemble(type){
   const v=id=>(document.getElementById(id)||{}).value||'';
-  if(type==='review')return`週日覆盤，這週是 ${v('r-week')}。\n\n這週紀錄：\n${v('r-notes')||'（未填寫）'}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 公司目標與個人目標各佔日常多少比例\n3. 有沒有哪個流程可以優化`;
+  if(type==='review'){
+    const insights=getWeekInsights();
+    const insightText=insights.length
+      ?`\n\n📚 本週靈感與觀察：\n${insights.map(i=>`・[${i.date}] ${i.summary}`).join('\n')}`
+      :'';
+    const notes=v('r-notes');
+    return`週日覆盤，這週是 ${v('r-week')}。${insightText}${notes?`\n\n其他補充：\n${notes}`:''}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點\n2. 從本週靈感中，哪 1-2 個最值得下週變成行動？\n3. 1 個防呆行動（讓下週更順的小改變）\n4. 公司目標與個人目標比例是否平衡`;
+  }
   if(type==='monthly')return`月回顧，${v('mo-month')}。\n\n🏢 事業：${v('mo-career')||'（未填）'}\n📈 成長：${v('mo-growth')||'（未填）'}\n👨‍👩‍👧‍👦 家庭：${v('mo-family')||'（未填）'}\n💪 健康：${v('mo-health')||'（未填）'}\n下月重點：${v('mo-next')||'（未填）'}\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句績效描述句。`;
 }
-function copyOnly(type){doCopy(assemble(type),'已複製！貼到 NotebookLM')}
+function copyOnly(type){doCopy(assemble(type),'已複製！貼給 Claude 分析')}
 
 /* ════ NotebookLM box ════ */
 function loadNb(type){
