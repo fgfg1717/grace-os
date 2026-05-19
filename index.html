@@ -277,7 +277,7 @@
     <div class="card card-capture full" onclick="show('capture')">
       <span class="icon">⚡</span>
       <div class="label">快速記錄</div>
-      <div class="hint">靈感・財務・健康・生活・語音 🎙️</div>
+      <div class="hint">靈感・財務・健康・工作・生活・語音 🎙️</div>
     </div>
   </div>
 
@@ -352,7 +352,8 @@
       <button class="chip" data-cat="財務記帳" onclick="setCapCat('財務記帳')">💰 記帳</button>
       <button class="chip" data-cat="股票紀錄" onclick="setCapCat('股票紀錄')">📊 股票</button>
       <button class="chip" data-cat="健康管理" onclick="setCapCat('健康管理')">💪 健康</button>
-      <button class="chip" data-cat="工作生活" onclick="setCapCat('工作生活')">💬 生活</button>
+      <button class="chip" data-cat="工作" onclick="setCapCat('工作')">🏢 工作</button>
+      <button class="chip" data-cat="生活" onclick="setCapCat('生活')">💬 生活</button>
     </div>
     <div class="cap-row">
       <div class="cap-time-group">
@@ -694,7 +695,7 @@ function toggleNb(type){const ta=document.getElementById('nb-ta-'+type);ta.style
 /* ════════════════════════════════
    快速記錄
 ════════════════════════════════ */
-const CAT_STYLE={'閱讀/Podcast 靈感':{bg:'#EDE9FE',color:'#4C1D95'},'財務記帳':{bg:'#D1FAE5',color:'#065F46'},'股票紀錄':{bg:'#FFF7ED',color:'#9A3412'},'健康管理':{bg:'#FEE2E2',color:'#991B1B'},'工作生活':{bg:'#F1F5F9',color:'#475569'}};
+const CAT_STYLE={'閱讀/Podcast 靈感':{bg:'#EDE9FE',color:'#4C1D95'},'財務記帳':{bg:'#D1FAE5',color:'#065F46'},'股票紀錄':{bg:'#FFF7ED',color:'#9A3412'},'健康管理':{bg:'#FEE2E2',color:'#991B1B'},'工作':{bg:'#DBEAFE',color:'#1E40AF'},'生活':{bg:'#F1F5F9',color:'#475569'},'工作生活':{bg:'#F1F5F9',color:'#475569'}};
 let capCat='閱讀/Podcast 靈感';
 function setCapCat(cat){capCat=cat;document.querySelectorAll('#cap-cats .chip').forEach(b=>b.className='chip'+(b.dataset.cat===cat?' sel-green':''));  }
 function getCaptures(){try{return JSON.parse(localStorage.getItem('captures')||'[]')}catch(e){return[]}}
@@ -975,7 +976,7 @@ async function fetchAAR(){
 }
 function renderAAR(){
   const byDate={};aarData.forEach(r=>{if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r)});
-  const CAT_COLORS={'閱讀/Podcast 靈感':'#EDE9FE:#4C1D95','財務記帳':'#D1FAE5:#065F46','股票紀錄':'#FFF7ED:#9A3412','健康管理':'#FEE2E2:#991B1B','工作生活':'#F1F5F9:#475569','公司目標':'#DBEAFE:#1E40AF','個人目標':'#EDE9FE:#4C1D95','個人生活':'#D1FAE5:#065F46','瑣務':'#F1F5F9:#475569'};
+  const CAT_COLORS={'閱讀/Podcast 靈感':'#EDE9FE:#4C1D95','財務記帳':'#D1FAE5:#065F46','股票紀錄':'#FFF7ED:#9A3412','健康管理':'#FEE2E2:#991B1B','工作':'#DBEAFE:#1E40AF','生活':'#F1F5F9:#475569','工作生活':'#F1F5F9:#475569','公司目標':'#DBEAFE:#1E40AF','個人目標':'#EDE9FE:#4C1D95','個人生活':'#D1FAE5:#065F46','瑣務':'#F1F5F9:#475569'};
   document.getElementById('aar-content').innerHTML=Object.entries(byDate).sort(([a],[b])=>a.localeCompare(b)).map(([date,rows])=>`<div class="aar-day"><div class="aar-day-header">${esc(date)}</div>${rows.map(r=>{const cc=(CAT_COLORS[r.category]||'#F1F5F9:#475569').split(':');return`<div class="aar-entry"><span class="aar-entry-cat" style="background:${cc[0]};color:${cc[1]}">${esc(r.category||'')}</span><span class="aar-entry-time">${esc(r.time||'')}</span><span class="aar-entry-body">${esc(r.summary||'')}</span></div>`}).join('')}</div>`).join('')
 }
 function copyAARFmt(mode){
