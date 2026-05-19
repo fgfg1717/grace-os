@@ -127,6 +127,41 @@
       background:white;display:none}
     .nb-textarea:focus{outline:none;border-color:#94A3B8}
 
+    /* English Learning Center */
+    .eng-tabs{display:flex;gap:4px;margin-bottom:14px;background:var(--bg);border-radius:12px;padding:4px}
+    .eng-tab-btn{flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;background:none;color:var(--muted);transition:all .18s}
+    .eng-tab-btn.active{background:white;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+    .e-hidden{display:none!important}
+    .dict-card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-top:10px}
+    .dict-word-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+    .dict-word{font-size:24px;font-weight:800}
+    .dict-ipa{font-size:14px;color:var(--muted);font-style:italic}
+    .dict-play-btn{background:#F1F5F9;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer}
+    .dict-pos{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--vocab);margin:10px 0 4px}
+    .dict-def{font-size:14px;line-height:1.6;margin-bottom:4px}
+    .dict-example{font-size:13px;color:var(--muted);font-style:italic;margin-bottom:6px}
+    .eng-item{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+    .eng-item-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .eng-item-main{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+    .type-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px}
+    .eng-word{font-size:17px;font-weight:700}
+    .eng-ipa{font-size:13px;color:var(--muted);font-style:italic}
+    .eng-play{background:none;border:none;cursor:pointer;font-size:16px;padding:2px}
+    .eng-zh{font-size:14px;color:var(--text);margin-top:2px}
+    .eng-example{font-size:12px;color:var(--muted);font-style:italic;margin-top:3px}
+    .prac-card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px}
+    .prac-prompt{font-size:16px;line-height:1.7;white-space:pre-line;font-weight:600}
+    .prac-audio-btn{background:#F1F5F9;border:none;border-radius:100px;padding:6px 14px;font-size:13px;cursor:pointer;margin-top:8px;display:inline-block}
+    .prac-options{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+    .prac-opt{text-align:left;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:white;font-size:14px;cursor:pointer;width:100%;transition:all .15s}
+    .prac-opt:hover{background:var(--bg)}
+    .prac-opt.correct{background:#D1FAE5;border-color:#059669;color:#065F46;font-weight:700}
+    .prac-opt.wrong{background:#FEE2E2;border-color:#EF4444;color:#991B1B}
+    .prac-fb{border-radius:14px;padding:14px;margin-top:10px;border:1.5px solid var(--border)}
+    .correct-fb{background:#ECFDF5;border-color:#059669}
+    .wrong-fb{background:#FEF2F2;border-color:#EF4444}
+    .self-fb{background:#F8FAFC;border-color:#CBD5E1}
+
     /* Quick capture */
     .cap-form{background:white;border-radius:var(--radius);padding:14px;
       margin-bottom:14px;border:1.5px solid var(--border)}
@@ -312,9 +347,9 @@
   <div class="section-label">學習成長</div>
   <div class="grid">
     <div class="card card-vocab" onclick="show('vocab')">
-      <span class="icon">📖</span>
-      <div class="label">英文單字庫</div>
-      <div class="hint">隨手記・複製給 Claude 出題</div>
+      <span class="icon">📚</span>
+      <div class="label">英文學習中心</div>
+      <div class="hint">查字典・記單字句子文法・練習</div>
     </div>
     <div class="card card-english" onclick="openEmbed('english')">
       <span class="icon">🎓</span>
@@ -414,31 +449,83 @@
   </div>
 </div>
 
-<!-- 英文單字庫 -->
+<!-- 英文學習中心 -->
 <div class="tpl" id="tpl-vocab">
   <button class="back" onclick="goHome()">← 返回</button>
   <div class="tpl-header">
-    <span class="big-icon">📖</span>
-    <div><h2>英文單字庫</h2>
-      <span class="tag" style="background:#EDE9FE;color:#4C1D95;">隨手記 · 累積複習素材</span>
+    <span class="big-icon">📚</span>
+    <div><h2>英文學習中心</h2>
+      <span class="tag" style="background:#EDE9FE;color:#4C1D95;">查字典・記錄・練習</span>
     </div>
   </div>
-  <div class="cap-form">
-    <div class="seg" id="vocab-tags">
-      <button class="chip sel-purple" data-tag="好單字" onclick="setVocabTag('好單字')">⭐ 好單字</button>
-      <button class="chip" data-tag="好句子" onclick="setVocabTag('好句子')">💬 好句子</button>
-      <button class="chip" data-tag="TOEIC" onclick="setVocabTag('TOEIC')">📝 TOEIC</button>
-      <button class="chip" data-tag="工作用語" onclick="setVocabTag('工作用語')">🏢 工作用語</button>
-      <button class="chip" data-tag="課堂筆記" onclick="setVocabTag('課堂筆記')">📚 課堂</button>
-    </div>
-    <input type="text" id="vocab-word" class="vocab-input" placeholder="輸入單字或句子…"/>
-    <textarea id="vocab-note" class="vocab-note" placeholder="中文意思 / 例句 / 使用情境 / 老師糾正…"></textarea>
-    <button class="full-btn" style="background:var(--vocab)" onclick="submitVocab()">存進單字庫</button>
+
+  <div class="eng-tabs">
+    <button class="eng-tab-btn active" onclick="switchEngTab('dict')">🔍 查字典</button>
+    <button class="eng-tab-btn" onclick="switchEngTab('list')">📚 我的內容</button>
+    <button class="eng-tab-btn" onclick="switchEngTab('practice')">🎯 練習</button>
   </div>
-  <div class="section-label">單字庫（<span id="vocab-count">0</span> 筆）</div>
-  <div class="vocab-filter" id="vocab-filter"></div>
-  <div id="vocab-list"></div>
-  <button class="outline-btn" onclick="copyAllVocab()">📋 複製全部 → 貼給 Claude 出題</button>
+
+  <!-- 查字典 -->
+  <div id="eng-panel-dict">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="text" id="dict-input" placeholder="輸入英文單字…"
+        style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"
+        onkeydown="if(event.key==='Enter')engLookup()"/>
+      <button class="btn-primary" style="background:var(--vocab);padding:11px 16px;border-radius:10px;border:none;color:white;font-weight:700;cursor:pointer" onclick="engLookup()">查</button>
+    </div>
+    <div id="dict-result"></div>
+
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="section-label">手動新增</div>
+      <div class="seg" id="eng-add-type" style="margin-bottom:10px">
+        <button class="chip sel-purple" data-t="vocab" onclick="setEngAddType('vocab')">📝 單字</button>
+        <button class="chip" data-t="sentence" onclick="setEngAddType('sentence')">💬 句子</button>
+        <button class="chip" data-t="grammar" onclick="setEngAddType('grammar')">📐 文法</button>
+      </div>
+      <div id="eng-manual-form"></div>
+    </div>
+  </div>
+
+  <!-- 我的內容 -->
+  <div id="eng-panel-list" class="e-hidden">
+    <div class="seg" id="eng-type-filter" style="margin:4px 0 6px">
+      <button class="chip sel-purple" data-f="all" onclick="setEngFilter('type','all')">全部</button>
+      <button class="chip" data-f="vocab" onclick="setEngFilter('type','vocab')">📝 單字</button>
+      <button class="chip" data-f="sentence" onclick="setEngFilter('type','sentence')">💬 句子</button>
+      <button class="chip" data-f="grammar" onclick="setEngFilter('type','grammar')">📐 文法</button>
+    </div>
+    <div class="seg" id="eng-src-filter" style="margin-bottom:10px">
+      <button class="chip sel-purple" data-f="all" onclick="setEngFilter('src','all')">所有來源</button>
+      <button class="chip" data-f="lookup" onclick="setEngFilter('src','lookup')">🔍 查字典</button>
+      <button class="chip" data-f="lesson" onclick="setEngFilter('src','lesson')">📖 講義</button>
+      <button class="chip" data-f="teacher" onclick="setEngFilter('src','teacher')">👩‍🏫 老師補充</button>
+    </div>
+    <div id="eng-item-count" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
+    <div id="eng-list"></div>
+  </div>
+
+  <!-- 練習 -->
+  <div id="eng-panel-practice" class="e-hidden">
+    <div id="eng-practice-setup">
+      <div class="section-label">練習模式</div>
+      <div class="seg" id="prac-mode-seg" style="margin-bottom:12px">
+        <button class="chip sel-purple" data-m="choice" onclick="setPracMode('choice')">選擇題</button>
+        <button class="chip" data-m="fill" onclick="setPracMode('fill')">填空</button>
+        <button class="chip" data-m="listen" onclick="setPracMode('listen')">聽寫</button>
+        <button class="chip" data-m="translate" onclick="setPracMode('translate')">翻譯</button>
+      </div>
+      <div class="section-label">練習範圍</div>
+      <div class="seg" id="prac-range-seg" style="margin-bottom:14px">
+        <button class="chip sel-purple" data-r="all" onclick="setPracRange('all')">全部</button>
+        <button class="chip" data-r="vocab" onclick="setPracRange('vocab')">單字</button>
+        <button class="chip" data-r="sentence" onclick="setPracRange('sentence')">句子</button>
+        <button class="chip" data-r="grammar" onclick="setPracRange('grammar')">文法</button>
+      </div>
+      <div id="prac-pool-info" style="font-size:13px;color:var(--muted);margin-bottom:14px"></div>
+      <button class="full-btn" style="background:var(--vocab)" onclick="startEngPractice()">開始練習</button>
+    </div>
+    <div id="eng-prac-card" style="display:none"></div>
+  </div>
 </div>
 
 <!-- 記帳 -->
@@ -692,7 +779,7 @@ function show(type){
   document.querySelectorAll('.tpl').forEach(el=>el.classList.remove('active'));
   document.getElementById('tpl-'+type).classList.add('active');
   if(type==='capture')initCaptureForm();
-  else if(type==='vocab')initVocabPage();
+  else if(type==='vocab')initEngCenter();
   else if(type==='ledger')initLedger();
   else if(type==='stock')initStock();
   else if(type==='aar')initAAR();
@@ -813,33 +900,300 @@ function toggleVoice(){
 /* ════════════════════════════════
    英文單字庫
 ════════════════════════════════ */
-let vocabTag='好單字',vocabFilter='全部';
-function setVocabTag(tag){vocabTag=tag;document.querySelectorAll('#vocab-tags .chip').forEach(b=>b.className='chip'+(b.dataset.tag===tag?' sel-purple':''))}
-function getVocabs(){try{return JSON.parse(localStorage.getItem('vocabs')||'[]')}catch(e){return[]}}
-function setVocabs(items){localStorage.setItem('vocabs',JSON.stringify(items))}
-function initVocabPage(){document.getElementById('vocab-word').value='';document.getElementById('vocab-note').value='';renderVocabFilter();loadVocabList()}
-function renderVocabFilter(){const tags=['全部',...new Set(getVocabs().map(v=>v.tag))];document.getElementById('vocab-filter').innerHTML=tags.map(t=>`<button class="vf-btn ${t===vocabFilter?'sel':''}" onclick="setVocabFilter('${t}')">${t}</button>`).join('')}
-function setVocabFilter(tag){vocabFilter=tag;renderVocabFilter();loadVocabList()}
-async function submitVocab(){
-  const word=document.getElementById('vocab-word').value.trim();const note=document.getElementById('vocab-note').value.trim();
-  if(!word){showToast('請輸入單字或句子');return}
-  const now=taipeiNow();const item={id:Date.now(),date:fmtYMD(now),time:fmtHHMM(now),word,note,tag:vocabTag,synced:false};
-  const items=getVocabs();items.unshift(item);setVocabs(items);
-  document.getElementById('vocab-word').value='';document.getElementById('vocab-note').value='';
-  renderVocabFilter();loadVocabList();showToast('已存入單字庫！');
-  const ok=await postGAS({type:'vocab',date:item.date,time:item.time,word,note,tag:vocabTag});
-  if(ok){const latest=getVocabs();const idx=latest.findIndex(v=>v.id===item.id);if(idx!==-1){latest[idx].synced=true;setVocabs(latest)}renderVocabFilter();loadVocabList();showToast('已存入並同步 ✓')}
+/* ════════════════════════════════
+   英文學習中心
+════════════════════════════════ */
+const ENG_KEY='eng_items_v1';
+let engTypeFilter='all',engSrcFilter='all',engAddType='vocab';
+let pracMode='choice',pracRange='all',pracPool=[],pracIdx=0,pracScore={c:0,t:0};
+let _dictEntry=null,_curQ=null;
+
+function getEngItems(){try{return JSON.parse(localStorage.getItem(ENG_KEY)||'[]')}catch{return[]}}
+function setEngItems(a){localStorage.setItem(ENG_KEY,JSON.stringify(a))}
+function addEngItem(item){const a=getEngItems();const i=a.findIndex(x=>x.id===item.id);i>=0?a[i]=item:a.unshift(item);setEngItems(a)}
+
+function initEngCenter(){switchEngTab('dict');renderEngManualForm()}
+
+function switchEngTab(tab){
+  ['dict','list','practice'].forEach(t=>{
+    document.getElementById('eng-panel-'+t).classList.toggle('e-hidden',t!==tab);
+  });
+  document.querySelectorAll('.eng-tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['dict','list','practice'][i]===tab);
+  });
+  if(tab==='list')renderEngList();
+  if(tab==='practice')renderPracSetup();
 }
-function loadVocabList(){
-  const list=document.getElementById('vocab-list');const countEl=document.getElementById('vocab-count');const all=getVocabs();const items=vocabFilter==='全部'?all:all.filter(v=>v.tag===vocabFilter);countEl.textContent=all.length;
-  if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄，快記第一個！</div>';return}
-  list.innerHTML=items.map(v=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:#EDE9FE;color:#4C1D95">${esc(v.tag)}</span><span class="rec-time">${esc(v.date)}</span></div><div class="rec-right">${v.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delVocab(${v.id})">✕</button></div></div><div class="vocab-word">${esc(v.word)}</div>${v.note?`<div class="vocab-note-body">${esc(v.note)}</div>`:''}</div>`).join('')
+
+/* ── 查字典 ── */
+async function engLookup(){
+  const word=(document.getElementById('dict-input').value||'').trim();
+  if(!word)return;
+  const r=document.getElementById('dict-result');
+  r.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">查詢中…</div>';
+  try{
+    const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+    if(!res.ok)throw new Error('找不到這個單字，請確認拼字');
+    const data=await res.json();
+    _dictEntry=data[0];
+    renderDictResult(_dictEntry);
+  }catch(e){r.innerHTML=`<div style="text-align:center;padding:20px;color:#EF4444">${e.message}</div>`}
 }
-function delVocab(id){setVocabs(getVocabs().filter(v=>v.id!==id));renderVocabFilter();loadVocabList()}
-function copyAllVocab(){
-  const items=getVocabs();if(!items.length){showToast('單字庫是空的');return}
-  const text=`【我的英文單字庫 — ${items.length} 筆】\n\n`+items.map((v,i)=>`${i+1}. [${v.tag}] ${v.word}`+(v.note?`\n   → ${v.note}`:'')).join('\n\n')+'\n\n---\n我是公關，TOEIC 目標 800 分。請出 3 題造句練習（選最適合公關工作的單字）+ 2 題 TOEIC 填空題。';
-  doCopy(text,`已複製 ${items.length} 筆！貼給 Claude 出題`)
+
+function renderDictResult(entry){
+  const ph=entry.phonetics||[];
+  const ipa=ph.find(p=>p.text)?.text||'';
+  const au=ph.find(p=>p.audio&&p.audio.length>4)?.audio||'';
+  let html=`<div class="dict-card"><div class="dict-word-row">
+    <span class="dict-word">${esc(entry.word)}</span>
+    ${ipa?`<span class="dict-ipa">${esc(ipa)}</span>`:''}
+    <button class="dict-play-btn" onclick="engPlay('${au.replace(/'/g,"\\'")}','${esc(entry.word)}')">🔊</button>
+  </div>`;
+  (entry.meanings||[]).slice(0,2).forEach(m=>{
+    html+=`<div class="dict-pos">${esc(m.partOfSpeech)}</div>`;
+    (m.definitions||[]).slice(0,2).forEach(d=>{
+      html+=`<div class="dict-def">• ${esc(d.definition)}</div>`;
+      if(d.example)html+=`<div class="dict-example">"${esc(d.example)}"<button class="eng-play" onclick="engSpeak('${d.example.replace(/'/g,"\\'")}')">🔊</button></div>`;
+    });
+  });
+  html+=`<div style="margin-top:14px">
+    <label style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px">中文意思</label>
+    <input type="text" id="dict-zh" placeholder="輸入中文意思…"
+      style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:15px;font-family:inherit;margin-bottom:8px"/>
+    <button class="full-btn" style="background:var(--vocab)" onclick="saveDictWord()">記住這個字 ✓</button>
+  </div></div>`;
+  document.getElementById('dict-result').innerHTML=html;
+}
+
+function saveDictWord(){
+  if(!_dictEntry){return}
+  const zh=(document.getElementById('dict-zh').value||'').trim();
+  if(!zh){showToast('請輸入中文意思');return}
+  const ph=_dictEntry.phonetics||[];
+  const ipa=ph.find(p=>p.text)?.text||'';
+  const au=ph.find(p=>p.audio&&p.audio.length>4)?.audio||'';
+  const m=_dictEntry.meanings?.[0]||{};const d=m.definitions?.[0]||{};
+  addEngItem({id:Date.now(),type:'vocab',word:_dictEntry.word,ipa,audioUrl:au,
+    partOfSpeech:m.partOfSpeech||'',enDef:d.definition||'',zhMeaning:zh,
+    example:d.example||'',source:'lookup',date:fmtYMD(taipeiNow())});
+  showToast(`「${_dictEntry.word}」已存入 ✓`);
+  document.getElementById('dict-result').innerHTML='';
+  document.getElementById('dict-input').value='';_dictEntry=null;
+}
+
+function engPlay(url,word){
+  const src=url&&url.length>4?(url.startsWith('http')?url:'https:'+url):'';
+  if(src){const a=new Audio(src);a.play().catch(()=>engSpeak(word));}
+  else engSpeak(word);
+}
+function engSpeak(text){
+  if(!('speechSynthesis'in window))return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
+  speechSynthesis.speak(u);
+}
+
+/* ── 手動新增 ── */
+function setEngAddType(t){
+  engAddType=t;
+  document.querySelectorAll('#eng-add-type .chip').forEach(b=>b.className='chip'+(b.dataset.t===t?' sel-purple':''));
+  renderEngManualForm();
+}
+function renderEngManualForm(){
+  const f=document.getElementById('eng-manual-form');if(!f)return;
+  const srcSel=`<div class="field"><label>來源</label><select id="m-src" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;background:white;font-family:inherit"><option value="teacher">👩‍🏫 老師課堂補充</option><option value="manual">✍️ 自己記的</option></select></div>`;
+  if(engAddType==='vocab'){
+    f.innerHTML=`<div class="field"><label>英文單字</label><input type="text" id="m-word" placeholder="例：ephemeral" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/></div>
+    <div class="field"><label>中文意思</label><input type="text" id="m-zh" placeholder="例：短暫的" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/></div>
+    <div class="field"><label>例句（選填）</label><input type="text" id="m-ex" placeholder="例：Fame is ephemeral." style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/></div>
+    ${srcSel}<button class="full-btn" style="background:var(--vocab)" onclick="submitManualEng()">存入 ✓</button>`;
+  }else if(engAddType==='sentence'){
+    f.innerHTML=`<div class="field"><label>英文句子</label><textarea id="m-sent" placeholder="例：I was wondering if you could help me." style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;min-height:72px;resize:vertical;font-family:inherit"></textarea></div>
+    <div class="field"><label>中文翻譯</label><input type="text" id="m-zh" placeholder="例：我在想你是否能幫我。" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/></div>
+    <div class="field"><label>備註（選填）</label><input type="text" id="m-notes" placeholder="例：禮貌請求的委婉說法" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit"/></div>
+    ${srcSel}<button class="full-btn" style="background:var(--vocab)" onclick="submitManualEng()">存入 ✓</button>`;
+  }else{
+    f.innerHTML=`<div class="field"><label>文法規則名稱</label><input type="text" id="m-rule" placeholder="例：Noun Clauses with that" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/></div>
+    <div class="field"><label>說明</label><textarea id="m-expl" placeholder="例：that 引導名詞子句，可作主詞、受詞…" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;min-height:72px;resize:vertical;font-family:inherit"></textarea></div>
+    <div class="field"><label>例句（一行一句）</label><textarea id="m-examps" placeholder="I know that she is coming.&#10;That he passed is surprising." style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;min-height:80px;resize:vertical;font-family:inherit"></textarea></div>
+    <button class="full-btn" style="background:var(--vocab)" onclick="submitManualEng()">存入 ✓</button>`;
+  }
+}
+function submitManualEng(){
+  const v=id=>(document.getElementById(id)||{}).value?.trim()||'';
+  const now=taipeiNow();let item={id:Date.now(),type:engAddType,date:fmtYMD(now)};
+  if(engAddType==='vocab'){
+    if(!v('m-word')||!v('m-zh')){showToast('單字和中文意思必填');return}
+    Object.assign(item,{word:v('m-word'),zhMeaning:v('m-zh'),example:v('m-ex'),source:v('m-src')||'teacher',ipa:'',audioUrl:'',enDef:''});
+  }else if(engAddType==='sentence'){
+    if(!v('m-sent')||!v('m-zh')){showToast('句子和中文翻譯必填');return}
+    Object.assign(item,{sentence:v('m-sent'),translation:v('m-zh'),notes:v('m-notes'),source:v('m-src')||'teacher'});
+  }else{
+    if(!v('m-rule')){showToast('請輸入文法規則名稱');return}
+    Object.assign(item,{rule:v('m-rule'),explanation:v('m-expl'),examples:v('m-examps').split('\n').map(s=>s.trim()).filter(Boolean),source:'teacher'});
+  }
+  addEngItem(item);showToast('已存入 ✓');renderEngManualForm();
+}
+
+/* ── 我的內容 ── */
+function setEngFilter(kind,val){
+  if(kind==='type'){engTypeFilter=val;document.querySelectorAll('#eng-type-filter .chip').forEach(b=>b.className='chip'+(b.dataset.f===val?' sel-purple':''));}
+  else{engSrcFilter=val;document.querySelectorAll('#eng-src-filter .chip').forEach(b=>b.className='chip'+(b.dataset.f===val?' sel-purple':''));}
+  renderEngList();
+}
+function renderEngList(){
+  let items=getEngItems();
+  if(engTypeFilter!=='all')items=items.filter(i=>i.type===engTypeFilter);
+  if(engSrcFilter!=='all')items=items.filter(i=>i.source===engSrcFilter);
+  const cnt=document.getElementById('eng-item-count');if(cnt)cnt.textContent=`共 ${items.length} 筆`;
+  const list=document.getElementById('eng-list');
+  if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄</div>';return}
+  const TS={vocab:{l:'單字',bg:'#EDE9FE',c:'#4C1D95'},sentence:{l:'句子',bg:'#DBEAFE',c:'#1E40AF'},grammar:{l:'文法',bg:'#D1FAE5',c:'#065F46'}};
+  const SL={lookup:'🔍',lesson:'📖',teacher:'👩‍🏫',manual:'✍️'};
+  list.innerHTML=items.map(item=>{
+    const ts=TS[item.type]||TS.vocab;
+    let main='',sub='';
+    if(item.type==='vocab'){
+      main=`<span class="eng-word">${esc(item.word)}</span>${item.ipa?`<span class="eng-ipa">${esc(item.ipa)}</span>`:''}<button class="eng-play" onclick="engPlay('${(item.audioUrl||'').replace(/'/g,"\\'")}','${esc(item.word)}')">🔊</button>`;
+      sub=`<div class="eng-zh">${esc(item.zhMeaning||'')}</div>${item.example?`<div class="eng-example">"${esc(item.example)}"</div>`:''}`;
+    }else if(item.type==='sentence'){
+      main=`<span class="eng-word" style="font-size:14px">${esc(item.sentence||'')}</span><button class="eng-play" onclick="engSpeak('${(item.sentence||'').replace(/'/g,"\\'")}')">🔊</button>`;
+      sub=`<div class="eng-zh">${esc(item.translation||'')}</div>${item.notes?`<div class="eng-example">${esc(item.notes)}</div>`:''}`;
+    }else{
+      main=`<span class="eng-word" style="font-size:14px">${esc(item.rule||'')}</span>`;
+      sub=`${item.explanation?`<div class="eng-zh">${esc(item.explanation)}</div>`:''}`+((item.examples||[]).slice(0,1).map(e=>`<div class="eng-example">"${esc(e)}"<button class="eng-play" onclick="engSpeak('${e.replace(/'/g,"\\'")}')">🔊</button></div>`).join(''));
+    }
+    return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="font-size:11px;color:var(--muted);flex:1;margin-left:4px">${SL[item.source]||''} ${esc(item.date)}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
+  }).join('');
+}
+function delEngItem(id){setEngItems(getEngItems().filter(i=>i.id!==id));renderEngList()}
+
+/* ── 練習 ── */
+function setPracMode(m){pracMode=m;document.querySelectorAll('#prac-mode-seg .chip').forEach(b=>b.className='chip'+(b.dataset.m===m?' sel-purple':''));renderPracSetup()}
+function setPracRange(r){pracRange=r;document.querySelectorAll('#prac-range-seg .chip').forEach(b=>b.className='chip'+(b.dataset.r===r?' sel-purple':''));renderPracSetup()}
+function renderPracSetup(){
+  let pool=getEngItems();if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
+  const el=document.getElementById('prac-pool-info');if(el)el.textContent=`共 ${pool.length} 個項目可練習`;
+}
+function engShuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function startEngPractice(){
+  let pool=getEngItems();if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
+  if(pool.length<2){showToast('至少需要 2 個項目才能練習');return}
+  pracPool=engShuffle(pool);pracIdx=0;pracScore={c:0,t:0};
+  document.getElementById('eng-practice-setup').style.display='none';
+  document.getElementById('eng-prac-card').style.display='block';
+  renderPracQ();
+}
+function genEngQ(item,all,mode){
+  const pool=all.filter(i=>i.type===item.type&&i.id!==item.id);
+  const sa=(prompt,hint,answer,audio,audioUrl,reveal)=>({prompt,hint,answer,audioText:audio,audioUrl:audioUrl||'',reveal,selfAssess:true,options:null});
+  if(mode==='choice'){
+    if(item.type==='vocab'&&item.word&&item.zhMeaning){
+      const opts=engShuffle([item.word,...engShuffle(pool).slice(0,3).map(i=>i.word).filter(Boolean)]);
+      return{prompt:item.zhMeaning,hint:'選出對應的英文單字',answer:item.word,options:opts,audioText:item.word,audioUrl:item.audioUrl||'',reveal:`${item.word}${item.ipa?` [${item.ipa}]`:''} — ${item.zhMeaning}${item.example?`\n\n例句："${item.example}"`:''}`,selfAssess:false};
+    }
+    if(item.type==='sentence'&&item.sentence&&item.translation){
+      const opts=engShuffle([item.translation,...engShuffle(pool).slice(0,3).map(i=>i.translation).filter(Boolean)]);
+      return{prompt:item.sentence,hint:'選出正確的中文翻譯',answer:item.translation,options:opts,audioText:item.sentence,audioUrl:'',reveal:`${item.sentence}\n${item.translation}${item.notes?`\n（${item.notes}）`:''}`,selfAssess:false};
+    }
+    if(item.type==='grammar'&&(item.examples||[]).length){
+      const ex=item.examples[0];
+      const opts=engShuffle([ex,...engShuffle(pool).flatMap(i=>i.examples||[]).slice(0,3)]);
+      return{prompt:`【${item.rule}】\n${item.explanation||''}`,hint:'選出符合此文法規則的例句',answer:ex,options:opts,audioText:ex,audioUrl:'',reveal:(item.examples||[]).join('\n'),selfAssess:false};
+    }
+  }
+  if(mode==='fill'){
+    if(item.type==='vocab'&&item.word&&item.example){
+      const re=new RegExp('\\b'+item.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');
+      const blank=item.example.replace(re,'______');
+      return{prompt:blank!==item.example?blank:`請造一個包含「${item.word}」的句子（中文意思：${item.zhMeaning}）`,hint:`中文意思：${item.zhMeaning}`,answer:item.word.toLowerCase(),options:null,audioText:item.example,audioUrl:item.audioUrl||'',reveal:item.example,selfAssess:blank===item.example};
+    }
+    if(item.type==='sentence'&&item.sentence){
+      const words=item.sentence.split(/\s+/);
+      const cands=words.filter(w=>w.replace(/[^a-zA-Z]/g,'').length>3);
+      if(!cands.length)return null;
+      const target=cands[Math.floor(Math.random()*cands.length)];
+      return{prompt:item.sentence.replace(target,'______'),hint:`中文提示：${item.translation||''}`,answer:target.replace(/[^a-zA-Z']/g,'').toLowerCase(),options:null,audioText:item.sentence,audioUrl:'',reveal:item.sentence,selfAssess:false};
+    }
+    if(item.type==='grammar'&&(item.examples||[]).length){
+      return sa(`【${item.rule}】\n${item.explanation||''}\n\n請造一個正確的例句`,item.rule,item.examples[0],item.examples[0],'',item.examples.join('\n'));
+    }
+  }
+  if(mode==='listen'){
+    if(item.type==='vocab'&&item.word)return{prompt:'🎧 聆聽發音，輸入這個單字',hint:`中文意思：${item.zhMeaning||''}`,answer:item.word.toLowerCase(),options:null,audioText:item.word,audioUrl:item.audioUrl||'',reveal:`${item.word}${item.ipa?` [${item.ipa}]`:''} — ${item.zhMeaning||''}`,selfAssess:false};
+    if(item.type==='sentence'&&item.sentence&&item.translation){
+      const opts=engShuffle([item.translation,...engShuffle(pool).slice(0,3).map(i=>i.translation).filter(Boolean)]);
+      return{prompt:'🎧 聆聽句子，選出正確的中文意思',hint:'',answer:item.translation,options:opts,audioText:item.sentence,audioUrl:'',reveal:`${item.sentence}\n${item.translation}`,selfAssess:false};
+    }
+  }
+  if(mode==='translate'){
+    if(item.type==='vocab'&&item.zhMeaning)return sa(`中文：${item.zhMeaning}`,`用英文寫出這個單字和例句`,item.example||item.word,item.word,item.audioUrl,`${item.word}\n例句：${item.example||''}`);
+    if(item.type==='sentence'&&item.translation)return sa(`中文：${item.translation}`,'翻譯成英文',item.sentence,item.sentence,'',item.sentence);
+    if(item.type==='grammar'&&(item.examples||[]).length)return sa(`【${item.rule}】\n${item.explanation||''}\n\n請用英文造一個正確例句`,item.rule,item.examples[0],item.examples[0],'',item.examples.join('\n'));
+  }
+  return null;
+}
+function renderPracQ(){
+  const maxQ=Math.min(pracPool.length,10);
+  if(pracIdx>=maxQ){
+    const pct=Math.round(pracScore.c/pracScore.t*100)||0;
+    document.getElementById('eng-prac-card').innerHTML=`<div style="text-align:center;padding:24px 0"><div style="font-size:48px;margin-bottom:12px">${pct>=80?'🎉':pct>=60?'👍':'💪'}</div><div style="font-size:22px;font-weight:800;margin-bottom:6px">${pracScore.c} / ${pracScore.t}</div><div style="color:var(--muted);margin-bottom:20px">${pct}% 答對</div><button class="full-btn" style="background:var(--vocab)" onclick="resetEngPrac()">再練一輪</button></div>`;return;
+  }
+  let item=pracPool[pracIdx],q=null,tries=0;
+  while(!q&&tries<pracPool.length){q=genEngQ(item,getEngItems(),pracMode);if(!q){pracIdx++;tries++;if(pracIdx>=maxQ){renderPracQ();return}item=pracPool[pracIdx]}}
+  if(!q){renderPracQ();return}
+  _curQ=q;
+  const prog=`${pracIdx+1} / ${maxQ}`;
+  const audioBtn=q.audioText?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聆聽</button>`:'';
+  let inputHtml='';
+  if(q.options){
+    inputHtml=`<div class="prac-options">${q.options.map(o=>`<button class="prac-opt" onclick="checkEngChoice(this,'${o.replace(/'/g,"\\'")}')"><span>${esc(o)}</span></button>`).join('')}</div>`;
+  }else{
+    inputHtml=`<input type="text" id="prac-fill" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit;margin-bottom:8px" placeholder="輸入答案…" onkeydown="if(event.key==='Enter')checkEngFill()"/>
+    <button class="full-btn" style="background:var(--vocab)" onclick="checkEngFill()">確認</button>`;
+  }
+  document.getElementById('eng-prac-card').innerHTML=`
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between"><span>${prog}</span><span>答對 ${pracScore.c} 題</span></div>
+    <div class="prac-card"><div class="prac-prompt">${esc(q.prompt)}</div>${audioBtn}${q.hint?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(q.hint)}</div>`:''}</div>
+    ${inputHtml}
+    <div id="prac-fb" style="display:none"></div>`;
+  if(pracMode==='listen'&&q.audioText)setTimeout(()=>engPlay(q.audioUrl||'',q.audioText),300);
+}
+function checkEngChoice(btn,selected){
+  const q=_curQ;if(!q)return;
+  const correct=selected.toLowerCase()===q.answer.toLowerCase();
+  pracScore.t++;if(correct)pracScore.c++;
+  document.querySelectorAll('.prac-opt').forEach(b=>{
+    b.disabled=true;
+    if(b.querySelector('span').textContent===q.answer)b.classList.add('correct');
+    else if(b===btn&&!correct)b.classList.add('wrong');
+  });
+  showPracFb(correct,q.reveal,q.audioText,q.audioUrl);
+}
+function checkEngFill(){
+  const q=_curQ;if(!q)return;
+  const val=(document.getElementById('prac-fill')?.value||'').trim().toLowerCase();
+  if(q.selfAssess){
+    document.getElementById('prac-fb').style.display='block';
+    document.getElementById('prac-fb').className='prac-fb self-fb';
+    document.getElementById('prac-fb').innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:6px">參考答案：</div><div style="font-size:14px;line-height:1.7;white-space:pre-line">${esc(q.reveal)}</div>${q.audioText?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聆聽</button>`:''}<div style="display:flex;gap:8px;margin-top:10px"><button class="prac-opt correct" style="flex:1" onclick="selfMark(true)">✅ 對了</button><button class="prac-opt wrong" style="flex:1" onclick="selfMark(false)">❌ 答錯</button></div>`;
+    return;
+  }
+  const correct=val===q.answer.toLowerCase()||q.answer.toLowerCase().startsWith(val);
+  pracScore.t++;if(correct)pracScore.c++;
+  showPracFb(correct,correct?q.reveal:`正確答案：${q.answer}\n\n${q.reveal}`,q.audioText,q.audioUrl);
+}
+function selfMark(ok){pracScore.t++;if(ok)pracScore.c++;nextEngQ()}
+function showPracFb(correct,reveal,audioText,audioUrl){
+  const fb=document.getElementById('prac-fb');
+  fb.style.display='block';fb.className=correct?'prac-fb correct-fb':'prac-fb wrong-fb';
+  fb.innerHTML=`<div class="fb-title">${correct?'✅ 正確！':'❌ 答錯了'}</div><div style="font-size:13px;line-height:1.7;white-space:pre-line;margin-top:4px">${esc(reveal||'')}</div>${audioText?`<button class="prac-audio-btn" onclick="engPlay('${(audioUrl||'').replace(/'/g,"\\'")}','${audioText.replace(/'/g,"\\'")}')">🔊 再聽一次</button>`:''}<button class="btn-primary" style="margin-top:10px;width:100%;padding:12px;border:none;border-radius:10px;color:white;background:var(--vocab);font-size:15px;font-weight:700;cursor:pointer" onclick="nextEngQ()">下一題 →</button>`;
+}
+function nextEngQ(){pracIdx++;renderPracQ()}
+function resetEngPrac(){
+  document.getElementById('eng-practice-setup').style.display='block';
+  document.getElementById('eng-prac-card').style.display='none';
+  renderPracSetup();
 }
 
 /* ════════════════════════════════
