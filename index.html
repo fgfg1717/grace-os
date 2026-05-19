@@ -309,6 +309,30 @@
     .plan-task{font-size:13px;padding:6px 8px;flex:1;line-height:1.5;color:var(--text)}
     .plan-cat{font-size:11px;font-weight:600;padding:6px 6px;color:var(--muted);flex-shrink:0}
     .plan-empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
+
+    /* Today tasks */
+    .today-sec-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+      color:var(--muted);margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center}
+    .today-task-card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+    .toeic-word-row{border-bottom:1px dashed var(--border);padding:10px 0}
+    .toeic-word-row:last-child{border-bottom:none}
+    .toeic-word-en{font-size:16px;font-weight:700;display:flex;align-items:center;gap:5px}
+    .toeic-word-zh{font-size:12px;color:var(--muted);margin-top:2px}
+    .toeic-word-ex{font-size:12px;color:var(--muted);font-style:italic;margin-top:3px;line-height:1.5}
+    .today-sent-card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+    .today-sent-q{font-size:14px;line-height:1.7;margin-bottom:10px;font-weight:600}
+    .today-sent-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+    .today-sent-opt{text-align:left;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;
+      background:white;font-size:13px;cursor:pointer;width:100%;transition:all .15s}
+    .today-sent-opt:hover{background:var(--bg)}
+    .today-sent-opt.t-correct{background:#D1FAE5;border-color:#059669;color:#065F46;font-weight:700}
+    .today-sent-opt.t-wrong{background:#FEE2E2;border-color:#EF4444;color:#991B1B}
+    .today-output-card{background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:14px;padding:16px}
+    .lesson-import-box{background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;padding:14px;margin-bottom:12px}
+    .lesson-card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;
+      margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .lesson-title{font-size:14px;font-weight:700}
+    .lesson-meta{font-size:11px;color:var(--muted);margin-top:3px}
   </style>
 </head>
 <body>
@@ -346,15 +370,10 @@
 
   <div class="section-label">學習成長</div>
   <div class="grid">
-    <div class="card card-vocab" onclick="show('vocab')">
+    <div class="card card-vocab full" onclick="show('vocab')">
       <span class="icon">📚</span>
       <div class="label">英文學習中心</div>
-      <div class="hint">查字典・記單字句子文法・練習</div>
-    </div>
-    <div class="card card-english" onclick="openEmbed('english')">
-      <span class="icon">🎓</span>
-      <div class="label">英文練習 App</div>
-      <div class="hint">TOEIC · 每日任務 · 課程複習</div>
+      <div class="hint">TOEIC 每日任務・查字典・課程複習・練習</div>
     </div>
   </div>
 
@@ -460,13 +479,28 @@
   </div>
 
   <div class="eng-tabs">
-    <button class="eng-tab-btn active" onclick="switchEngTab('dict')">🔍 查字典</button>
-    <button class="eng-tab-btn" onclick="switchEngTab('list')">📚 我的內容</button>
+    <button class="eng-tab-btn active" onclick="switchEngTab('today')">📅 今日</button>
+    <button class="eng-tab-btn" onclick="switchEngTab('dict')">🔍 查記</button>
+    <button class="eng-tab-btn" onclick="switchEngTab('list')">📚 內容</button>
     <button class="eng-tab-btn" onclick="switchEngTab('practice')">🎯 練習</button>
   </div>
 
-  <!-- 查字典 -->
-  <div id="eng-panel-dict">
+  <!-- 今日任務 -->
+  <div id="eng-panel-today">
+    <div id="toeic-phase-bar"></div>
+    <div class="today-sec-label" style="margin-top:4px">
+      <span>📝 任務一：今日 TOEIC 單字 × 5</span>
+      <button class="nb-btn" onclick="saveTodayVocab()">存入 ✓</button>
+    </div>
+    <div id="today-vocab-list"></div>
+    <div class="today-sec-label">💬 任務二：句子填空 × 3</div>
+    <div id="today-sentence-list"></div>
+    <div class="today-sec-label">✍️ 任務三：英文輸出</div>
+    <div id="today-output"></div>
+  </div>
+
+  <!-- 查記 -->
+  <div id="eng-panel-dict" class="e-hidden">
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <input type="text" id="dict-input" placeholder="輸入英文單字…"
         style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"
@@ -474,7 +508,6 @@
       <button class="btn-primary" style="background:var(--vocab);padding:11px 16px;border-radius:10px;border:none;color:white;font-weight:700;cursor:pointer" onclick="engLookup()">查</button>
     </div>
     <div id="dict-result"></div>
-
     <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
       <div class="section-label">手動新增</div>
       <div class="seg" id="eng-add-type" style="margin-bottom:10px">
@@ -486,22 +519,38 @@
     </div>
   </div>
 
-  <!-- 我的內容 -->
+  <!-- 內容 -->
   <div id="eng-panel-list" class="e-hidden">
-    <div class="seg" id="eng-type-filter" style="margin:4px 0 6px">
-      <button class="chip sel-purple" data-f="all" onclick="setEngFilter('type','all')">全部</button>
-      <button class="chip" data-f="vocab" onclick="setEngFilter('type','vocab')">📝 單字</button>
-      <button class="chip" data-f="sentence" onclick="setEngFilter('type','sentence')">💬 句子</button>
-      <button class="chip" data-f="grammar" onclick="setEngFilter('type','grammar')">📐 文法</button>
+    <div style="margin-bottom:14px">
+      <div class="today-sec-label" style="margin-top:0">
+        <span>📖 我的課程</span>
+        <button class="nb-btn" onclick="toggleLessonImport()">+ 匯入課程</button>
+      </div>
+      <div id="lesson-import-box" class="lesson-import-box" style="display:none">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">貼上課程 JSON，單字和慣用語會自動加入內容庫</div>
+        <textarea id="lesson-json-input" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;font-family:'SF Mono','Courier New',monospace;min-height:100px;resize:vertical;background:white;margin-bottom:8px" placeholder='{"courseTitle":"...","classDate":"...","vocabulary":[...],"idioms":[]}'></textarea>
+        <button class="full-btn" style="background:var(--vocab)" onclick="importLessonJSON()">匯入課程 ✓</button>
+      </div>
+      <div id="lesson-list"></div>
     </div>
-    <div class="seg" id="eng-src-filter" style="margin-bottom:10px">
-      <button class="chip sel-purple" data-f="all" onclick="setEngFilter('src','all')">所有來源</button>
-      <button class="chip" data-f="lookup" onclick="setEngFilter('src','lookup')">🔍 查字典</button>
-      <button class="chip" data-f="lesson" onclick="setEngFilter('src','lesson')">📖 講義</button>
-      <button class="chip" data-f="teacher" onclick="setEngFilter('src','teacher')">👩‍🏫 老師補充</button>
+    <div style="border-top:1px solid var(--border);padding-top:10px">
+      <div class="section-label" style="margin-top:0">我的學習內容</div>
+      <div class="seg" id="eng-type-filter" style="margin:4px 0 6px">
+        <button class="chip sel-purple" data-f="all" onclick="setEngFilter('type','all')">全部</button>
+        <button class="chip" data-f="vocab" onclick="setEngFilter('type','vocab')">📝 單字</button>
+        <button class="chip" data-f="sentence" onclick="setEngFilter('type','sentence')">💬 句子</button>
+        <button class="chip" data-f="grammar" onclick="setEngFilter('type','grammar')">📐 文法</button>
+      </div>
+      <div class="seg" id="eng-src-filter" style="margin-bottom:10px">
+        <button class="chip sel-purple" data-f="all" onclick="setEngFilter('src','all')">所有來源</button>
+        <button class="chip" data-f="toeic" onclick="setEngFilter('src','toeic')">📊 TOEIC</button>
+        <button class="chip" data-f="lookup" onclick="setEngFilter('src','lookup')">🔍 查字典</button>
+        <button class="chip" data-f="lesson" onclick="setEngFilter('src','lesson')">📖 講義</button>
+        <button class="chip" data-f="teacher" onclick="setEngFilter('src','teacher')">👩‍🏫 老師補充</button>
+      </div>
+      <div id="eng-item-count" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
+      <div id="eng-list"></div>
     </div>
-    <div id="eng-item-count" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
-    <div id="eng-list"></div>
   </div>
 
   <!-- 練習 -->
@@ -910,18 +959,22 @@ let _dictEntry=null,_curQ=null;
 
 function getEngItems(){try{return JSON.parse(localStorage.getItem(ENG_KEY)||'[]')}catch{return[]}}
 function setEngItems(a){localStorage.setItem(ENG_KEY,JSON.stringify(a))}
-function addEngItem(item){const a=getEngItems();const i=a.findIndex(x=>x.id===item.id);i>=0?a[i]=item:a.unshift(item);setEngItems(a)}
+function addEngItem(item){
+  if(!item.srs)item.srs={nextReview:fmtYMD(taipeiNow()),interval:0,reps:0,lastRating:0,lastReview:''};
+  const a=getEngItems();const i=a.findIndex(x=>x.id===item.id);i>=0?a[i]=item:a.unshift(item);setEngItems(a)
+}
 
-function initEngCenter(){switchEngTab('dict');renderEngManualForm()}
+function initEngCenter(){switchEngTab('today');renderEngManualForm()}
 
 function switchEngTab(tab){
-  ['dict','list','practice'].forEach(t=>{
+  ['today','dict','list','practice'].forEach(t=>{
     document.getElementById('eng-panel-'+t).classList.toggle('e-hidden',t!==tab);
   });
   document.querySelectorAll('.eng-tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active',['dict','list','practice'][i]===tab);
+    b.classList.toggle('active',['today','dict','list','practice'][i]===tab);
   });
-  if(tab==='list')renderEngList();
+  if(tab==='today')initTodayTab();
+  if(tab==='list'){renderEngList();renderLessonList()}
   if(tab==='practice')renderPracSetup();
 }
 
@@ -1049,7 +1102,7 @@ function renderEngList(){
   const list=document.getElementById('eng-list');
   if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄</div>';return}
   const TS={vocab:{l:'單字',bg:'#EDE9FE',c:'#4C1D95'},sentence:{l:'句子',bg:'#DBEAFE',c:'#1E40AF'},grammar:{l:'文法',bg:'#D1FAE5',c:'#065F46'}};
-  const SL={lookup:'🔍',lesson:'📖',teacher:'👩‍🏫',manual:'✍️'};
+  const SL={lookup:'🔍',lesson:'📖',teacher:'👩‍🏫',manual:'✍️',toeic:'📊'};
   list.innerHTML=items.map(item=>{
     const ts=TS[item.type]||TS.vocab;
     let main='',sub='';
@@ -1195,6 +1248,402 @@ function resetEngPrac(){
   document.getElementById('eng-prac-card').style.display='none';
   renderPracSetup();
 }
+
+/* ════════════════════════════════
+   英文學習中心 — SRS + 今日任務 + 課程管理
+════════════════════════════════ */
+
+const TOEIC_WORDS=[
+  // 動詞
+  {w:'accommodate',zh:'配合；容納',pos:'v',ex:'The hotel can accommodate 200 guests.'},
+  {w:'correspond',zh:'通信；相符',pos:'v',ex:'Please correspond with clients via email.'},
+  {w:'negotiate',zh:'協商；談判',pos:'v',ex:'We need to negotiate the contract terms.'},
+  {w:'facilitate',zh:'促進；使容易',pos:'v',ex:'The new software facilitates data entry.'},
+  {w:'coordinate',zh:'協調；統籌',pos:'v',ex:'She coordinates the project timeline.'},
+  {w:'implement',zh:'執行；實施',pos:'v',ex:'The policy will be implemented next month.'},
+  {w:'evaluate',zh:'評估；衡量',pos:'v',ex:'Please evaluate the results of the survey.'},
+  {w:'establish',zh:'建立；設立',pos:'v',ex:'The company was established in 1990.'},
+  {w:'clarify',zh:'釐清；說明',pos:'v',ex:'Could you clarify the instructions?'},
+  {w:'submit',zh:'提交；呈交',pos:'v',ex:'Please submit the report by Friday.'},
+  {w:'distribute',zh:'分發；分配',pos:'v',ex:'Handouts were distributed before the meeting.'},
+  {w:'allocate',zh:'分配；撥款',pos:'v',ex:'Budget was allocated for the new project.'},
+  {w:'delegate',zh:'授權；委派',pos:'v',ex:'She delegated the task to her assistant.'},
+  {w:'notify',zh:'通知；告知',pos:'v',ex:'Please notify us of any changes in advance.'},
+  {w:'verify',zh:'確認；核實',pos:'v',ex:'We need to verify your information first.'},
+  {w:'revise',zh:'修改；修訂',pos:'v',ex:'Please revise the draft before submitting.'},
+  {w:'approve',zh:'批准；同意',pos:'v',ex:'The proposal was approved by the board.'},
+  {w:'generate',zh:'產生；創造',pos:'v',ex:'The campaign generated significant interest.'},
+  {w:'secure',zh:'取得；確保',pos:'v',ex:'We secured a new partnership with the client.'},
+  {w:'retain',zh:'保留；留住',pos:'v',ex:'The company worked hard to retain top talent.'},
+  {w:'obtain',zh:'取得；獲得',pos:'v',ex:'You must obtain written permission first.'},
+  {w:'ensure',zh:'確保；保證',pos:'v',ex:'Please ensure all files are backed up.'},
+  {w:'monitor',zh:'監控；追蹤',pos:'v',ex:'We monitor customer feedback regularly.'},
+  {w:'anticipate',zh:'預期；預料',pos:'v',ex:'We anticipate strong demand this quarter.'},
+  {w:'resolve',zh:'解決；決心',pos:'v',ex:'The complaint was resolved within 24 hours.'},
+  {w:'expand',zh:'擴大；擴張',pos:'v',ex:'The company plans to expand into Asia.'},
+  {w:'transfer',zh:'調任；轉移',pos:'v',ex:'She was transferred to the overseas office.'},
+  {w:'recruit',zh:'招募；徵才',pos:'v',ex:'We are currently recruiting for two positions.'},
+  {w:'reimburse',zh:'報銷；退款',pos:'v',ex:'Expenses will be reimbursed within 30 days.'},
+  {w:'promote',zh:'晉升；宣傳',pos:'v',ex:'He was promoted to senior manager last year.'},
+  {w:'assist',zh:'協助；幫助',pos:'v',ex:'Can you assist me with the presentation?'},
+  {w:'confirm',zh:'確認；確定',pos:'v',ex:'Please confirm your attendance by Thursday.'},
+  {w:'process',zh:'處理；加工',pos:'v',ex:'Please process the order immediately.'},
+  {w:'reduce',zh:'減少；降低',pos:'v',ex:'We need to reduce operating costs.'},
+  {w:'handle',zh:'處理；負責',pos:'v',ex:'She handles all client inquiries.'},
+  {w:'update',zh:'更新；告知最新狀況',pos:'v',ex:'Please update the database by end of day.'},
+  {w:'review',zh:'審閱；回顧',pos:'v',ex:'The committee will review your proposal.'},
+  {w:'schedule',zh:'安排；排程',pos:'v',ex:'Let us schedule a meeting for Monday.'},
+  {w:'survey',zh:'調查；問卷',pos:'v',ex:'We surveyed 500 customers last month.'},
+  {w:'postpone',zh:'延期；推遲',pos:'v',ex:'The meeting has been postponed to Friday.'},
+  {w:'complete',zh:'完成；填寫',pos:'v',ex:'Please complete the form and return it.'},
+  {w:'deliver',zh:'遞送；交付',pos:'v',ex:'The package was delivered this morning.'},
+  {w:'maintain',zh:'維持；保養',pos:'v',ex:'We must maintain high quality standards.'},
+  {w:'improve',zh:'改善；提升',pos:'v',ex:'We aim to improve customer satisfaction.'},
+  {w:'increase',zh:'增加；提升',pos:'v',ex:'Revenue increased by 15% last year.'},
+  // 名詞
+  {w:'agenda',zh:'議程；待辦事項',pos:'n',ex:'The meeting agenda was emailed this morning.'},
+  {w:'minutes',zh:'會議記錄',pos:'n',ex:'Please take minutes during today\'s meeting.'},
+  {w:'invoice',zh:'發票；帳單',pos:'n',ex:'The invoice should be paid within 30 days.'},
+  {w:'itinerary',zh:'行程表',pos:'n',ex:'The travel itinerary has been confirmed.'},
+  {w:'reservation',zh:'預訂；預約',pos:'n',ex:'I made a hotel reservation for two nights.'},
+  {w:'confirmation',zh:'確認；確認書',pos:'n',ex:'A confirmation email will be sent shortly.'},
+  {w:'proposal',zh:'提案；企劃書',pos:'n',ex:'Please review the attached proposal.'},
+  {w:'budget',zh:'預算',pos:'n',ex:'The project is well within budget.'},
+  {w:'revenue',zh:'收益；營收',pos:'n',ex:'Revenue increased by 15% this quarter.'},
+  {w:'surplus',zh:'盈餘；過剩',pos:'n',ex:'The department reported a budget surplus.'},
+  {w:'deficit',zh:'赤字；虧損',pos:'n',ex:'The company reported a deficit last year.'},
+  {w:'audit',zh:'審計；查帳',pos:'n',ex:'The annual audit begins next week.'},
+  {w:'payroll',zh:'薪資名冊',pos:'n',ex:'New employees are added to the payroll.'},
+  {w:'dividend',zh:'股息；紅利',pos:'n',ex:'Shareholders received a quarterly dividend.'},
+  {w:'liability',zh:'負債；責任',pos:'n',ex:'All liabilities must be disclosed in the report.'},
+  {w:'expenditure',zh:'支出；費用',pos:'n',ex:'Monthly expenditures exceeded the forecast.'},
+  {w:'vacancy',zh:'職位空缺',pos:'n',ex:'There is a vacancy in the sales department.'},
+  {w:'compensation',zh:'薪酬；賠償',pos:'n',ex:'The compensation package is very competitive.'},
+  {w:'probation',zh:'試用期',pos:'n',ex:'All new hires have a three-month probation.'},
+  {w:'incentive',zh:'獎勵；誘因',pos:'n',ex:'A performance bonus serves as a great incentive.'},
+  {w:'appraisal',zh:'績效考核；評估',pos:'n',ex:'Annual appraisals are held in December.'},
+  {w:'orientation',zh:'職前訓練',pos:'n',ex:'New staff attend a one-day orientation.'},
+  {w:'workforce',zh:'員工；勞動力',pos:'n',ex:'The company expanded its workforce by 20%.'},
+  {w:'vendor',zh:'供應商；賣家',pos:'n',ex:'We are selecting a new software vendor.'},
+  {w:'supplier',zh:'供應商',pos:'n',ex:'Our main supplier is based in Taiwan.'},
+  {w:'inventory',zh:'庫存；存貨',pos:'n',ex:'Please update the inventory records.'},
+  {w:'shipment',zh:'貨物；出貨',pos:'n',ex:'The shipment arrived two days early.'},
+  {w:'warranty',zh:'保固；保證',pos:'n',ex:'The product has a two-year warranty.'},
+  {w:'refund',zh:'退款',pos:'n',ex:'Customers may request a full refund.'},
+  {w:'procedure',zh:'程序；步驟',pos:'n',ex:'Please follow the standard procedure.'},
+  {w:'regulation',zh:'規定；法規',pos:'n',ex:'All staff must comply with safety regulations.'},
+  {w:'merger',zh:'合併',pos:'n',ex:'The merger was announced last Thursday.'},
+  {w:'acquisition',zh:'收購',pos:'n',ex:'The acquisition increased our market share.'},
+  {w:'headquarters',zh:'總部',pos:'n',ex:'The headquarters is located in Taipei.'},
+  {w:'subsidiary',zh:'子公司',pos:'n',ex:'They opened a subsidiary in Singapore.'},
+  {w:'premises',zh:'場所；廠房',pos:'n',ex:'No smoking is allowed on the premises.'},
+  {w:'inquiry',zh:'詢問；調查',pos:'n',ex:'Thank you for your inquiry about our services.'},
+  {w:'estimate',zh:'估計；報價',pos:'n',ex:'Please provide a cost estimate by Monday.'},
+  {w:'maintenance',zh:'維護；保養',pos:'n',ex:'Regular maintenance keeps equipment running.'},
+  {w:'partnership',zh:'合夥；夥伴關係',pos:'n',ex:'We formed a strategic partnership last year.'},
+  {w:'strategy',zh:'策略；戰略',pos:'n',ex:'We need a clear marketing strategy.'},
+  {w:'complaint',zh:'投訴；抱怨',pos:'n',ex:'A complaint was filed about the delay.'},
+  {w:'extension',zh:'延長；分機',pos:'n',ex:'She requested a two-week extension on the deadline.'},
+  {w:'commitment',zh:'承諾；責任',pos:'n',ex:'We value your commitment to quality.'},
+  {w:'brochure',zh:'小冊子；型錄',pos:'n',ex:'Please send me the product brochure.'},
+  {w:'correspondence',zh:'通信；信函',pos:'n',ex:'All correspondence should be filed properly.'},
+  {w:'announcement',zh:'公告；通知',pos:'n',ex:'An important announcement will be made soon.'},
+  {w:'outcome',zh:'結果；成果',pos:'n',ex:'The outcome of the meeting was positive.'},
+  {w:'projection',zh:'預測；預估',pos:'n',ex:'Sales projections for Q3 look strong.'},
+  {w:'destination',zh:'目的地',pos:'n',ex:'What is the final destination of the shipment?'},
+  {w:'departure',zh:'出發；離境',pos:'n',ex:'The departure time has been moved to 9 AM.'},
+  {w:'transit',zh:'過境；轉運',pos:'n',ex:'We have a two-hour transit in Hong Kong.'},
+  {w:'itinerary',zh:'行程表',pos:'n',ex:'Please review the attached travel itinerary.'},
+  {w:'freight',zh:'貨運；運費',pos:'n',ex:'The freight charge is included in the price.'},
+  {w:'deduction',zh:'扣除額；推論',pos:'n',ex:'Tax deductions must be filed by April.'},
+  {w:'circulation',zh:'流通；傳閱',pos:'n',ex:'The memo is for internal circulation only.'},
+  {w:'overview',zh:'概述；總覽',pos:'n',ex:'Here is an overview of the new project.'},
+  // 形容詞
+  {w:'available',zh:'可用的；有空的',pos:'adj',ex:'Is the conference room available at 3 PM?'},
+  {w:'eligible',zh:'符合資格的',pos:'adj',ex:'Full-time employees are eligible for benefits.'},
+  {w:'mandatory',zh:'強制的；必要的',pos:'adj',ex:'Attendance at safety training is mandatory.'},
+  {w:'competitive',zh:'有競爭力的',pos:'adj',ex:'We offer competitive salaries and benefits.'},
+  {w:'comprehensive',zh:'全面的；詳盡的',pos:'adj',ex:'We provide comprehensive employee training.'},
+  {w:'consecutive',zh:'連續的',pos:'adj',ex:'The store is open seven consecutive days.'},
+  {w:'considerable',zh:'相當多的',pos:'adj',ex:'Considerable effort was needed to finish it.'},
+  {w:'efficient',zh:'有效率的',pos:'adj',ex:'The new process is much more efficient.'},
+  {w:'exclusive',zh:'獨家的；專有的',pos:'adj',ex:'This deal is exclusive to premium members.'},
+  {w:'flexible',zh:'彈性的',pos:'adj',ex:'We offer flexible remote working options.'},
+  {w:'outstanding',zh:'傑出的；未付的',pos:'adj',ex:'She received an award for outstanding work.'},
+  {w:'potential',zh:'潛在的',pos:'adj',ex:'We have identified potential new markets.'},
+  {w:'qualified',zh:'有資格的',pos:'adj',ex:'Only qualified candidates will be contacted.'},
+  {w:'relevant',zh:'相關的',pos:'adj',ex:'Please attach all relevant documents.'},
+  {w:'significant',zh:'重要的；顯著的',pos:'adj',ex:'Sales showed a significant increase last month.'},
+  {w:'sufficient',zh:'足夠的',pos:'adj',ex:'Are there sufficient funds in the account?'},
+  {w:'temporary',zh:'暫時的；臨時的',pos:'adj',ex:'This is a temporary assignment for three months.'},
+  {w:'thorough',zh:'徹底的；詳細的',pos:'adj',ex:'She conducted a thorough review of the data.'},
+  {w:'mutual',zh:'相互的；共同的',pos:'adj',ex:'The agreement is in our mutual interest.'},
+  {w:'immediate',zh:'立即的；直接的',pos:'adj',ex:'Your immediate attention is required.'},
+  {w:'approximate',zh:'大約的',pos:'adj',ex:'The approximate cost of the project is $5,000.'},
+  {w:'complimentary',zh:'免費的；贈送的',pos:'adj',ex:'Breakfast is complimentary for hotel guests.'},
+  {w:'dedicated',zh:'專注的；專用的',pos:'adj',ex:'She is a dedicated and hardworking employee.'},
+  {w:'essential',zh:'必要的；基本的',pos:'adj',ex:'Strong communication skills are essential.'},
+  {w:'limited',zh:'有限的；限量的',pos:'adj',ex:'Seats are limited, so please register early.'},
+  {w:'reasonable',zh:'合理的',pos:'adj',ex:'The restaurant offers meals at a reasonable price.'},
+  {w:'reliable',zh:'可靠的',pos:'adj',ex:'We need a reliable delivery partner.'},
+  {w:'adjacent',zh:'鄰近的；毗鄰的',pos:'adj',ex:'The parking lot is adjacent to the building.'},
+  {w:'fiscal',zh:'財政的',pos:'adj',ex:'The fiscal year ends on December 31st.'},
+  {w:'quarterly',zh:'每季度的',pos:'adj',ex:'The quarterly earnings report was released today.'},
+  {w:'prompt',zh:'迅速的；準時的',pos:'adj',ex:'We appreciate your prompt response.'},
+  {w:'confidential',zh:'機密的；保密的',pos:'adj',ex:'This document is strictly confidential.'},
+  {w:'prior',zh:'先前的；事先的',pos:'adj',ex:'Prior experience is preferred for this role.'},
+  {w:'mutual',zh:'相互的',pos:'adj',ex:'Both parties signed the mutual agreement.'},
+  // 常用片語
+  {w:'look forward to',zh:'期待；盼望',pos:'phr',ex:'I look forward to hearing from you soon.'},
+  {w:'in advance',zh:'事先；提前',pos:'phr',ex:'Please register in advance to confirm your spot.'},
+  {w:'on behalf of',zh:'代表；代為',pos:'phr',ex:'I am writing on behalf of our CEO.'},
+  {w:'as of',zh:'自……起；截至',pos:'phr',ex:'As of Monday, the new policy takes effect.'},
+  {w:'prior to',zh:'在……之前',pos:'phr',ex:'Please arrive 10 minutes prior to the meeting.'},
+  {w:'subject to',zh:'受……限制；視……而定',pos:'phr',ex:'The price is subject to change without notice.'},
+  {w:'in charge of',zh:'負責；主管',pos:'phr',ex:'Who is in charge of the marketing department?'},
+  {w:'in addition to',zh:'除……之外',pos:'phr',ex:'In addition to salary, we offer health insurance.'},
+  {w:'regardless of',zh:'不管；無論',pos:'phr',ex:'All employees must comply, regardless of rank.'},
+  {w:'in accordance with',zh:'根據；依照',pos:'phr',ex:'Please act in accordance with company guidelines.'},
+  {w:'in the meantime',zh:'與此同時；在此期間',pos:'phr',ex:'In the meantime, please check your email.'},
+  {w:'at your earliest convenience',zh:'盡快；方便時',pos:'phr',ex:'Please reply at your earliest convenience.'},
+  {w:'on a regular basis',zh:'定期地；固定地',pos:'phr',ex:'Reports are submitted on a regular basis.'},
+  {w:'take place',zh:'舉行；發生',pos:'phr',ex:'The conference will take place in Taipei.'},
+  {w:'be responsible for',zh:'負責；對……負責',pos:'phr',ex:'She is responsible for client relations.'},
+];
+
+const LESSONS_KEY='eng_lessons_v1';
+function getLessons(){try{return JSON.parse(localStorage.getItem(LESSONS_KEY)||'[]')}catch{return[]}}
+function setLessons(a){localStorage.setItem(LESSONS_KEY,JSON.stringify(a))}
+
+function toggleLessonImport(){
+  const box=document.getElementById('lesson-import-box');
+  if(box)box.style.display=box.style.display==='none'?'block':'none';
+}
+
+function importLessonJSON(){
+  const raw=(document.getElementById('lesson-json-input')?.value||'').trim();
+  if(!raw){showToast('請貼上課程 JSON');return}
+  let data;try{data=JSON.parse(raw)}catch{showToast('JSON 格式有誤，請重新貼上');return}
+  const title=data.courseTitle||data.title||'未命名課程';
+  const date=data.classDate||data.date||fmtYMD(taipeiNow());
+  const now=fmtYMD(taipeiNow());let count=0;
+  [...(data.vocabulary||[]),...(data.idioms||[])].forEach(v=>{
+    const word=v.word||v.english||v.term||'';const zh=v.zh||v.chinese||v.meaning||v.translation||'';
+    if(!word||!zh)return;
+    addEngItem({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
+      enDef:v.definition||'',zhMeaning:zh,example:v.example||v.ex||'',
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+  });
+  (data.sentences||data.dialogues||[]).forEach(s=>{
+    const sent=s.sentence||s.english||s.text||'';const zh=s.zh||s.chinese||s.translation||'';
+    if(!sent||!zh)return;
+    addEngItem({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
+      translation:zh,notes:s.notes||s.context||'',
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+  });
+  (data.grammar||[]).forEach(g=>{
+    const rule=g.rule||g.title||'';if(!rule)return;
+    addEngItem({id:Date.now()+Math.random(),type:'grammar',rule,
+      explanation:g.explanation||g.desc||'',
+      examples:(g.examples||[]).map(e=>typeof e==='string'?e:e.en||'').filter(Boolean),
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+  });
+  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:count});setLessons(lessons);
+  document.getElementById('lesson-json-input').value='';
+  toggleLessonImport();renderLessonList();
+  showToast(`已匯入「${title}」，共 ${count} 個項目 ✓`);
+}
+
+function renderLessonList(){
+  const list=document.getElementById('lesson-list');if(!list)return;
+  const lessons=getLessons();
+  if(!lessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
+  list.innerHTML=lessons.map(l=>`<div class="lesson-card">
+    <div style="flex:1"><div class="lesson-title">${esc(l.title)}</div>
+    <div class="lesson-meta">${esc(l.date)} · ${l.itemCount} 個學習項目</div></div>
+    <button class="del-btn" onclick="delLesson(${l.id})">✕</button>
+  </div>`).join('');
+}
+function delLesson(id){setLessons(getLessons().filter(l=>l.id!==id));renderLessonList();showToast('已刪除課程紀錄')}
+
+/* ── SRS 間隔複習引擎 ── */
+function srsAddDays(n){const d=new Date(taipeiNow());d.setDate(d.getDate()+n);return fmtYMD(d)}
+function getTodayStr(){return fmtYMD(taipeiNow())}
+
+function srsRate(itemId,rating){
+  const items=getEngItems();const idx=items.findIndex(i=>i.id===itemId);if(idx<0)return;
+  const srs=items[idx].srs||{interval:0,reps:0};
+  let interval;
+  if(rating===1)interval=1;
+  else if(rating===2)interval=3;
+  else if(rating===3)interval=Math.max(7,Math.round((srs.interval||3)*1.8));
+  else interval=Math.max(14,Math.round((srs.interval||7)*2.5));
+  items[idx].srs={nextReview:srsAddDays(interval),interval,reps:(srs.reps||0)+1,lastRating:rating,lastReview:getTodayStr()};
+  setEngItems(items);
+}
+
+function getDueItems(){
+  const today=getTodayStr();
+  return getEngItems().filter(i=>i.srs&&i.srs.nextReview<=today);
+}
+function getMasteredCount(){
+  return getEngItems().filter(i=>i.srs&&(i.srs.reps||0)>=3&&(i.srs.lastRating||0)>=3).length;
+}
+function getToeicNewWords(n){
+  const existing=new Set(getEngItems().filter(i=>i.source==='toeic').map(i=>(i.word||'').toLowerCase()));
+  return TOEIC_WORDS.filter(w=>!existing.has(w.w.toLowerCase())).slice(0,n);
+}
+function migrateSRS(){
+  const items=getEngItems();let changed=false;
+  items.forEach((item,i)=>{
+    if(!item.srs){item.srs={nextReview:srsAddDays(i%7),interval:0,reps:0,lastRating:0,lastReview:''};changed=true;}
+  });
+  if(changed)setEngItems(items);
+}
+
+/* ── 今日任務 ── */
+let todayReviewItems=[],todayReviewIdx=0,todayShowingAnswer=false;
+
+function initTodayTab(){
+  migrateSRS();
+  todayReviewItems=getDueItems();
+  todayReviewIdx=0;todayShowingAnswer=false;
+  renderToeicProgressBar();
+  renderTodayContent();
+}
+
+function renderToeicProgressBar(){
+  const bar=document.getElementById('toeic-phase-bar');if(!bar)return;
+  const mastered=getMasteredCount();const target=250;const pct=Math.min(100,Math.round(mastered/target*100));
+  bar.innerHTML=`<div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:700">📊 多益衝刺進度</span>
+      <span style="font-size:12px;color:var(--muted)">目標 550 → 750</span>
+    </div>
+    <div style="background:#F1F5F9;border-radius:10px;height:10px;overflow:hidden;margin-bottom:6px">
+      <div style="background:linear-gradient(90deg,#7C3AED,#A78BFA);height:100%;width:${pct}%;border-radius:10px;transition:width .4s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+      <span>已掌握 <strong style="color:var(--text)">${mastered}</strong> 個項目</span>
+      <span>目標 ${target} 個（${pct}%）</span>
+    </div>
+  </div>`;
+}
+
+function renderTodayContent(){
+  const vh=document.getElementById('today-vocab-list');
+  const sh=document.getElementById('today-sentence-list');
+  const oh=document.getElementById('today-output');
+  if(sh)sh.innerHTML='';if(oh)oh.innerHTML='';
+  if(todayReviewIdx<todayReviewItems.length){renderReviewCard(todayReviewItems[todayReviewIdx]);return}
+  const newWords=getToeicNewWords(5);const doneCount=todayReviewItems.length;
+  let html='';
+  if(doneCount>0){
+    html+=`<div style="text-align:center;padding:16px 0 8px"><div style="font-size:36px;margin-bottom:6px">🎉</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:3px">完成 ${doneCount} 個複習！</div>
+      <div style="font-size:12px;color:var(--muted)">記憶越來越穩固，繼續保持</div></div>`;
+  }else if(!newWords.length){
+    html+=`<div style="text-align:center;padding:20px"><div style="font-size:36px;margin-bottom:8px">🌱</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px">今天沒有待複習項目</div>
+      <div style="font-size:12px;color:var(--muted)">繼續查字典、匯入課程來累積詞庫</div></div>`;
+  }
+  if(newWords.length){
+    html+=`<div class="today-sec-label" style="margin-top:${doneCount?'4px':'0'}">
+      <span>📚 今日 TOEIC 新詞 × ${newWords.length}</span>
+      <button class="nb-btn" id="learn-toeic-btn" onclick="learnTodayToeic()">全部加入學習 ✓</button>
+    </div>
+    ${newWords.map(w=>`<div class="today-task-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div class="toeic-word-en">${esc(w.w)}&nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
+          <div class="toeic-word-zh">${esc(w.zh)}</div>
+          ${w.ex?`<div class="toeic-word-ex">"${esc(w.ex)}"</div>`:''}
+        </div>
+        <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button>
+      </div>
+    </div>`).join('')}`;
+  }else if(doneCount===0){
+    html+=`<div style="text-align:center;padding:12px;color:var(--muted);font-size:13px">全部 TOEIC 內建詞彙都已學習過！繼續從課程和查字典累積內容。</div>`;
+  }
+  if(vh)vh.innerHTML=html;
+}
+
+function learnTodayToeic(){
+  const btn=document.getElementById('learn-toeic-btn');if(btn){btn.disabled=true;btn.textContent='加入中…'}
+  const newWords=getToeicNewWords(5);const now=getTodayStr();
+  newWords.forEach(w=>{
+    addEngItem({id:Date.now()+Math.random(),type:'vocab',word:w.w,ipa:'',audioUrl:'',
+      enDef:'',zhMeaning:w.zh,example:w.ex||'',partOfSpeech:w.pos,source:'toeic',date:now});
+  });
+  showToast(`${newWords.length} 個新詞已加入複習佇列 ✓`);
+  renderToeicProgressBar();renderTodayContent();
+}
+
+function getSourceLabel(src){
+  return({toeic:'📊 TOEIC',lookup:'🔍 查字典',lesson:'📖 課程',teacher:'👩‍🏫 老師補充',manual:'✍️ 自己記的'})[src]||src||'';
+}
+
+function renderReviewCard(item){
+  const vh=document.getElementById('today-vocab-list');if(!vh)return;
+  const total=todayReviewItems.length;
+  const prog=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between">
+    <span>複習 ${todayReviewIdx+1} / ${total}</span><span>${getSourceLabel(item.source)}</span></div>`;
+  let front='',back='';
+  if(item.type==='vocab'){
+    front=`<div style="text-align:center;padding:20px 0">
+      <div style="font-size:28px;font-weight:800;letter-spacing:.5px">${esc(item.word||'')}</div>
+      ${item.ipa?`<div style="font-size:14px;color:var(--muted);margin-top:4px">${esc(item.ipa)}</div>`:''}
+      <button class="eng-play" style="margin-top:10px" onclick="engPlay('${(item.audioUrl||'').replace(/'/g,"\\'")}','${(item.word||'').replace(/'/g,"\\'")}')">🔊</button>
+    </div>`;
+    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
+      <div style="font-size:17px;font-weight:700">${esc(item.zhMeaning||'')}</div>
+      ${(item.partOfSpeech||item.enDef)?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${[item.partOfSpeech,item.enDef].filter(Boolean).join(' — ')}</div>`:''}
+      ${item.example?`<div style="font-size:13px;font-style:italic;color:#4B5563;margin-top:8px">"${esc(item.example)}"</div>`:''}
+    </div>`;
+  }else if(item.type==='sentence'){
+    front=`<div style="padding:16px 0">
+      <div style="font-size:15px;line-height:1.8;font-weight:600">${esc(item.sentence||'')}</div>
+      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(item.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
+    </div>`;
+    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
+      <div style="font-size:15px;font-weight:700">${esc(item.translation||'')}</div>
+      ${item.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(item.notes)}</div>`:''}
+    </div>`;
+  }else{
+    front=`<div style="padding:16px 0">
+      <div style="font-size:12px;font-weight:700;color:#7C3AED;margin-bottom:6px">文法規則</div>
+      <div style="font-size:17px;font-weight:800">${esc(item.rule||'')}</div>
+    </div>`;
+    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
+      ${item.explanation?`<div style="font-size:14px;line-height:1.6;margin-bottom:8px">${esc(item.explanation)}</div>`:''}
+      ${(item.examples||[]).slice(0,2).map(e=>`<div style="font-size:13px;font-style:italic;color:#4B5563;margin-bottom:4px">"${esc(e)}" <button class="eng-play" onclick="engSpeak('${e.replace(/'/g,"\\'")}')">🔊</button></div>`).join('')}
+    </div>`;
+  }
+  const ratingBtns=`<div style="margin-top:12px">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:8px">你記得嗎？</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="reviewRate(1)" style="padding:11px 8px;border:2px solid #EF4444;border-radius:12px;background:white;color:#EF4444;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">❌ 不會<br><span style="font-size:10px;font-weight:400">明天再複習</span></button>
+      <button onclick="reviewRate(2)" style="padding:11px 8px;border:2px solid #F59E0B;border-radius:12px;background:white;color:#D97706;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">😅 模糊<br><span style="font-size:10px;font-weight:400">3 天後複習</span></button>
+      <button onclick="reviewRate(3)" style="padding:11px 8px;border:2px solid #10B981;border-radius:12px;background:white;color:#059669;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">✅ 會了<br><span style="font-size:10px;font-weight:400">約 1 週後</span></button>
+      <button onclick="reviewRate(4)" style="padding:11px 8px;border:2px solid #7C3AED;border-radius:12px;background:white;color:#7C3AED;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">🔥 很熟<br><span style="font-size:10px;font-weight:400">約 2 週後</span></button>
+    </div>
+  </div>`;
+  if(!todayShowingAnswer){
+    vh.innerHTML=`${prog}<div class="today-task-card">${front}
+      <button class="full-btn" style="background:#6D28D9;margin-top:8px" onclick="revealReview()">翻面看答案</button>
+    </div>`;
+  }else{
+    vh.innerHTML=`${prog}<div class="today-task-card">${front}${back}</div>${ratingBtns}`;
+  }
+}
+
+function revealReview(){todayShowingAnswer=true;renderReviewCard(todayReviewItems[todayReviewIdx])}
+function reviewRate(rating){
+  srsRate(todayReviewItems[todayReviewIdx].id,rating);
+  todayReviewIdx++;todayShowingAnswer=false;
+  renderToeicProgressBar();renderTodayContent();
+}
+function saveTodayVocab(){}
 
 /* ════════════════════════════════
    記帳
