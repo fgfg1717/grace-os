@@ -14,7 +14,7 @@
       --capture:#059669; --vocab:#7C3AED; --ledger:#0891B2;
       --stock:#EA580C;   --plan:#2563EB;  --aar:#64748B;
       --review:#64748B;  --monthly:#0EA5E9;
-      --health:#EF4444;
+      --health:#EF4444;  --english:#D97706; --pr:#1E3A8A;
       --bg:#F8FAFC; --card:#FFFFFF; --text:#1E293B;
       --muted:#64748B; --border:#E2E8F0; --radius:16px;
     }
@@ -46,6 +46,20 @@
     .card-aar:hover    {background:#F8FAFC;border-color:var(--aar)}
     .card-review:hover {background:#F8FAFC;border-color:var(--review)}
     .card-monthly:hover{background:#F0F9FF;border-color:var(--monthly)}
+    .card-english:hover{background:#FFFBEB;border-color:var(--english)}
+    .card-pr:hover     {background:#EFF6FF;border-color:var(--pr)}
+
+    /* Embed overlay */
+    .embed-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
+      background:white;display:none;flex-direction:column}
+    .embed-overlay.open{display:flex}
+    .embed-bar{background:var(--text);color:white;padding:12px 16px;
+      display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+      safe-area-inset-top:env(safe-area-inset-top)}
+    .embed-bar-title{font-size:15px;font-weight:700;flex:1;text-align:center}
+    .embed-close{background:none;border:none;color:white;font-size:20px;
+      cursor:pointer;padding:0;line-height:1;width:32px}
+    .embed-frame{flex:1;border:none;width:100%;height:100%}
 
     .tpl{display:none}.tpl.active{display:block}.home.hidden{display:none}
     .back{background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);
@@ -297,10 +311,24 @@
 
   <div class="section-label">學習成長</div>
   <div class="grid">
-    <div class="card card-vocab full" onclick="show('vocab')">
+    <div class="card card-vocab" onclick="show('vocab')">
       <span class="icon">📖</span>
       <div class="label">英文單字庫</div>
-      <div class="hint">隨手記・一鍵複製給 Claude 出題</div>
+      <div class="hint">隨手記・複製給 Claude 出題</div>
+    </div>
+    <div class="card card-english" onclick="openEmbed('english')">
+      <span class="icon">🎓</span>
+      <div class="label">英文練習 App</div>
+      <div class="hint">TOEIC · 每日任務 · 課程複習</div>
+    </div>
+  </div>
+
+  <div class="section-label">職涯發展</div>
+  <div class="grid">
+    <div class="card card-pr full" onclick="openEmbed('pr')">
+      <span class="icon">🎯</span>
+      <div class="label">幕僚沙盤</div>
+      <div class="hint">危機模擬 · AI 雙角色評估 · 公關策略練習</div>
     </div>
   </div>
 
@@ -612,6 +640,16 @@
 </div><!-- /wrap -->
 <div class="toast" id="toast"></div>
 
+<!-- 嵌入式 App Overlay -->
+<div class="embed-overlay" id="embed-overlay">
+  <div class="embed-bar">
+    <button class="embed-close" onclick="closeEmbed()">←</button>
+    <span class="embed-bar-title" id="embed-title"></span>
+    <span style="width:32px"></span>
+  </div>
+  <iframe class="embed-frame" id="embed-frame" src="" allow="microphone; clipboard-write"></iframe>
+</div>
+
 <script>
 /* ════ Utils ════ */
 function taipeiNow(){return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Taipei'}))}
@@ -661,6 +699,20 @@ function show(type){
   else if(type==='plan'){}
   else loadNb(type);
   window.scrollTo(0,0);
+}
+function openEmbed(type){
+  const apps={
+    english:{url:'https://fgfg1717.github.io/english-review-app/',title:'英文練習 App'},
+    pr:     {url:'https://fanciful-brioche-829d7d.netlify.app/',   title:'幕僚沙盤'}
+  };
+  const app=apps[type];
+  document.getElementById('embed-title').textContent=app.title;
+  document.getElementById('embed-frame').src=app.url;
+  document.getElementById('embed-overlay').classList.add('open');
+}
+function closeEmbed(){
+  document.getElementById('embed-overlay').classList.remove('open');
+  document.getElementById('embed-frame').src='';
 }
 function goHome(){
   document.getElementById('home').classList.remove('hidden');
