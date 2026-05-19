@@ -174,8 +174,8 @@ function doPost(e) {
   }
 }
 
-// ── setupTodayTemplate：複製上一天範本到今天 ────────────────────
-// 會完整複製格式（checkbox、下拉選單、欄寬），並清除內容留空
+// ── setupTodayTemplate：在最上方插入今天的範本 ──────────────────
+// 新的在最上面，複製最頂端那天的格式，清除內容後填入今天日期
 function setupTodayTemplate() {
   const ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
   const main = getMainSheet(ss);
@@ -196,52 +196,44 @@ function setupTodayTemplate() {
     }
   }
 
-  // 找最後一個日期 header（0-indexed）
-  let lastDateIdx = -1;
-  for (let i = allVals.length - 1; i >= 0; i--) {
-    if (/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(allVals[i].join(''))) {
-      lastDateIdx = i; break;
-    }
+  // 找最上方那個 section 的列數（第 1 列到下一個日期 header 之前）
+  let firstSectionEnd = allVals.length;
+  for (let i = 1; i < allVals.length; i++) {
+    if (isDateHeader(allVals[i])) { firstSectionEnd = i; break; }
   }
-  if (lastDateIdx === -1) {
-    safeAlert('找不到上一天的格式，請手動建立後再執行。'); return;
-  }
+  const srcRows = firstSectionEnd; // 第一個 section 共幾列
 
-  const srcStartRow = lastDateIdx + 1;       // 1-indexed，上一天範本起始列
-  const srcRows     = lastRow - srcStartRow + 1;
+  // 在最上方插入空列（srcRows 行內容 + 2 行分隔）
+  main.insertRowsBefore(1, srcRows + 2);
 
-  // 在最下方插入空列：2 列分隔 + srcRows 複製空間
-  main.insertRowsAfter(lastRow, srcRows + 2);
+  // 舊的第一個 section 現在往下移了 srcRows+2 列
+  const oldSrcStart = srcRows + 3; // 1-indexed
+  main.getRange(oldSrcStart, 1, srcRows, numCols)
+      .copyTo(main.getRange(1, 1, srcRows, numCols));
 
-  // 完整複製（含格式、checkbox、下拉選單）
-  const dstStartRow = lastRow + 3;
-  main.getRange(srcStartRow, 1, srcRows, numCols)
-      .copyTo(main.getRange(dstStartRow, 1, srcRows, numCols));
+  // 填入今天日期
+  main.getRange(1, 1).setValue(today);
 
-  // 更新日期
-  main.getRange(dstStartRow, 1).setValue(today);
-
-  // 清除內容，保留格式：找到欄位標題列（含「分類」字樣）後清除資料列
-  const dstVals = main.getRange(dstStartRow, 1, srcRows, numCols).getValues();
+  // 清除內容保留格式：找「分類」欄位標題列
+  const newVals = main.getRange(1, 1, srcRows, numCols).getValues();
   let colHeaderOffset = -1;
-  for (let i = 0; i < dstVals.length; i++) {
-    const joined = dstVals[i].join('');
-    if (joined.includes('分類')) { colHeaderOffset = i; break; }
+  for (let i = 0; i < newVals.length; i++) {
+    if (newVals[i].join('').includes('分類')) { colHeaderOffset = i; break; }
   }
 
   if (colHeaderOffset >= 0) {
-    // 清除「每日重點貼」內文（日期列之後到欄位標題之前）
+    // 清除每日重點貼區（日期列之後、欄位標題之前）
     if (colHeaderOffset > 1) {
-      main.getRange(dstStartRow + 1, 1, colHeaderOffset - 1, numCols).clearContent();
+      main.getRange(2, 1, colHeaderOffset - 1, numCols).clearContent();
     }
-    // 清除 AAR 資料列內容（保留 checkbox 和下拉選單格式）
+    // 清除 AAR 資料列（保留 checkbox 和下拉選單格式）
     const aarDataRows = srcRows - colHeaderOffset - 1;
     if (aarDataRows > 0) {
-      main.getRange(dstStartRow + colHeaderOffset + 1, 1, aarDataRows, 4).clearContent();
+      main.getRange(colHeaderOffset + 2, 1, aarDataRows, 4).clearContent();
     }
   }
 
-  safeAlert('✓ 已建立 ' + today + ' 的範本！可以開始記錄了。');
+  safeAlert('✓ 已建立 ' + today + ' 的範本，已加在最上方！');
 }
 
 // ── setupMorningTrigger：設定每天早上 7 點自動建立範本 ───────────
