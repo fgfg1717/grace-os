@@ -24,53 +24,70 @@
   - 記帳明細：記帳模組寫入
   - 股票紀錄：股票模組寫入
 
+## 使用者日常流程
+- **白天**：手機/網頁開 App → ⚡ 快速記錄（靈感/健康/工作/生活）
+- **晚上坐電腦**：直接開 Google Sheets 填今日 AAR 反思
+- **花錢**：App → 💰 記帳（不在快速記錄，兩邊資料不互通）
+- **買賣股票**：App → 📈 股票追蹤
+- **週覆盤**：App → 📋 讀取 AAR → 讀取資料 → 複製週覆盤格式 → 貼給 Claude
+- **英文**：App → 📚 英文學習中心 → 今日 tab 刷複習卡
+
 ## App 功能模組（首頁 → 點卡片進入）
 | 卡片 | 功能 | localStorage key |
 |------|------|-----------------|
 | ⚡ 快速記錄 | 6 分類（靈感/記帳/股票/健康/工作/生活）+ 語音 | `captures` |
-| 💰 記帳 | 家用/個人/投資/定存 + 細項分類 | — |
-| 📈 股票追蹤 | 個人+家庭，台股+美股，損益計算 | — |
-| 📖 英文單字庫 | 隨手記、複製給 Claude 出題 | `vocabs` |
-| 🎓 英文練習 App | iframe 嵌入，連到獨立 App | — |
+| 💎 財務總覽 | 本月收支、銀行帳戶管理、股票+銀行資產快照 | `bank_accounts_v1` |
+| 💰 記帳 | 支出（家用/個人/投資/定存）+ 收入（薪資/獎金等） | `ledgers` |
+| 📈 股票追蹤 | 個人+家庭，台股+美股，定期定額，損益計算 | `stocks`, `stock_prices` |
+| 📚 英文學習中心 | SRS 複習、TOEIC 每日新詞、查字典、課程匯入、練習 | `eng_items_v1`, `eng_lessons_v1` |
 | 🎯 幕僚沙盤 | iframe 嵌入，連到獨立 App | — |
 | 🗓️ 本週計畫 | 從 Sheets 讀取，今日任務高亮 | — |
-| 📋 讀取 AAR | 從 Sheets 讀，一鍵複製給 NotebookLM | — |
-| 📊 週覆盤 | 輸入 → 複製給 Claude 分析 | — |
+| 📋 讀取 AAR | 從 Sheets 讀，一鍵複製給 Claude 週覆盤/月回顧 | — |
+| 📊 週覆盤 | 自動帶入本週靈感紀錄 + 複製給 Claude 分析 | — |
 | 📅 月回顧 | 輸入 → 複製給 Claude 分析 | — |
 
-## 整合的兩個獨立 App
-### 英文練習 App
-- **網址**：`https://fgfg1717.github.io/english-review-app/`
-- **本機路徑**：`C:\Users\ASUS\Downloads\Grace-agent\english-review-app\`
-- **課程 JSON 存放**：`C:\Users\ASUS\Downloads\Grace-agent\英文講義\`
-- **JSONBin Sync Code**：`69e1929aaaba88219709eb0b`
-- **已匯入課程**：b2c-01~b2c-02、grammar-09~grammar-10
-- **匯入新課程**：App → ⚙️ 設定 → 匯入新課程（貼 JSON）→ 立即同步
+## 英文學習中心架構（SRS）
+- **統一學習池**：所有來源（TOEIC 內建、查字典、課程匯入、手動）全進 `eng_items_v1`
+- **SRS 間隔複習**：不會=1天、模糊=3天、會了=7天起、很熟=14天起
+- **TOEIC 內建詞彙**：150+ 高頻詞，存在 `TOEIC_WORDS` 常數，每日推 5 個新詞
+- **TOEIC 進度條**：掌握（reps≥3 且 lastRating≥3）/ 250 個目標（550→750）
+- **課程匯入格式**：JSON，含 `courseTitle`, `classDate`, `vocabulary[]`, `idioms[]`, `sentences[]`, `grammar[]`
+- **今日 tab 邏輯**：有待複習 → 先刷完複習卡；無待複習 → 顯示今日 5 個 TOEIC 新詞
 
-### 幕僚沙盤
-- **網址**：`https://fgfg1717.github.io/pr-practice-app/`
-- **本機路徑**：`C:\Users\ASUS\Downloads\Grace-agent\pr-practice-app\`
-- **AI 服務**：Groq API（`gsk_` 開頭的 key），模型 llama-3.3-70b-versatile
-- **功能**：AI 動態出題 → 三維度應對（外部公關/內部治理/向上決策）→ AI 雙角色評分 + PDF 匯出
+## 財務模組架構
+- **財務總覽**：從 `ledgers` 計算本月收支，從 `bank_accounts_v1` 抓銀行餘額，從 `stocks`+`stock_prices` 計算股票市值
+- **記帳收入分類**：`INCOME_CATS = ['薪資','獎金','年終獎金','股利','利息','其他收入']`
+- **股票操作類型**：買入 / 定期定額（等同買入計算）/ 賣出
+- **持倉損益**：按帳戶（個人/家庭）分組顯示，含已實現損益
+- **銀行帳戶**：手動新增、手動更新餘額，存 `bank_accounts_v1`
 
-## Quick Capture 分類（對應 Sheets 欄位 B）
-`閱讀/Podcast 靈感` / `財務記帳` / `股票紀錄` / `健康管理` / `工作` / `生活`
+## 週覆盤靈感閉環
+- 進入「週覆盤」頁，自動抓本週 `captures` 中 category='閱讀/Podcast 靈感' 的紀錄顯示
+- 「複製內容 → Claude 分析」按鈕會把靈感自動帶入 prompt
+- Claude 會分析哪些靈感值得下週變成行動
 
 ## 記帳分類結構
 - **家用**：家庭飲食、孩子相關、家庭雜支、水電費、房租/房貸、其他家用
 - **個人**：飲食、交通、娛樂、保險、買車存款、其他個人
 - **投資**、**定存**（直接填金額）
+- **收入**：薪資、獎金、年終獎金、股利、利息、其他收入
 
 ## 自動化設定（已完成）
-- 每天早上 7:00 → 自動建立當日 AAR 範本（含格式/複選框/下拉選單）
+- 每天早上 7:00 → 自動建立當日 AAR 範本（含格式/複選框/下拉選單），新的一天加在最上方
 - 每天 18:45 → 自動合併 App 快取到 Sheets 主紀錄
 
 ## 固定觸發詞
-- **「新英文講義」**：讀 PDF → 生成 JSON → 存到 `英文講義` 資料夾 → 告知匯入位置
+- **「新英文講義」**：收到講義內容（PDF/文字）→ 生成課程 JSON → 告知貼到 App「匯入課程」的位置
 - **「新課堂筆記」**：收 Gemini 整理的課堂內容 → 整理成複習卡片格式 → 更新進 App
 - **`/週計畫`**：生成本週行程 → 寫入 Sheets
 - **`/週復盤`**：讀取 Sheets 資料 → 輸出亮點/痛點/防呆行動
 - **`/月復盤`**：彙整當月週復盤 → 月度總結
+
+## 整合的獨立 App
+### 幕僚沙盤
+- **網址**：`https://fgfg1717.github.io/pr-practice-app/`
+- **本機路徑**：`C:\Users\ASUS\Downloads\Grace-agent\pr-practice-app\`
+- **AI 服務**：Groq API（`gsk_` 開頭的 key），模型 llama-3.3-70b-versatile
 
 ## Apps Script 修改注意事項
 改完 `apps-script.js` 後，必須重新部署才會生效：
