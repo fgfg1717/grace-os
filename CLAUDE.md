@@ -80,8 +80,18 @@
 - **「新英文講義」**：收到講義內容（PDF/文字）→ 生成課程 JSON → 告知貼到 App「匯入課程」的位置
 - **「新課堂筆記」**：收 Gemini 整理的課堂內容 → 整理成複習卡片格式 → 更新進 App
 - **`/週計畫`**：生成本週行程 → 寫入 Sheets
-- **`/週復盤`**：讀取 Sheets 資料 → 輸出亮點/痛點/防呆行動
-- **`/月復盤`**：彙整當月週復盤 → 月度總結
+- **「週覆盤」**：自動執行以下步驟：
+  1. 用 Bash 計算本週一到今天的日期（Asia/Taipei 時區，格式 YYYY/MM/DD）
+  2. WebFetch GET GAS API 抓本週 AAR 資料（from=週一, to=今天）
+  3. 分析資料產出報告（亮點/痛點/靈感轉行動/防呆行動/時間分配比例）
+  4. WebFetch POST 寫回 GAS API（type='review', token='graceos2026read', review_type='週'）
+  5. 輸出完整報告給使用者看
+- **「月覆盤」**：自動執行以下步驟：
+  1. 用 Bash 計算本月第一天到今天（Asia/Taipei 時區）
+  2. WebFetch GET GAS API 抓本月 AAR 資料
+  3. 分析產出報告（月度亮點/需改變模式/績效描述句/下月重點）
+  4. WebFetch POST 寫回 GAS API（type='review', token='graceos2026read', review_type='月'）
+  5. 輸出完整報告給使用者看
 
 ## 整合的獨立 App
 ### 幕僚沙盤
