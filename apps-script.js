@@ -562,7 +562,10 @@ function out(obj) {
 function ui() { return SpreadsheetApp.getUi(); }
 
 function safeAlert(msg) {
-  try { SpreadsheetApp.getUi().alert(msg); } catch(e) { Logger.log('[GraceOS] ' + msg); }
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SPREADSHEET_ID);
+    ss.toast(msg, '靜華 OS', 5);
+  } catch(e) { Logger.log('[GraceOS] ' + msg); }
 }
 
 // 統一日期格式比較用（去掉補零），避免 2026/05/04 vs 2026/5/4 對不上
