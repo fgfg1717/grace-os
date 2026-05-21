@@ -282,7 +282,7 @@ function setupMorningTrigger() {
   ScriptApp.newTrigger('setupTodayTemplate')
     .timeBased().everyDays(1).atHour(7)
     .inTimezone('Asia/Taipei').create();
-  safeAlert('設定完成！每天早上 7:00-8:00 會自動建立當天範本 ✓');
+  Logger.log('設定完成！每天早上 7:00-8:00 會自動建立當天範本 ✓');
 }
 
 // ── mergeToday：將今日手機快取合併至 AAR 區塊（正確位置）────────
@@ -693,5 +693,5 @@ function setupDailyMerge() {
     .nearMinute(45)
     .inTimezone('Asia/Taipei')
     .create();
-  safeAlert('設定完成！每天 18:45 會自動合併所有未合併快取 ✓');
+  Logger.log('設定完成！每天 18:45 會自動合併所有未合併快取 ✓');
 }
