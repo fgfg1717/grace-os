@@ -665,12 +665,76 @@ function mergeAll() {
   safeAlert('已合併 ' + total + ' 筆紀錄到日常紀錄 ✓');
 }
 
+// ── fixMisplacedData：修正被插錯位置的快取資料 ─────────────────
+// 之前的 bug 會把資料插進「反思區」（日期標題和分類標題之間）
+// 這個函式找出這些錯位資料，移回正確的 AAR 資料區
+function fixMisplacedData() {
+  const ss      = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const main    = getMainSheet(ss);
+  const lastRow = main.getLastRow();
+  if (lastRow === 0) { safeAlert('主紀錄是空的'); return; }
+
+  const numCols = Math.max(main.getLastColumn(), 4);
+  const vals    = main.getRange(1, 1, lastRow, numCols).getValues();
+  let totalMoved = 0;
+
+  // 找出所有日期 section 的起始位置（0-based）
+  const secStarts = [];
+  for (let i = 0; i < vals.length; i++) {
+    if (isDateHeader(vals[i])) secStarts.push(i);
+  }
+
+  // 從最底部往上處理，確保刪除/插入不影響上方的 section 位置
+  for (let s = secStarts.length - 1; s >= 0; s--) {
+    const secStart = secStarts[s];
+    const secEnd   = s + 1 < secStarts.length ? secStarts[s + 1] : vals.length;
+
+    // 找「分類」欄位標題列
+    let catIdx = -1;
+    for (let i = secStart + 1; i < secEnd; i++) {
+      if (vals[i].join('').includes('分類')) { catIdx = i; break; }
+    }
+    if (catIdx === -1) continue; // 沒有 AAR 結構（appendSection 建立的段落），跳過
+
+    // 找錯位資料：在日期標題和「分類」標題之間，col A 是 boolean（快取資料特徵）
+    const misplaced  = [];
+    const deleteRows = [];
+    for (let i = secStart + 1; i < catIdx; i++) {
+      const r = vals[i];
+      if (r[0] === true || r[0] === false) {
+        misplaced.push({ t: startTime(r[2]) || 9999, row: [r[0], r[1], r[2], r[3]] });
+        deleteRows.push(i + 1); // 1-based
+      }
+    }
+    if (!misplaced.length) continue;
+
+    // 刪除錯位列（由下往上，避免列號位移）
+    deleteRows.sort((a, b) => b - a);
+    deleteRows.forEach(r => main.deleteRow(r));
+
+    // 計算刪除後的「分類」標題列位置
+    const newCatRow1 = catIdx + 1 - deleteRows.length; // 1-based
+    const aarStart1  = newCatRow1 + 1;                  // 1-based，分類標題的下一列
+
+    // 按時間排序，批次插入到 AAR 資料區
+    misplaced.sort((a, b) => a.t - b.t);
+    main.insertRowsAfter(newCatRow1, misplaced.length);
+    main.getRange(aarStart1, 1, misplaced.length, 4).setValues(misplaced.map(m => m.row));
+
+    totalMoved += misplaced.length;
+    // 刪除 N 列 + 插入 N 列 → 上方 section 位置不變，不需要重新讀取
+  }
+
+  safeAlert('已修正 ' + totalMoved + ' 筆資料，移至正確的 AAR 欄位 ✓');
+}
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('靜華 OS')
     .addItem('① 建立今日範本（手動）', 'setupTodayTemplate')
     .addItem('② 合併今日手機快取', 'mergeToday')
     .addItem('合併所有未合併快取', 'mergeAll')
+    .addItem('🔧 修正錯位資料（移回 AAR 區）', 'fixMisplacedData')
     .addSeparator()
     .addItem('⏰ 設定每早 7 點自動建立範本', 'setupMorningTrigger')
     .addItem('⏰ 設定每日 18:45 自動合併', 'setupDailyMerge')
