@@ -176,6 +176,44 @@ function doPost(e) {
 
 // ── setupTodayTemplate：在最上方插入今天的範本 ──────────────────
 // 新的在最上面，複製最頂端那天的格式，清除內容後填入今天日期
+function buildFreshTemplate(main, today) {
+  const numCols = 7;
+  main.insertRowsBefore(1, 22);
+  const r = (row, col) => main.getRange(row, col);
+  const rng = (row, col, rows, cols) => main.getRange(row, col, rows, cols);
+
+  // 日期 header
+  r(1,1).setValue(today).setFontSize(14).setFontWeight('bold');
+  r(1,4).setValue('每日單一亮點');
+  r(1,6).setValue('1% 推進問題').setFontColor('#cc0000').setFontWeight('bold');
+  r(1,7).setValue('我今天到底哪裡變強了');
+  rng(2,1,1,numCols).merge().setValue('上班坐到座位上的前 30 分鐘，嚴禁打開 Email 與通訊軟體。');
+
+  // 反思欄
+  r(4,2).setValue('選一件讓我有感覺、有啟發的事情');
+  r(5,2).setValue('');
+  r(7,2).setValue('有出門的零碎時間多，但都忘記五分鐘小抽屜');
+  r(9,2).setValue('我從過程中學習或觀察到什麼事情？');
+  r(10,2).setValue('');
+
+  // AAR header
+  r(12,2).setValue('AAR');
+  r(13,1).setValue('進攻');
+  r(13,2).setValue('分類');
+  r(13,3).setValue('今天完成了什麼事情？');
+  r(13,6).setValue('1% 推進問題');
+  r(13,7).setValue('我今天到底哪裡變強了');
+
+  // 8 列空白資料列（含 checkbox）
+  for (let i = 14; i <= 21; i++) {
+    main.getRange(i, 1).insertCheckboxes();
+  }
+
+  // 空白分隔
+  r(22,1).setValue('');
+  safeAlert('✓ 已建立 ' + today + ' 的全新範本（預設格式）！');
+}
+
 function setupTodayTemplate() {
   const ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
   const main = getMainSheet(ss);
@@ -183,7 +221,7 @@ function setupTodayTemplate() {
   const lastRow = main.getLastRow();
 
   if (lastRow === 0) {
-    safeAlert('主分頁是空的，請先手動建立第一天的格式後再執行。'); return;
+    buildFreshTemplate(main, today); return;
   }
 
   const numCols = Math.max(main.getLastColumn(), 8);
@@ -502,7 +540,13 @@ function getOrCreateReviewSheet(ss) {
 }
 
 function getMainSheet(ss) {
-  return ss.getSheets().find(s => s.getSheetId() === MAIN_GID) || ss.getSheets()[0];
+  // 先用 GID，找不到再用名稱，再找不到用第一個有資料的分頁
+  const byId = ss.getSheets().find(s => s.getSheetId() === MAIN_GID);
+  if (byId) return byId;
+  const byName = ss.getSheets().find(s => /AAR|主紀錄/.test(s.getName()));
+  if (byName) return byName;
+  const withData = ss.getSheets().find(s => s.getLastRow() > 0);
+  return withData || ss.getSheets()[0];
 }
 
 function fmt(d) {
@@ -593,12 +637,19 @@ function mergeAll() {
     } else {
       let sectionEnd = vals.length;
       for (let i = headerIdx + 1; i < vals.length; i++) { if (isDateHeader(vals[i])) { sectionEnd = i; break; } }
+
+      // ★ 同 mergeToday：找到「分類」欄位標題列，資料插在它之後，不插進反思區
+      let aarDataStart = headerIdx + 1;
+      for (let i = headerIdx + 1; i < sectionEnd; i++) {
+        if (vals[i].join('').includes('分類')) { aarDataStart = i + 1; break; }
+      }
+
       const existing = [];
-      for (let i = headerIdx + 1; i < sectionEnd; i++) { const t = startTime(vals[i][2]); if (t !== null) existing.push({ rowNum: i + 1, t }); }
+      for (let i = aarDataStart; i < sectionEnd; i++) { const t = startTime(vals[i][2]); if (t !== null) existing.push({ rowNum: i + 1, t }); }
       const inserts = items.map(({ row }) => ({ t: startTime(row[2]) !== null ? startTime(row[2]) : 9999, data: [row[0], row[1], row[2], row[3]] })).sort((a, b) => b.t - a.t);
       inserts.forEach(({ t, data }) => {
         const before = existing.filter(e => e.t <= t);
-        const afterRow = before.length ? before[before.length - 1].rowNum : headerIdx + 1;
+        const afterRow = before.length ? before[before.length - 1].rowNum : aarDataStart;
         main.insertRowAfter(afterRow);
         main.getRange(afterRow + 1, 1, 1, 4).setValues([data]);
         existing.forEach(e => { if (e.rowNum > afterRow) e.rowNum++; });
@@ -639,7 +690,8 @@ function setupDailyMerge() {
     .timeBased()
     .everyDays(1)
     .atHour(18)
+    .nearMinute(45)
     .inTimezone('Asia/Taipei')
     .create();
-  safeAlert('設定完成！每天 18:00–19:00 之間會自動合併所有未合併快取 ✓');
+  safeAlert('設定完成！每天 18:45 會自動合併所有未合併快取 ✓');
 }
