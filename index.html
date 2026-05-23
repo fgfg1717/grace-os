@@ -901,7 +901,125 @@ async function getGAS(params){
   const url=gasUrl();if(!url)return null;
   const q=new URLSearchParams({token:'graceos2026read',...params});
   try{const r=await fetch(`${url}?${q}`);return await r.json()}
+
   catch(e){return null}
+}
+
+/* ════ 跨裝置雲端同步 ════ */
+async function syncCapturesFromCloud(){
+  if(!gasUrl())return;
+  const res=await getGAS({type:'captures'});
+  if(!res?.ok||!res.data?.length)return;
+  const local=getCaptures();
+  const keys=new Set(local.map(c=>`${c.date}|${c.category}|${c.time}|${c.summary}`));
+  const toAdd=res.data.filter(c=>!keys.has(`${c.date}|${c.category}|${c.time}|${c.summary}`))
+    .map(c=>({id:Date.now()+Math.random(),synced:true,...c}));
+  if(!toAdd.length)return;
+  setCaptures([...toAdd,...local]);
+  loadCaptureList();
+  showToast(`已同步 ${toAdd.length} 筆雲端紀錄 ✓`);
+}
+
+async function syncCoursesFromCloud(){
+  if(!gasUrl())return;
+  const res=await getGAS({type:'eng_courses'});
+  if(!res?.ok||!res.data?.length)return;
+  const localKeys=new Set(getLessons().map(l=>`${l.title}|${l.date}`));
+  let added=0;
+  for(const course of res.data){
+    const title=course.courseTitle||course.title||'';
+    const date=course.classDate||course.date||'';
+    if(localKeys.has(`${title}|${date}`))continue;
+    _importCourseData(course); added++;
+  }
+  if(added>0){renderLessonList();showToast(`已同步 ${added} 堂課程 ✓`);}
+}
+
+function _importCourseData(data){
+  const title=data.courseTitle||data.title||'未命名課程';
+  const date=data.classDate||data.date||fmtYMD(taipeiNow());
+  const now=fmtYMD(taipeiNow());let count=0;
+  [...(data.vocabulary||[]),(data.idioms||[])].flat().forEach(v=>{
+    const word=v.word||v.english||v.term||'';const zh=v.zh||v.chinese||v.meaning||v.translation||'';
+    if(!word||!zh)return;
+    addEngItem({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
+      enDef:v.definition||'',zhMeaning:zh,example:v.example||v.ex||'',
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+  });
+  (data.sentences||data.dialogues||[]).forEach(s=>{
+    const sent=s.sentence||s.english||s.text||'';const zh=s.zh||s.chinese||s.translation||'';
+    if(!sent||!zh)return;
+    addEngItem({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
+      translation:zh,notes:s.notes||s.context||'',
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+  });
+  (data.grammar||[]).forEach(g=>{
+    const rule=g.rule||g.title||'';if(!rule)return;
+    addEngItem({id:Date.now()+Math.random(),type:'grammar',rule,
+      explanation:g.explanation||g.desc||'',
+      examples:(g.examples||[]).map(e=>typeof e==='string'?e:e.en||'').filter(Boolean),
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+  });
+  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:count});setLessons(lessons);
+}
+
+async function syncEngItemsFromCloud(){
+  if(!gasUrl())return;
+  const res=await getGAS({type:'eng_items'});
+  if(!res?.ok||!res.data?.length)return;
+  const local=getEngItems();
+  const localMap={};
+  local.forEach(item=>{const k=item.word||item.sentence||item.rule||String(item.id);localMap[k]=item});
+  let added=0;
+  res.data.forEach(ci=>{
+    const k=ci.word||ci.sentence||ci.rule||String(ci.id);
+    if(!localMap[k]){local.unshift(ci);added++;}
+    else{
+      const ls=(localMap[k].srs||{}).lastReview||'';
+      const cs=(ci.srs||{}).lastReview||'';
+      if(cs>ls)localMap[k].srs=ci.srs;
+    }
+  });
+  setEngItems(local);
+  if(added>0)showToast(`已同步 ${added} 個英文單字 ✓`);
+}
+
+let _engBackupTimer=null;
+function _scheduleEngBackup(){
+  if(!gasUrl())return;
+  if(_engBackupTimer)clearTimeout(_engBackupTimer);
+  _engBackupTimer=setTimeout(()=>{
+    postGAS({type:'eng_items_backup',token:'graceos2026read',ts:Date.now(),items:getEngItems()});
+  },8000);
+}
+
+async function syncLedgersFromCloud(){
+  if(!gasUrl())return;
+  const res=await getGAS({type:'ledgers'});
+  if(!res?.ok||!res.data?.length)return;
+  const local=getLedgers();
+  const keys=new Set(local.map(l=>`${l.date}|${l.type}|${l.mainCat}|${l.subCat}|${l.amount}`));
+  const toAdd=res.data.filter(l=>!keys.has(`${l.date}|${l.ledger_type}|${l.main_cat}|${l.sub_cat}|${l.amount}`))
+    .map(l=>({id:Date.now()+Math.random(),synced:true,
+      date:l.date,type:l.ledger_type,mainCat:l.main_cat,subCat:l.sub_cat,
+      category:l.main_cat+(l.sub_cat?` · ${l.sub_cat}`:''),amount:l.amount,notes:l.notes}));
+  if(!toAdd.length)return;
+  setLedgers([...toAdd,...local].sort((a,b)=>b.date.localeCompare(a.date)));
+  loadLedgerList();if(showMonthlySummary)renderMonthlySummary();
+  showToast(`已同步 ${toAdd.length} 筆記帳 ✓`);
+}
+
+async function syncStocksFromCloud(){
+  if(!gasUrl())return;
+  const res=await getGAS({type:'stocks'});
+  if(!res?.ok||!res.data?.length)return;
+  const local=getStocks();
+  const keys=new Set(local.map(s=>`${s.date}|${s.account}|${s.action}|${s.code}|${s.qty}|${s.price}`));
+  const toAdd=res.data.filter(s=>!keys.has(`${s.date}|${s.account}|${s.action}|${s.code}|${s.qty}|${s.price}`))
+    .map(s=>({id:Date.now()+Math.random(),synced:true,...s}));
+  if(!toAdd.length)return;
+  setStocks([...toAdd,...local].sort((a,b)=>b.date.localeCompare(a.date)));
+  showToast(`已同步 ${toAdd.length} 筆股票 ✓`);
 }
 
 /* ════ Init ════ */
@@ -1023,6 +1141,7 @@ function initCaptureForm(){
   document.getElementById('cap-attack').checked=false;
   document.getElementById('cap-gas-url').value=gasUrl();
   loadCaptureList();
+  syncCapturesFromCloud();
 }
 async function submitCapture(){
   const rs=document.getElementById('cap-start').value.replace(/\D/g,'').substring(0,4);
@@ -1087,10 +1206,11 @@ function getEngItems(){try{return JSON.parse(localStorage.getItem(ENG_KEY)||'[]'
 function setEngItems(a){localStorage.setItem(ENG_KEY,JSON.stringify(a))}
 function addEngItem(item){
   if(!item.srs)item.srs={nextReview:fmtYMD(taipeiNow()),interval:0,reps:0,lastRating:0,lastReview:''};
-  const a=getEngItems();const i=a.findIndex(x=>x.id===item.id);i>=0?a[i]=item:a.unshift(item);setEngItems(a)
+  const a=getEngItems();const i=a.findIndex(x=>x.id===item.id);i>=0?a[i]=item:a.unshift(item);setEngItems(a);
+  _scheduleEngBackup();
 }
 
-function initEngCenter(){switchEngTab('today');renderEngManualForm()}
+function initEngCenter(){switchEngTab('today');renderEngManualForm();syncCoursesFromCloud();syncEngItemsFromCloud();}
 
 function switchEngTab(tab){
   ['today','dict','list','practice'].forEach(t=>{
@@ -1578,6 +1698,8 @@ function importLessonJSON(){
   document.getElementById('lesson-json-input').value='';
   toggleLessonImport();renderLessonList();
   showToast(`已匯入「${title}」，共 ${count} 個項目 ✓`);
+  postGAS({type:'eng_course',...data});
+  _scheduleEngBackup();
 }
 
 function renderLessonList(){
@@ -1820,6 +1942,7 @@ function initLedger(){
   const now=taipeiNow();document.getElementById('ledger-date').value=fmtInputDate(now);
   setLedgerType('支出');loadLedgerList();
   if(showMonthlySummary)renderMonthlySummary();
+  syncLedgersFromCloud();
 }
 function getLedgers(){try{return JSON.parse(localStorage.getItem('ledgers')||'[]')}catch(e){return[]}}
 function setLedgers(items){localStorage.setItem('ledgers',JSON.stringify(items))}
@@ -1895,6 +2018,7 @@ function initStock(){
   const now=taipeiNow();document.getElementById('stock-date').value=fmtInputDate(now);
   setStockField('account','個人');setStockField('market','台股');setStockField('action','買入');
   loadStockHoldings();loadStockHistory();
+  syncStocksFromCloud();
 }
 async function submitStock(){
   const date=document.getElementById('stock-date').value.replace(/-/g,'/');

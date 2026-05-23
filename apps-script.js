@@ -32,6 +32,76 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
+  // ── 跨裝置同步：讀取手機快取（快速記錄）──
+  if (params.type === 'captures') {
+    const cache = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(CACHE_TAB);
+    if (!cache || cache.getLastRow() <= 1) return out({ ok: true, data: [] });
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 60);
+    const cutoffStr = Utilities.formatDate(cutoff, 'Asia/Taipei', 'yyyy/MM/dd');
+    const rows = cache.getDataRange().getValues().slice(1);
+    const data = rows.map(r => ({
+      is_attack: r[0] === true,
+      category:  String(r[1] || ''),
+      time:      String(r[2] || ''),
+      summary:   String(r[3] || ''),
+      date:      cellToDateStr(r[4]),
+    })).filter(r => r.summary && r.date >= cutoffStr);
+    return out({ ok: true, data });
+  }
+
+  // ── 跨裝置同步：讀取英文課程 ──
+  if (params.type === 'eng_courses') {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('英文課程');
+    if (!sheet || sheet.getLastRow() <= 1) return out({ ok: true, data: [] });
+    const courses = sheet.getDataRange().getValues().slice(1)
+      .map(r => { try { return JSON.parse(String(r[2])); } catch(e) { return null; } })
+      .filter(Boolean);
+    return out({ ok: true, data: courses });
+  }
+
+  // ── 跨裝置同步：讀取英文詞庫快照 ──
+  if (params.type === 'eng_items') {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('英文詞庫快照');
+    if (!sheet || sheet.getLastRow() <= 1) return out({ ok: true, data: [], ts: 0 });
+    const row = sheet.getRange(2, 1, 1, 2).getValues()[0];
+    let items = []; try { items = JSON.parse(String(row[1])); } catch(e) {}
+    return out({ ok: true, data: items, ts: Number(row[0]) || 0 });
+  }
+
+  // ── 跨裝置同步：讀取記帳明細 ──
+  if (params.type === 'ledgers') {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(LEDGER_TAB);
+    if (!sheet || sheet.getLastRow() <= 1) return out({ ok: true, data: [] });
+    const data = sheet.getDataRange().getValues().slice(1).map(r => ({
+      date:        cellToDateStr(r[0]),
+      ledger_type: String(r[1] || '支出'),
+      main_cat:    String(r[2] || ''),
+      sub_cat:     String(r[3] || ''),
+      amount:      Number(r[4]) || 0,
+      notes:       String(r[5] || ''),
+    })).filter(r => r.date && r.amount);
+    return out({ ok: true, data });
+  }
+
+  // ── 跨裝置同步：讀取股票紀錄 ──
+  if (params.type === 'stocks') {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(STOCK_TAB);
+    if (!sheet || sheet.getLastRow() <= 1) return out({ ok: true, data: [] });
+    const data = sheet.getDataRange().getValues().slice(1).map(r => ({
+      date:    cellToDateStr(r[0]),
+      account: String(r[1] || ''),
+      market:  String(r[2] || ''),
+      action:  String(r[3] || ''),
+      code:    String(r[4] || ''),
+      name:    String(r[5] || ''),
+      qty:     Number(r[6]) || 0,
+      price:   Number(r[7]) || 0,
+      total:   Number(r[8]) || 0,
+      notes:   String(r[9] || ''),
+    })).filter(r => r.date && r.code);
+    return out({ ok: true, data });
+  }
+
   const from = params.from || '';
   const to   = params.to   || '';
 
@@ -140,6 +210,22 @@ function doPost(e) {
       return out({ ok: true });
     }
 
+    // ── 儲存英文課程（跨裝置，不需 token）──
+    if (type === 'eng_course') {
+      const sheet = getOrCreateEngCourseSheet(ss);
+      const title = String(data.courseTitle || data.title || '');
+      const date  = String(data.classDate   || data.date  || '');
+      if (!title) return out({ ok: false, error: 'missing title' });
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        const rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+        if (rows.some(r => String(r[0]) === title && String(r[1]) === date))
+          return out({ ok: true, skipped: true });
+      }
+      sheet.appendRow([title, date, JSON.stringify(data), fmt(new Date())]);
+      return out({ ok: true });
+    }
+
     // ── 以下需要 token 驗證 ──
     if (data.token !== READ_TOKEN) return out({ error: 'unauthorized' });
 
@@ -165,6 +251,16 @@ function doPost(e) {
         data.misc_pct    || '',   // J: 瑣務%
         data.full_report || ''    // K: 完整報告
       ]);
+      return out({ ok: true });
+    }
+
+    // ── 英文詞庫快照備份（需 token）──
+    if (type === 'eng_items_backup') {
+      const sheet = getOrCreateEngItemsSheet(ss);
+      const ts   = data.ts || Date.now();
+      const json = JSON.stringify(data.items || []);
+      if (sheet.getLastRow() <= 1) { sheet.appendRow([ts, json]); }
+      else { sheet.getRange(2, 1, 1, 2).setValues([[ts, json]]); }
       return out({ ok: true });
     }
 
@@ -581,6 +677,33 @@ function normDate(str) {
 
 function isDateHeader(row) {
   return /\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(row.join(''));
+}
+
+function cellToDateStr(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Taipei', 'yyyy/MM/dd');
+  const m = String(v).match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (m) return `${m[1]}/${m[2].padStart(2,'0')}/${m[3].padStart(2,'0')}`;
+  return String(v);
+}
+
+function getOrCreateEngCourseSheet(ss) {
+  let s = ss.getSheetByName('英文課程');
+  if (!s) {
+    s = ss.insertSheet('英文課程');
+    s.getRange(1,1,1,4).setValues([['課程名稱','上課日期','JSON資料','儲存時間']]);
+    s.setFrozenRows(1);
+  }
+  return s;
+}
+
+function getOrCreateEngItemsSheet(ss) {
+  let s = ss.getSheetByName('英文詞庫快照');
+  if (!s) {
+    s = ss.insertSheet('英文詞庫快照');
+    s.getRange(1,1,1,2).setValues([['時間戳','JSON資料']]);
+    s.setFrozenRows(1);
+  }
+  return s;
 }
 
 function startTime(val) {
