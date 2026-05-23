@@ -241,6 +241,12 @@ function setupTodayTemplate() {
   }
   const srcRows = firstSectionEnd; // 第一個 section 共幾列
 
+  // ★ 安全檢查：section 大小不合理（太小或太大）代表上方區塊已損壞，
+  //   直接用全新空白範本，避免把錯誤的格式往後複製
+  if (srcRows < 10 || srcRows > 50) {
+    buildFreshTemplate(main, today); return;
+  }
+
   // 在最上方插入空列（srcRows 行內容 + 2 行分隔）
   main.insertRowsBefore(1, srcRows + 2);
 
