@@ -616,52 +616,95 @@ function mergeAll() {
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const cache = ss.getSheetByName(CACHE_TAB);
   if (!cache || cache.getLastRow() <= 1) { safeAlert('手機快取是空的，沒有資料可合併。'); return; }
-  const cacheAll = cache.getDataRange().getValues().slice(1);
+
   const toDateStr = v => {
     if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Taipei', 'yyyy/MM/dd');
     return String(v).replace(/(\d{4})\/(\d{1,2})\/(\d{1,2})/, (_, y, m, d) => `${y}/${m.padStart(2,'0')}/${d.padStart(2,'0')}`);
   };
+
+  const cacheAll = cache.getDataRange().getValues().slice(1);
   const unmerged = cacheAll
     .map((row, i) => ({ idx: i + 2, row, date: toDateStr(row[4]) }))
     .filter(({ row }) => !row[5]);
   if (!unmerged.length) { safeAlert('沒有待合併的資料，全部都已合併過了。'); return; }
+
   const byDate = {};
   unmerged.forEach(item => { if (!byDate[item.date]) byDate[item.date] = []; byDate[item.date].push(item); });
-  const main = getMainSheet(ss);
-  let total = 0;
-  Object.keys(byDate).sort().forEach(date => {
-    const items = byDate[date];
-    const lastRow = main.getLastRow();
-    const vals = lastRow > 0 ? main.getRange(1, 1, lastRow, 4).getValues() : [];
-    let headerIdx = -1;
-    for (let i = 0; i < vals.length; i++) { if (normDate(vals[i].join('')).includes(normDate(date))) { headerIdx = i; break; } }
-    if (headerIdx === -1) {
-      appendSection(main, date, items);
-    } else {
-      let sectionEnd = vals.length;
-      for (let i = headerIdx + 1; i < vals.length; i++) { if (isDateHeader(vals[i])) { sectionEnd = i; break; } }
 
-      // ★ 同 mergeToday：找到「分類」欄位標題列，資料插在它之後，不插進反思區
-      let aarDataStart = headerIdx + 1;
-      for (let i = headerIdx + 1; i < sectionEnd; i++) {
-        if (vals[i].join('').includes('分類')) { aarDataStart = i + 1; break; }
-      }
+  const main    = getMainSheet(ss);
+  const lastRow = main.getLastRow();
 
-      const existing = [];
-      for (let i = aarDataStart; i < sectionEnd; i++) { const t = startTime(vals[i][2]); if (t !== null) existing.push({ rowNum: i + 1, t }); }
-      const inserts = items.map(({ row }) => ({ t: startTime(row[2]) !== null ? startTime(row[2]) : 9999, data: [row[0], row[1], row[2], row[3]] })).sort((a, b) => b.t - a.t);
-      inserts.forEach(({ t, data }) => {
-        const before = existing.filter(e => e.t <= t);
-        const afterRow = before.length ? before[before.length - 1].rowNum : aarDataStart;
-        main.insertRowAfter(afterRow);
-        main.getRange(afterRow + 1, 1, 1, 4).setValues([data]);
-        existing.forEach(e => { if (e.rowNum > afterRow) e.rowNum++; });
-        sectionEnd++;
-      });
+  // 表格是空的：全部 appendSection
+  if (lastRow === 0) {
+    let t = 0;
+    Object.keys(byDate).sort().forEach(d => { appendSection(main, d, byDate[d]); markMerged(cache, byDate[d]); t += byDate[d].length; });
+    safeAlert('已合併 ' + t + ' 筆紀錄 ✓');
+    return;
+  }
+
+  // ★ 讀一次表格，所有日期共用（原本每個日期各讀一次，速度慢 10 倍）
+  let vals = main.getRange(1, 1, lastRow, 4).getValues();
+
+  // 建立日期 header 索引 map（0-based rowIdx）
+  const headerMap = {};
+  for (let i = 0; i < vals.length; i++) {
+    if (isDateHeader(vals[i])) {
+      const m = vals[i].join('').match(/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/);
+      if (m) { const k = normDate(m[0]); if (headerMap[k] === undefined) headerMap[k] = i; }
     }
+  }
+
+  let total = 0;
+
+  // 由舊到新處理（= sheet 由下往上）：插入不影響上方尚未處理的列號
+  Object.keys(byDate).sort().forEach(date => {
+    const items   = byDate[date];
+    const hRowIdx = headerMap[normDate(date)];
+
+    if (hRowIdx === undefined) {
+      // 沒有範本，直接 appendSection
+      appendSection(main, date, items);
+      markMerged(cache, items);
+      total += items.length;
+      return;
+    }
+
+    // 找 section 結束位置（0-based）
+    let secEnd = vals.length;
+    for (let i = hRowIdx + 1; i < vals.length; i++) {
+      if (isDateHeader(vals[i])) { secEnd = i; break; }
+    }
+
+    // 找「分類」標題列，確定 AAR 資料起點（0-based）
+    let aarStart = hRowIdx + 1;
+    for (let i = hRowIdx + 1; i < secEnd; i++) {
+      if (vals[i].join('').includes('分類')) { aarStart = i + 1; break; }
+    }
+
+    // 找 AAR 資料區最後一筆有內容的列（0-based）
+    let lastFilled = aarStart - 1;
+    for (let i = aarStart; i < secEnd; i++) {
+      if (vals[i].some(c => c !== '' && c !== false && c !== null)) lastFilled = i;
+    }
+
+    // 排序後，批次插入到最後有內容列的下方（2 次 API call 搞定一整天）
+    const sorted = items.slice().sort((a, b) => (startTime(a.row[2]) || 0) - (startTime(b.row[2]) || 0));
+    const count  = sorted.length;
+    const insertAfter1 = lastFilled + 1; // 1-based sheet row
+    const firstNew1    = lastFilled + 2; // 1-based sheet row of first new row
+
+    main.insertRowsAfter(insertAfter1, count);
+    main.getRange(firstNew1, 1, count, 4)
+        .setValues(sorted.map(({ row }) => [row[0], row[1], row[2], row[3]]));
+
+    // 同步更新 in-memory vals，讓後續日期的 secEnd / aarStart 計算正確
+    const empty = Array(count).fill(null).map(() => ['', '', '', '']);
+    vals.splice(lastFilled + 1, 0, ...empty);
+
     markMerged(cache, items);
     total += items.length;
   });
+
   safeAlert('已合併 ' + total + ' 筆紀錄到日常紀錄 ✓');
 }
 
