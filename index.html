@@ -545,7 +545,10 @@
     <div style="margin-bottom:14px">
       <div class="today-sec-label" style="margin-top:0">
         <span>📖 我的課程</span>
-        <button class="nb-btn" onclick="toggleLessonImport()">+ 匯入課程</button>
+        <div style="display:flex;gap:6px">
+          <button class="nb-btn" style="font-size:11px;opacity:0.7" onclick="fixCorruptCourses()">🔄 重新同步</button>
+          <button class="nb-btn" onclick="toggleLessonImport()">+ 匯入課程</button>
+        </div>
       </div>
       <div id="lesson-import-box" class="lesson-import-box" style="display:none">
         <div style="font-size:12px;color:var(--muted);margin-bottom:8px">貼上課程 JSON，單字和慣用語會自動加入內容庫</div>
@@ -934,6 +937,17 @@ async function syncCoursesFromCloud(){
     _importCourseData(course); added++;
   }
   if(added>0){renderLessonList();showToast(`已同步 ${added} 堂課程 ✓`);}
+}
+
+async function fixCorruptCourses(){
+  // 刪除所有來自課程匯入的項目（重新同步前清空）
+  const items=getEngItems();
+  setEngItems(items.filter(i=>i.source!=='lesson'));
+  setLessons([]);
+  renderLessonList();
+  showToast('正在從雲端重新載入課程...');
+  await syncCoursesFromCloud();
+  if(!getLessons().length)showToast('同步完成，若仍無課程請確認網路 ✓');
 }
 
 function _importCourseData(data){

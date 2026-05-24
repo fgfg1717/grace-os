@@ -219,8 +219,12 @@ function doPost(e) {
       const lastRow = sheet.getLastRow();
       if (lastRow > 1) {
         const rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-        if (rows.some(r => String(r[0]) === title && String(r[1]) === date))
-          return out({ ok: true, skipped: true });
+        const existIdx = rows.findIndex(r => String(r[0]) === title && String(r[1]) === date);
+        if (existIdx >= 0) {
+          // 覆寫既有資料（修正亂碼用）
+          sheet.getRange(existIdx + 2, 1, 1, 4).setValues([[title, date, JSON.stringify(data), fmt(new Date())]]);
+          return out({ ok: true, updated: true });
+        }
       }
       sheet.appendRow([title, date, JSON.stringify(data), fmt(new Date())]);
       return out({ ok: true });
