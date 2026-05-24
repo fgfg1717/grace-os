@@ -114,8 +114,8 @@ function doGet(e) {
 
   rows.forEach(row => {
     if (isDateHeader(row)) {
-      const m = row.join('').match(/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/);
-      curDate = m ? m[0].replace(/-/g, '/') : String(row[0]);
+      const m = rowStr(row).match(/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/);
+      curDate = m ? m[0].replace(/-/g, '/') : cellToDateStr(row[0]);
       return;
     }
     if (!curDate) return;
@@ -329,7 +329,7 @@ function setupTodayTemplate() {
 
   // 今天已存在？
   for (let i = 0; i < allVals.length; i++) {
-    if (normDate(allVals[i].join('')).includes(normDate(today))) {
+    if (normDate(rowStr(allVals[i])).includes(normDate(today))) {
       safeAlert('今天（' + today + '）的範本已存在！'); return;
     }
   }
@@ -362,7 +362,7 @@ function setupTodayTemplate() {
   const newVals = main.getRange(1, 1, srcRows, numCols).getValues();
   let colHeaderOffset = -1;
   for (let i = 0; i < newVals.length; i++) {
-    if (newVals[i].join('').includes('分類')) { colHeaderOffset = i; break; }
+    if (rowStr(newVals[i]).includes('分類')) { colHeaderOffset = i; break; }
   }
 
   if (colHeaderOffset >= 0) {
@@ -433,7 +433,7 @@ function mergeToday() {
   // 找今日日期 header
   let headerIdx = -1;
   for (let i = 0; i < vals.length; i++) {
-    if (normDate(vals[i].join('')).includes(normDate(today))) { headerIdx = i; break; }
+    if (normDate(rowStr(vals[i])).includes(normDate(today))) { headerIdx = i; break; }
   }
 
   if (headerIdx === -1) {
@@ -451,7 +451,7 @@ function mergeToday() {
   // ★ 關鍵修正：找到欄位標題列（含「分類」），資料插在它之後
   let aarDataStart = headerIdx + 1; // 預設值：date 行之後
   for (let i = headerIdx + 1; i < sectionEnd; i++) {
-    if (vals[i].join('').includes('分類')) {
+    if (rowStr(vals[i]).includes('分類')) {
       aarDataStart = i + 1; // 欄位標題的下一行才是資料區
       break;
     }
@@ -679,8 +679,12 @@ function normDate(str) {
   return String(str).replace(/(\d{4})[\/\-]0*(\d+)[\/\-]0*(\d+)/g, (_, y, mo, dy) => `${y}/${parseInt(mo)}/${parseInt(dy)}`);
 }
 
+function rowStr(row) {
+  return row.map(c => c instanceof Date ? Utilities.formatDate(c, 'Asia/Taipei', 'yyyy/MM/dd') : String(c || '')).join('');
+}
+
 function isDateHeader(row) {
-  return /\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(row.join(''));
+  return /\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(rowStr(row));
 }
 
 function cellToDateStr(v) {
@@ -782,7 +786,7 @@ function mergeAll() {
   const headerMap = {};
   for (let i = 0; i < vals.length; i++) {
     if (isDateHeader(vals[i])) {
-      const m = vals[i].join('').match(/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/);
+      const m = rowStr(vals[i]).match(/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/);
       if (m) { const k = normDate(m[0]); if (headerMap[k] === undefined) headerMap[k] = i; }
     }
   }
@@ -811,7 +815,7 @@ function mergeAll() {
     // 找「分類」標題列，確定 AAR 資料起點（0-based）
     let aarStart = hRowIdx + 1;
     for (let i = hRowIdx + 1; i < secEnd; i++) {
-      if (vals[i].join('').includes('分類')) { aarStart = i + 1; break; }
+      if (rowStr(vals[i]).includes('分類')) { aarStart = i + 1; break; }
     }
 
     // 找 AAR 資料區最後一筆有內容的列（0-based）
@@ -868,7 +872,7 @@ function fixMisplacedData() {
     // 找「分類」欄位標題列
     let catIdx = -1;
     for (let i = secStart + 1; i < secEnd; i++) {
-      if (vals[i].join('').includes('分類')) { catIdx = i; break; }
+      if (rowStr(vals[i]).includes('分類')) { catIdx = i; break; }
     }
     if (catIdx === -1) continue; // 沒有 AAR 結構（appendSection 建立的段落），跳過
 
@@ -904,6 +908,87 @@ function fixMisplacedData() {
   safeAlert('已修正 ' + totalMoved + ' 筆資料，移至正確的 AAR 欄位 ✓');
 }
 
+// ── fixMismerged：修正被 appendSection 誤貼到底部的快取資料 ────────
+// 當 mergeAll 找不到日期 header（Date 物件辨識 bug）時，會把資料 append 到最底部
+// 這個函式把「沒有 AAR 模板結構的孤立段落」移到正確的日期區塊
+function fixMismerged() {
+  const ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const main = getMainSheet(ss);
+  const lastRow = main.getLastRow();
+  if (lastRow === 0) { safeAlert('AAR 是空的'); return; }
+
+  const numCols = Math.max(main.getLastColumn(), 4);
+  const vals = main.getRange(1, 1, lastRow, numCols).getValues();
+
+  // 找所有日期 header 及其位置（0-based）
+  const sections = [];
+  for (let i = 0; i < vals.length; i++) {
+    if (isDateHeader(vals[i])) {
+      const m = rowStr(vals[i]).match(/\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/);
+      if (m) sections.push({ idx: i, date: normDate(m[0]) });
+    }
+  }
+
+  // 分辨「有模板結構（含分類 header）」vs「孤立段落（appendSection 產物）」
+  const templatedMap = {}; // date → { catIdx(0-based), endIdx(0-based exclusive) }
+  const orphanedList = []; // [{ startIdx, endIdx, date }]
+
+  sections.forEach((sec, si) => {
+    const endIdx = si + 1 < sections.length ? sections[si + 1].idx : vals.length;
+    let catIdx = -1;
+    for (let i = sec.idx + 1; i < endIdx; i++) {
+      if (rowStr(vals[i]).includes('分類')) { catIdx = i; break; }
+    }
+    if (catIdx >= 0) {
+      if (!templatedMap[sec.date]) templatedMap[sec.date] = { catIdx, endIdx };
+    } else {
+      orphanedList.push({ startIdx: sec.idx, endIdx, date: sec.date });
+    }
+  });
+
+  if (!orphanedList.length) { safeAlert('沒有錯位的資料，全部已在正確位置 ✓'); return; }
+
+  let moved = 0;
+
+  // 由下往上處理，插入到上方的模板後，下方的列號才不會跑掉
+  [...orphanedList].reverse().forEach(({ startIdx, endIdx, date }) => {
+    const target = templatedMap[date];
+    if (!target) return; // 找不到對應模板，跳過
+
+    // 收集孤立段落的資料列（跳過日期 header 那行）
+    const dataRows = [];
+    for (let i = startIdx + 1; i < endIdx; i++) {
+      if (vals[i].some(c => c !== '' && c !== false && c !== null)) {
+        dataRows.push([vals[i][0], vals[i][1], vals[i][2], vals[i][3]]);
+      }
+    }
+    if (!dataRows.length) return;
+
+    // 找插入點：模板 AAR 資料區最後一筆有內容的列
+    const { catIdx, endIdx: tEnd } = target;
+    let lastFilled = catIdx;
+    for (let i = catIdx + 1; i < tEnd; i++) {
+      if (vals[i].some(c => c !== '' && c !== false && c !== null)) lastFilled = i;
+    }
+    const insertAfter1 = lastFilled + 1; // 1-based
+    const firstNew1    = lastFilled + 2; // 1-based
+
+    // 插入到模板區
+    main.insertRowsAfter(insertAfter1, dataRows.length);
+    main.getRange(firstNew1, 1, dataRows.length, 4).setValues(dataRows);
+
+    // 刪除孤立段落（所有列：日期 header + 資料列），由下往上，並加上插入偏移
+    const adj = dataRows.length;
+    for (let r1 = endIdx + adj; r1 >= startIdx + 1 + adj; r1--) {
+      main.deleteRow(r1);
+    }
+
+    moved += dataRows.length;
+  });
+
+  safeAlert('已將 ' + moved + ' 筆資料移至正確的 AAR 區塊 ✓');
+}
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('靜華 OS')
@@ -911,6 +996,7 @@ function onOpen() {
     .addItem('② 合併今日手機快取', 'mergeToday')
     .addItem('合併所有未合併快取', 'mergeAll')
     .addItem('🔧 修正錯位資料（移回 AAR 區）', 'fixMisplacedData')
+    .addItem('🔧 修正跑到底部的資料', 'fixMismerged')
     .addSeparator()
     .addItem('⏰ 設定每早 7 點自動建立範本', 'setupMorningTrigger')
     .addItem('⏰ 設定每日 18:45 自動合併', 'setupDailyMerge')
