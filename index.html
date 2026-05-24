@@ -890,7 +890,8 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 function fbCopy(text,cb){const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);cb()}
 function doCopy(text,msg){const done=()=>showToast(msg||'已複製！');navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(text).then(done).catch(()=>fbCopy(text,done)):fbCopy(text,done)}
-function gasUrl(){return localStorage.getItem('gas-url')||''}
+const _DEFAULT_GAS='https://script.google.com/macros/s/AKfycbwcFf2JuSp-z8IMiR0FQ3SCAuUHvtYnj7uKdZFUvd1mmQHo7b5W3zn0onvM-Js-giPXdQ/exec';
+function gasUrl(){return localStorage.getItem('gas-url')||_DEFAULT_GAS}
 
 async function postGAS(payload){
   const url=gasUrl();if(!url)return false;
