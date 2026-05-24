@@ -1142,7 +1142,21 @@ function initCaptureForm(){
   document.getElementById('cap-attack').checked=false;
   document.getElementById('cap-gas-url').value=gasUrl();
   loadCaptureList();
+  _autoRetryUnsync();
   syncCapturesFromCloud();
+}
+async function _autoRetryUnsync(){
+  const today=fmtYMD(taipeiNow());
+  const items=getCaptures();
+  const pending=items.filter(c=>!c.synced);
+  if(!pending.length)return;
+  for(const c of pending){
+    const ok=await postGAS({type:'capture',...c});
+    if(ok){const idx=items.findIndex(x=>x.id===c.id);if(idx!==-1)items[idx].synced=true;}
+  }
+  setCaptures(items);loadCaptureList();
+  const done=pending.filter(c=>items.find(x=>x.id===c.id)?.synced).length;
+  if(done>0)showToast(`已同步 ${done} 筆未上傳紀錄 ✓`);
 }
 async function submitCapture(){
   const rs=document.getElementById('cap-start').value.replace(/\D/g,'').substring(0,4);
