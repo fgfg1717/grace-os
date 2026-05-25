@@ -1788,7 +1788,14 @@ function lessonStatusBadge(dateStr){
 }
 function renderLessonList(){
   const list=document.getElementById('lesson-list');if(!list)return;
-  const lessons=getLessons();
+  const today=getTodayStr();
+  const lessons=[...getLessons()].sort((a,b)=>{
+    const af=a.date&&a.date>today,bf=b.date&&b.date>today;
+    if(af&&bf)return a.date<b.date?-1:1;   // 都是未來：近的排前
+    if(af)return -1;                         // a 未來、b 過去：a 排前
+    if(bf)return 1;                          // b 未來、a 過去：b 排前
+    return a.date>b.date?-1:1;              // 都是過去：最近的排前
+  });
   if(!lessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
   list.innerHTML=lessons.map(l=>`<div class="lesson-card">
     <div style="flex:1">
