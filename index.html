@@ -594,6 +594,12 @@
         <button class="chip" data-r="sentence" onclick="setPracRange('sentence')">句子</button>
         <button class="chip" data-r="grammar" onclick="setPracRange('grammar')">文法</button>
       </div>
+      <div class="section-label">課程篩選</div>
+      <div class="seg" id="prac-lesson-seg" style="margin-bottom:14px">
+        <button class="chip sel-purple" data-l="attended" onclick="setPracLesson('attended')">✅ 已上課</button>
+        <button class="chip" data-l="preview" onclick="setPracLesson('preview')">📅 預習</button>
+        <button class="chip" data-l="all" onclick="setPracLesson('all')">全部</button>
+      </div>
       <div id="prac-pool-info" style="font-size:13px;color:var(--muted);margin-bottom:14px"></div>
       <button class="full-btn" style="background:var(--vocab)" onclick="startEngPractice()">開始練習</button>
     </div>
@@ -1231,7 +1237,7 @@ function toggleVoice(){
 ════════════════════════════════ */
 const ENG_KEY='eng_items_v1';
 let engTypeFilter='all',engSrcFilter='all',engAddType='vocab';
-let pracMode='choice',pracRange='all',pracPool=[],pracIdx=0,pracScore={c:0,t:0};
+let pracMode='choice',pracRange='all',pracLesson='attended',pracPool=[],pracIdx=0,pracScore={c:0,t:0};
 let _dictEntry=null,_curQ=null;
 
 function getEngItems(){try{return JSON.parse(localStorage.getItem(ENG_KEY)||'[]')}catch{return[]}}
@@ -1402,13 +1408,22 @@ function delEngItem(id){setEngItems(getEngItems().filter(i=>i.id!==id));renderEn
 /* ── 練習 ── */
 function setPracMode(m){pracMode=m;document.querySelectorAll('#prac-mode-seg .chip').forEach(b=>b.className='chip'+(b.dataset.m===m?' sel-purple':''));renderPracSetup()}
 function setPracRange(r){pracRange=r;document.querySelectorAll('#prac-range-seg .chip').forEach(b=>b.className='chip'+(b.dataset.r===r?' sel-purple':''));renderPracSetup()}
+function setPracLesson(l){pracLesson=l;document.querySelectorAll('#prac-lesson-seg .chip').forEach(b=>b.className='chip'+(b.dataset.l===l?' sel-purple':''));renderPracSetup()}
+function filterByLesson(pool){
+  const today=getTodayStr();
+  if(pracLesson==='attended')return pool.filter(i=>i.source!=='lesson'||!i.lessonDate||i.lessonDate<=today);
+  if(pracLesson==='preview')return pool.filter(i=>i.source==='lesson'&&i.lessonDate&&i.lessonDate>today);
+  return pool;
+}
 function renderPracSetup(){
   let pool=getEngItems();if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
+  pool=filterByLesson(pool);
   const el=document.getElementById('prac-pool-info');if(el)el.textContent=`共 ${pool.length} 個項目可練習`;
 }
 function engShuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function startEngPractice(){
   let pool=getEngItems();if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
+  pool=filterByLesson(pool);
   if(pool.length<2){showToast('至少需要 2 個項目才能練習');return}
   pracPool=engShuffle(pool);pracIdx=0;pracScore={c:0,t:0};
   document.getElementById('eng-practice-setup').style.display='none';
@@ -1757,13 +1772,24 @@ function importLessonJSON(){
   _scheduleEngBackup();
 }
 
+function lessonStatusBadge(dateStr){
+  const today=getTodayStr();
+  if(!dateStr||dateStr<=today)
+    return `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:#D1FAE5;color:#065F46">✅ 已上課</span>`;
+  const diff=Math.round((new Date(dateStr.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/(864e5));
+  const label=diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
+  return `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:#FEF3C7;color:#92400E">📅 ${label}</span>`;
+}
 function renderLessonList(){
   const list=document.getElementById('lesson-list');if(!list)return;
   const lessons=getLessons();
   if(!lessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
   list.innerHTML=lessons.map(l=>`<div class="lesson-card">
-    <div style="flex:1"><div class="lesson-title">${esc(l.title)}</div>
-    <div class="lesson-meta">${esc(l.date)} · ${l.itemCount} 個學習項目</div></div>
+    <div style="flex:1">
+      <div class="lesson-title">${esc(l.title)}</div>
+      <div class="lesson-meta">${esc(l.date)} · ${l.itemCount} 個學習項目</div>
+      <div style="margin-top:5px">${lessonStatusBadge(l.date)}</div>
+    </div>
     <button class="del-btn" onclick="delLesson(${l.id})">✕</button>
   </div>`).join('');
 }
@@ -1787,7 +1813,11 @@ function srsRate(itemId,rating){
 
 function getDueItems(){
   const today=getTodayStr();
-  return getEngItems().filter(i=>i.srs&&i.srs.nextReview<=today);
+  return getEngItems().filter(i=>{
+    if(!i.srs||i.srs.nextReview>today)return false;
+    if(i.source==='lesson'&&i.lessonDate&&i.lessonDate>today)return false;
+    return true;
+  });
 }
 function getMasteredCount(){
   return getEngItems().filter(i=>i.srs&&(i.srs.reps||0)>=3&&(i.srs.lastRating||0)>=3).length;
