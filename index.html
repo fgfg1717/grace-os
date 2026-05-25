@@ -947,7 +947,10 @@ async function fixCorruptCourses(){
   renderLessonList();
   showToast('正在從雲端重新載入課程...');
   await syncCoursesFromCloud();
-  if(!getLessons().length)showToast('同步完成，若仍無課程請確認網路 ✓');
+  // 立刻把乾淨的詞庫快照推回雲端，避免舊亂碼備份被同步回來
+  const cleanItems=getEngItems();
+  await postGAS({type:'eng_items_backup',token:'graceos2026read',ts:Date.now(),items:cleanItems});
+  showToast('課程已修復 ✓');
 }
 
 function _importCourseData(data){
@@ -1863,8 +1866,9 @@ function getSourceLabel(src){
 function renderReviewCard(item){
   const vh=document.getElementById('today-vocab-list');if(!vh)return;
   const total=todayReviewItems.length;
-  const prog=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between">
-    <span>複習 ${todayReviewIdx+1} / ${total}</span><span>${getSourceLabel(item.source)}</span></div>`;
+  const lessonTag=(item.source==='lesson'&&item.lessonTitle)
+    ?`<div style="font-size:11px;color:#D97706;font-weight:600;margin-top:4px">📖 ${esc(item.lessonTitle)}${item.lessonDate?' · '+item.lessonDate:''}</div>`:''
+  const prog=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>複習 ${todayReviewIdx+1} / ${total}</span><span>${getSourceLabel(item.source)}</span></div>${lessonTag}</div>`;
   let front='',back='';
   if(item.type==='vocab'){
     front=`<div style="text-align:center;padding:20px 0">
@@ -2420,6 +2424,8 @@ function renderPlan(rows){
   });flush();
   document.getElementById('plan-content').innerHTML=html||'<div class="plan-empty">計畫格式無法解析</div>';
 }
+window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
 </script>
+<button id="back-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:24px;right:20px;width:44px;height:44px;border-radius:50%;background:#1E293B;color:white;border:none;font-size:20px;cursor:pointer;display:none;z-index:9998;box-shadow:0 4px 14px rgba(0,0,0,.25);align-items:center;justify-content:center;line-height:1">↑</button>
 </body>
 </html>
