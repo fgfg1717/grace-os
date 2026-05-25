@@ -1478,7 +1478,7 @@ function renderPracQ(){
   const audioBtn=q.audioText?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聆聽</button>`:'';
   let inputHtml='';
   if(q.options){
-    inputHtml=`<div class="prac-options">${q.options.map(o=>`<button class="prac-opt" onclick="checkEngChoice(this,'${o.replace(/'/g,"\\'")}')"><span>${esc(o)}</span></button>`).join('')}</div>`;
+    inputHtml=`<div class="prac-options">${q.options.map(o=>`<button class="prac-opt" data-value="${o.replace(/"/g,'&quot;')}" onclick="checkEngChoice(this,'${o.replace(/'/g,"\\'")}')"><span>${esc(stripGrammarMarkers(o))}</span></button>`).join('')}</div>`;
   }else{
     inputHtml=`<input type="text" id="prac-fill" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit;margin-bottom:8px" placeholder="輸入答案…" onkeydown="if(event.key==='Enter')checkEngFill()"/>
     <button class="full-btn" style="background:var(--vocab)" onclick="checkEngFill()">確認</button>`;
@@ -1496,7 +1496,7 @@ function checkEngChoice(btn,selected){
   pracScore.t++;if(correct)pracScore.c++;
   document.querySelectorAll('.prac-opt').forEach(b=>{
     b.disabled=true;
-    if(b.querySelector('span').textContent===q.answer)b.classList.add('correct');
+    if(b.dataset.value===q.answer)b.classList.add('correct');
     else if(b===btn&&!correct)b.classList.add('wrong');
   });
   showPracFb(correct,q.reveal,q.audioText,q.audioUrl);
@@ -1520,6 +1520,7 @@ function showPracFb(correct,reveal,audioText,audioUrl){
   fb.style.display='block';fb.className=correct?'prac-fb correct-fb':'prac-fb wrong-fb';
   fb.innerHTML=`<div class="fb-title">${correct?'✅ 正確！':'❌ 答錯了'}</div><div style="font-size:13px;line-height:1.7;white-space:pre-line;margin-top:4px">${esc(reveal||'')}</div>${audioText?`<button class="prac-audio-btn" onclick="engPlay('${(audioUrl||'').replace(/'/g,"\\'")}','${audioText.replace(/'/g,"\\'")}')">🔊 再聽一次</button>`:''}<button class="btn-primary" style="margin-top:10px;width:100%;padding:12px;border:none;border-radius:10px;color:white;background:var(--vocab);font-size:15px;font-weight:700;cursor:pointer" onclick="nextEngQ()">下一題 →</button>`;
 }
+function stripGrammarMarkers(s){return s.replace(/_([^_]+)_/g,'$1')}
 function nextEngQ(){pracIdx++;renderPracQ()}
 function resetEngPrac(){
   document.getElementById('eng-practice-setup').style.display='block';
@@ -1894,6 +1895,8 @@ function renderReviewCard(item){
     front=`<div style="padding:16px 0">
       <div style="font-size:12px;font-weight:700;color:#7C3AED;margin-bottom:6px">文法規則</div>
       <div style="font-size:17px;font-weight:800">${esc(item.rule||'')}</div>
+      ${item.explanation?`<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">${esc(item.explanation)}</div>`:''}
+      <div style="font-size:12px;font-weight:600;color:#7C3AED;margin-top:12px">👉 翻面看例句</div>
     </div>`;
     back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
       ${item.explanation?`<div style="font-size:14px;line-height:1.6;margin-bottom:8px">${esc(item.explanation)}</div>`:''}
