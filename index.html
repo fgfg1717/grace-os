@@ -1400,7 +1400,10 @@ function renderEngList(){
       main=`<span class="eng-word" style="font-size:14px">${esc(item.rule||'')}</span>`;
       sub=`${item.explanation?`<div class="eng-zh">${esc(item.explanation)}</div>`:''}`+((item.examples||[]).slice(0,1).map(e=>`<div class="eng-example">"${esc(e)}"<button class="eng-play" onclick="engSpeak('${e.replace(/'/g,"\\'")}')">🔊</button></div>`).join(''));
     }
-    return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="font-size:11px;color:var(--muted);flex:1;margin-left:4px">${SL[item.source]||''} ${esc(item.date)}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
+    const srcMeta=(item.source==='lesson'&&item.lessonTitle)
+      ?`${lessonStatusBadge(item.lessonDate)}&ensp;<span style="font-size:11px;color:var(--muted)">${esc(item.lessonTitle)}</span>`
+      :`<span style="font-size:11px;color:var(--muted)">${SL[item.source]||''} ${esc(item.date)}</span>`;
+    return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${srcMeta}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
   }).join('');
 }
 function delEngItem(id){setEngItems(getEngItems().filter(i=>i.id!==id));renderEngList()}
