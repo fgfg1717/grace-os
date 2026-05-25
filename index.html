@@ -1428,9 +1428,31 @@ function genEngQ(item,all,mode){
       return{prompt:item.sentence,hint:'選出正確的中文翻譯',answer:item.translation,options:opts,audioText:item.sentence,audioUrl:'',reveal:`${item.sentence}\n${item.translation}${item.notes?`\n（${item.notes}）`:''}`,selfAssess:false};
     }
     if(item.type==='grammar'&&(item.examples||[]).length){
-      const ex=item.examples[0];
-      const opts=engShuffle([ex,...engShuffle(pool).flatMap(i=>i.examples||[]).slice(0,3)]);
-      return{prompt:`【${item.rule}】\n${item.explanation||''}`,hint:'選出符合此文法規則的例句',answer:ex,options:opts,audioText:ex,audioUrl:'',reveal:(item.examples||[]).join('\n'),selfAssess:false};
+      // 找有 _word_ 標記的例句
+      const exWithBlanks=(item.examples||[]).filter(e=>/_[^_]+_/.test(e));
+      const ex=exWithBlanks.length?exWithBlanks[Math.floor(Math.random()*exWithBlanks.length)]:'';
+      const blankMatches=ex?[...ex.matchAll(/_([^_]+)_/g)]:[];
+      if(blankMatches.length){
+        // 隨機選一個空格當題目
+        const targetMatch=blankMatches[Math.floor(Math.random()*blankMatches.length)];
+        const targetWord=targetMatch[1];
+        // 顯示句子：目標空格換成 ______，其餘 _word_ 直接顯示文字
+        const displayQ=ex.replace(targetMatch[0],'______').replace(/_([^_]+)_/g,'$1');
+        // 收集干擾選項：其他文法項目的 _word_，不夠就補 vocab 單字
+        const wrongPool=[...new Set([
+          ...pool.flatMap(i=>(i.examples||[]).flatMap(e=>[...e.matchAll(/_([^_]+)_/g)].map(m=>m[1]))),
+          ...all.filter(i=>i.type==='vocab'&&i.word).map(i=>i.word)
+        ])].filter(w=>w.toLowerCase()!==targetWord.toLowerCase());
+        if(wrongPool.length>=3){
+          const opts=engShuffle([targetWord,...engShuffle(wrongPool).slice(0,3)]);
+          const revealSent=ex.replace(/_([^_]+)_/g,'$1');
+          const otherEx=(item.examples||[]).filter(e=>e!==ex).slice(0,3).map(e=>e.replace(/_([^_]+)_/g,'$1'));
+          const revealText=revealSent+(otherEx.length?'\n\n其他例句：\n'+otherEx.join('\n'):'');
+          return{prompt:displayQ,hint:`文法規則：${item.rule}`,answer:targetWord,options:opts,audioText:revealSent,audioUrl:'',reveal:revealText,selfAssess:false};
+        }
+      }
+      // fallback：若例句沒有 _word_ 標記或干擾選項不足，跳過此題
+      return null;
     }
   }
   if(mode==='fill'){
