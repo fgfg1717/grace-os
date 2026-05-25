@@ -942,7 +942,7 @@ async function syncCoursesFromCloud(){
     if(localKeys.has(`${title}|${date}`))continue;
     _importCourseData(course); added++;
   }
-  if(added>0){renderLessonList();showToast(`已同步 ${added} 堂課程 ✓`);}
+  if(added>0){renderLessonList();renderEngList();showToast(`已同步 ${added} 堂課程 ✓`);}
 }
 
 async function fixCorruptCourses(){
