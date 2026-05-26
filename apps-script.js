@@ -284,9 +284,6 @@ function buildFreshTemplate(main, today) {
 
   // 日期 header
   r(1,1).setValue(today).setFontSize(14).setFontWeight('bold');
-  r(1,4).setValue('每日單一亮點');
-  r(1,6).setValue('1% 推進問題').setFontColor('#cc0000').setFontWeight('bold');
-  r(1,7).setValue('我今天到底哪裡變強了');
   rng(2,1,1,numCols).merge().setValue('上班坐到座位上的前 30 分鐘，嚴禁打開 Email 與通訊軟體。');
 
   // 反思欄
@@ -301,8 +298,6 @@ function buildFreshTemplate(main, today) {
   r(13,1).setValue('進攻');
   r(13,2).setValue('分類');
   r(13,3).setValue('今天完成了什麼事情？');
-  r(13,6).setValue('1% 推進問題');
-  r(13,7).setValue('我今天到底哪裡變強了');
 
   // 8 列空白資料列（含 checkbox）
   for (let i = 14; i <= 21; i++) {
