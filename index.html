@@ -1988,15 +1988,6 @@ function renderTodayPreview(){
   const today=getTodayStr();
   const upcoming=getLessons().filter(l=>l.date&&l.date>today).sort((a,b)=>a.date<b.date?-1:1);
   if(!upcoming.length){el.innerHTML='';return}
-  const next=upcoming[0];
-  const diff=Math.round((new Date(next.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/864e5);
-  const dayLabel=diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
-  const items=getEngItems().filter(i=>i.lessonTitle===next.title&&i.lessonDate===next.date);
-  const vocab=items.filter(i=>i.type==='vocab');
-  const grammar=items.filter(i=>i.type==='grammar');
-  const idioms=items.filter(i=>i.type==='idiom');
-  const sentences=items.filter(i=>i.type==='sentence');
-  const hasContent=vocab.length||grammar.length||idioms.length||sentences.length;
 
   const section=(label,color,html)=>`
     <div style="margin-bottom:14px">
@@ -2004,46 +1995,86 @@ function renderTodayPreview(){
       ${html}
     </div>`;
 
-  const vocabHtml=vocab.map(v=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
-      <span style="font-size:14px;font-weight:700;min-width:110px;color:#1E293B">${esc(v.word)}</span>
-      <span style="font-size:13px;color:#78350F;flex:1">${esc(v.zhMeaning||'')}</span>
-      <button class="eng-play" onclick="engSpeak('${v.word.replace(/'/g,"\\'")}')">🔊</button>
-    </div>`).join('');
+  const buildCard=(lesson,idx)=>{
+    const diff=Math.round((new Date(lesson.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/864e5);
+    const dayLabel=diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
+    const items=getEngItems().filter(i=>i.lessonTitle===lesson.title&&i.lessonDate===lesson.date);
+    const vocab=items.filter(i=>i.type==='vocab');
+    const grammar=items.filter(i=>i.type==='grammar');
+    const idioms=items.filter(i=>i.type==='idiom');
+    const sentences=items.filter(i=>i.type==='sentence');
+    const hasContent=vocab.length||grammar.length||idioms.length||sentences.length;
 
-  const grammarHtml=grammar.map(g=>`
-    <div style="padding:8px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:6px;border-left:3px solid #F59E0B">
-      <div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:3px">${esc(g.rule||g.word||'')}</div>
-      ${g.explanation?`<div style="font-size:12px;color:#78350F;line-height:1.6">${esc(g.explanation)}</div>`:''}
-      ${g.example?`<div style="font-size:12px;color:#92400E;margin-top:4px;font-style:italic">${esc(g.example)}</div>`:''}
-    </div>`).join('');
+    const vocabHtml=vocab.map(v=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
+        <span style="font-size:14px;font-weight:700;min-width:110px;color:#1E293B">${esc(v.word)}</span>
+        <span style="font-size:13px;color:#78350F;flex:1">${esc(v.zhMeaning||'')}</span>
+        <button class="eng-play" onclick="engSpeak('${v.word.replace(/'/g,"\\'")}')">🔊</button>
+      </div>`).join('');
 
-  const idiomsHtml=idioms.map(i=>`
-    <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
-      <span style="font-size:13px;font-weight:700;min-width:130px;color:#1E293B">${esc(i.word)}</span>
-      <span style="font-size:13px;color:#78350F">${esc(i.zhMeaning||'')}</span>
-    </div>`).join('');
+    const grammarHtml=grammar.map(g=>`
+      <div style="padding:8px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:6px;border-left:3px solid #F59E0B">
+        <div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:3px">${esc(g.rule||g.word||'')}</div>
+        ${g.explanation?`<div style="font-size:12px;color:#78350F;line-height:1.6">${esc(g.explanation)}</div>`:''}
+        ${g.example?`<div style="font-size:12px;color:#92400E;margin-top:4px;font-style:italic">${esc(g.example)}</div>`:''}
+      </div>`).join('');
 
-  const sentHtml=sentences.map(s=>`
-    <div style="padding:7px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:5px">
-      <div style="font-size:13px;font-weight:600;color:#1E293B;line-height:1.6">${esc(s.word||s.sentence||'')}</div>
-      ${s.translation?`<div style="font-size:12px;color:#78350F;margin-top:2px">${esc(s.translation)}</div>`:''}
-    </div>`).join('');
+    const idiomsHtml=idioms.map(i=>`
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
+        <span style="font-size:13px;font-weight:700;min-width:130px;color:#1E293B">${esc(i.word)}</span>
+        <span style="font-size:13px;color:#78350F">${esc(i.zhMeaning||'')}</span>
+      </div>`).join('');
 
-  el.innerHTML=`<div style="background:#FFFBEB;border:2px solid #F59E0B;border-radius:16px;padding:16px;margin-bottom:16px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #FDE68A">
-      <span style="font-size:22px">📚</span>
-      <div style="flex:1">
-        <div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.5px">${dayLabel}・課前準備</div>
-        <div style="font-size:16px;font-weight:800;color:#1E293B">${esc(next.title)}</div>
+    const sentHtml=sentences.map(s=>`
+      <div style="padding:7px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:5px">
+        <div style="font-size:13px;font-weight:600;color:#1E293B;line-height:1.6">${esc(s.word||s.sentence||'')}</div>
+        ${s.translation?`<div style="font-size:12px;color:#78350F;margin-top:2px">${esc(s.translation)}</div>`:''}
+      </div>`).join('');
+
+    const bodyHtml=`
+      ${!hasContent?'<div style="font-size:13px;color:#92400E;text-align:center;padding:8px">課程 JSON 匯入後，重點會自動出現這裡</div>':''}
+      ${vocab.length?section('📝 本課單字','#92400E',vocabHtml):''}
+      ${grammar.length?section('📐 文法重點','#92400E',grammarHtml):''}
+      ${idioms.length?section('💬 片語 & 慣用語','#92400E',idiomsHtml):''}
+      ${sentences.length?section('✏️ 重要句型','#92400E',sentHtml):''}`;
+
+    if(idx===0){
+      return `<div style="background:#FFFBEB;border:2px solid #F59E0B;border-radius:16px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #FDE68A">
+          <span style="font-size:22px">📚</span>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.5px">${dayLabel}・課前準備</div>
+            <div style="font-size:16px;font-weight:800;color:#1E293B">${esc(lesson.title)}</div>
+          </div>
+        </div>
+        ${bodyHtml}
+      </div>`;
+    }
+    return `<div style="background:#FFFDF0;border:1.5px solid #FCD34D;border-radius:14px;margin-bottom:10px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer" onclick="togglePreviewCard(${idx})">
+        <span style="font-size:18px">📚</span>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:700;color:#92400E;letter-spacing:.5px">${dayLabel}</div>
+          <div style="font-size:14px;font-weight:700;color:#1E293B">${esc(lesson.title)}</div>
+        </div>
+        <span id="preview-arrow-${idx}" style="font-size:12px;color:#92400E;transition:transform .2s">▼</span>
       </div>
-    </div>
-    ${!hasContent?'<div style="font-size:13px;color:#92400E;text-align:center;padding:8px">課程 JSON 匯入後，重點會自動出現這裡</div>':''}
-    ${vocab.length?section('📝 本課單字','#92400E',vocabHtml):''}
-    ${grammar.length?section('📐 文法重點','#92400E',grammarHtml):''}
-    ${idioms.length?section('💬 片語 & 慣用語','#92400E',idiomsHtml):''}
-    ${sentences.length?section('✏️ 重要句型','#92400E',sentHtml):''}
-  </div>`;
+      <div id="preview-content-${idx}" style="display:none;padding:0 16px 16px">
+        ${bodyHtml}
+      </div>
+    </div>`;
+  };
+
+  el.innerHTML=upcoming.map((l,i)=>buildCard(l,i)).join('');
+}
+
+function togglePreviewCard(idx){
+  const content=document.getElementById(`preview-content-${idx}`);
+  const arrow=document.getElementById(`preview-arrow-${idx}`);
+  if(!content)return;
+  const open=content.style.display==='none';
+  content.style.display=open?'block':'none';
+  if(arrow)arrow.style.transform=open?'rotate(180deg)':'';
 }
 
 function renderTodaySentenceTask(){
