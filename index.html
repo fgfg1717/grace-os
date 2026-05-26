@@ -2284,9 +2284,17 @@ function loadLedgerList(){
   </div>`).join('')
 }
 function delLedger(id){
-  setLedgers(getLedgers().filter(l=>l.id!==id));
+  const all=getLedgers();
+  const l=all.find(l=>l.id===id);
+  setLedgers(all.filter(l=>l.id!==id));
   loadLedgerList();
   const calGrid=document.getElementById('ldg-cal-grid');if(calGrid&&calGrid.children.length)renderLedgerCal();
+  if(l&&l.synced){
+    postGAS({type:'delete_ledger',date:l.date,ledger_type:l.type,main_cat:l.mainCat,sub_cat:l.subCat||'',amount:l.amount,notes:l.notes||''});
+    showToast('已刪除並同步至雲端 ✓');
+  }else{
+    showToast('已刪除');
+  }
 }
 
 /* ── 日曆 ─────────────────────────── */
@@ -2439,6 +2447,8 @@ function closeLedgerEdit(){document.getElementById('ldg-edit-overlay').classList
 function saveLedgerEdit(){
   const id=parseInt(document.getElementById('ldg-edit-id').value);
   const items=getLedgers();const idx=items.findIndex(l=>l.id===id);if(idx===-1)return;
+  const original={date:items[idx].date,ledger_type:items[idx].type,main_cat:items[idx].mainCat,sub_cat:items[idx].subCat||'',amount:items[idx].amount,notes:items[idx].notes||''};
+  const wasSynced=items[idx].synced;
   const l=items[idx];
   l.date=document.getElementById('ldg-edit-date').value.replace(/-/g,'/');
   l.amount=parseFloat(document.getElementById('ldg-edit-amount').value)||l.amount;
@@ -2448,6 +2458,10 @@ function saveLedgerEdit(){
   l.subCat=ldgEditState.subCat;
   l.category=l.mainCat+(l.subCat?` · ${l.subCat}`:'');
   setLedgers(items);closeLedgerEdit();loadLedgerList();showToast('已更新記帳紀錄 ✓');
+  if(wasSynced){
+    postGAS({type:'update_ledger',original,updated:{date:l.date,ledger_type:l.type,main_cat:l.mainCat,sub_cat:l.subCat||'',amount:l.amount,notes:l.notes||''}});
+    showToast('已更新並同步至雲端 ✓');
+  }
 }
 
 /* ════════════════════════════════

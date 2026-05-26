@@ -164,6 +164,48 @@ function doPost(e) {
       return out({ ok: true });
     }
 
+    // ── 刪除記帳明細 ──
+    if (type === 'delete_ledger') {
+      const sheet = getOrCreateLedgerSheet(ss);
+      const lastRow = sheet.getLastRow();
+      if (lastRow <= 1) return out({ ok: false, error: 'no data' });
+      const rows = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (cellToDateStr(r[0]) === data.date &&
+            String(r[1]) === data.ledger_type &&
+            String(r[2]) === data.main_cat &&
+            Number(r[4]) === Number(data.amount)) {
+          sheet.deleteRow(i + 2);
+          return out({ ok: true });
+        }
+      }
+      return out({ ok: false, error: 'row not found' });
+    }
+
+    // ── 更新記帳明細 ──
+    if (type === 'update_ledger') {
+      const sheet = getOrCreateLedgerSheet(ss);
+      const lastRow = sheet.getLastRow();
+      if (lastRow <= 1) return out({ ok: false, error: 'no data' });
+      const rows = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+      const orig = data.original;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (cellToDateStr(r[0]) === orig.date &&
+            String(r[1]) === orig.ledger_type &&
+            String(r[2]) === orig.main_cat &&
+            Number(r[4]) === Number(orig.amount)) {
+          const upd = data.updated;
+          sheet.getRange(i + 2, 1, 1, 6).setValues([[
+            upd.date, upd.ledger_type, upd.main_cat, upd.sub_cat || '', Number(upd.amount), upd.notes || ''
+          ]]);
+          return out({ ok: true });
+        }
+      }
+      return out({ ok: false, error: 'row not found' });
+    }
+
     // ── 股票紀錄 ──
     if (type === 'stock') {
       const sheet = getOrCreateStockSheet(ss);
