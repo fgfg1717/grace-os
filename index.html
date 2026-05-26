@@ -687,12 +687,6 @@
         <button class="chip" data-r="sentence" onclick="setPracRange('sentence')">句子</button>
         <button class="chip" data-r="grammar" onclick="setPracRange('grammar')">文法</button>
       </div>
-      <div class="section-label">課程篩選</div>
-      <div class="seg" id="prac-lesson-seg" style="margin-bottom:14px">
-        <button class="chip sel-purple" data-l="attended" onclick="setPracLesson('attended')">✅ 已上課</button>
-        <button class="chip" data-l="preview" onclick="setPracLesson('preview')">📅 預習</button>
-        <button class="chip" data-l="all" onclick="setPracLesson('all')">全部</button>
-      </div>
       <div id="prac-pool-info" style="font-size:13px;color:var(--muted);margin-bottom:14px"></div>
       <button class="full-btn" style="background:var(--vocab)" onclick="startEngPractice()">開始練習</button>
     </div>
@@ -1547,9 +1541,8 @@ function setPracRange(r){pracRange=r;document.querySelectorAll('#prac-range-seg 
 function setPracLesson(l){pracLesson=l;document.querySelectorAll('#prac-lesson-seg .chip').forEach(b=>b.className='chip'+(b.dataset.l===l?' sel-purple':''));renderPracSetup()}
 function filterByLesson(pool){
   const today=getTodayStr();
-  if(pracLesson==='attended')return pool.filter(i=>i.source!=='lesson'||!i.lessonDate||i.lessonDate<=today);
-  if(pracLesson==='preview')return pool.filter(i=>i.source==='lesson'&&i.lessonDate&&i.lessonDate>today);
-  return pool;
+  // 練習只用已上課 + TOEIC，不包含未來課程
+  return pool.filter(i=>i.source!=='lesson'||!i.lessonDate||i.lessonDate<=today);
 }
 function renderPracSetup(){
   let pool=getEngItems();if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
@@ -1999,32 +1992,57 @@ function renderTodayPreview(){
   const diff=Math.round((new Date(next.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/864e5);
   const dayLabel=diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
   const items=getEngItems().filter(i=>i.lessonTitle===next.title&&i.lessonDate===next.date);
-  const vocab=items.filter(i=>i.type==='vocab').slice(0,6);
+  const vocab=items.filter(i=>i.type==='vocab');
   const grammar=items.filter(i=>i.type==='grammar');
-  el.innerHTML=`<div style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:14px;padding:16px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-      <span style="font-size:18px">📖</span>
+  const idioms=items.filter(i=>i.type==='idiom');
+  const sentences=items.filter(i=>i.type==='sentence');
+  const hasContent=vocab.length||grammar.length||idioms.length||sentences.length;
+
+  const section=(label,color,html)=>`
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:${color};letter-spacing:.5px;margin-bottom:7px">${label}</div>
+      ${html}
+    </div>`;
+
+  const vocabHtml=vocab.map(v=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
+      <span style="font-size:14px;font-weight:700;min-width:110px;color:#1E293B">${esc(v.word)}</span>
+      <span style="font-size:13px;color:#78350F;flex:1">${esc(v.zhMeaning||'')}</span>
+      <button class="eng-play" onclick="engSpeak('${v.word.replace(/'/g,"\\'")}')">🔊</button>
+    </div>`).join('');
+
+  const grammarHtml=grammar.map(g=>`
+    <div style="padding:8px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:6px;border-left:3px solid #F59E0B">
+      <div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:3px">${esc(g.rule||g.word||'')}</div>
+      ${g.explanation?`<div style="font-size:12px;color:#78350F;line-height:1.6">${esc(g.explanation)}</div>`:''}
+      ${g.example?`<div style="font-size:12px;color:#92400E;margin-top:4px;font-style:italic">${esc(g.example)}</div>`:''}
+    </div>`).join('');
+
+  const idiomsHtml=idioms.map(i=>`
+    <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
+      <span style="font-size:13px;font-weight:700;min-width:130px;color:#1E293B">${esc(i.word)}</span>
+      <span style="font-size:13px;color:#78350F">${esc(i.zhMeaning||'')}</span>
+    </div>`).join('');
+
+  const sentHtml=sentences.map(s=>`
+    <div style="padding:7px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:5px">
+      <div style="font-size:13px;font-weight:600;color:#1E293B;line-height:1.6">${esc(s.word||s.sentence||'')}</div>
+      ${s.translation?`<div style="font-size:12px;color:#78350F;margin-top:2px">${esc(s.translation)}</div>`:''}
+    </div>`).join('');
+
+  el.innerHTML=`<div style="background:#FFFBEB;border:2px solid #F59E0B;border-radius:16px;padding:16px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #FDE68A">
+      <span style="font-size:22px">📚</span>
       <div style="flex:1">
-        <div style="font-size:11px;font-weight:700;color:#92400E">${dayLabel}預習重點</div>
-        <div style="font-size:15px;font-weight:800;color:#1E293B">${esc(next.title)}</div>
+        <div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.5px">${dayLabel}・課前準備</div>
+        <div style="font-size:16px;font-weight:800;color:#1E293B">${esc(next.title)}</div>
       </div>
     </div>
-    ${vocab.length?`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:6px">重點詞彙</div>
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">
-      ${vocab.map(v=>`<div style="display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px dashed #FDE68A">
-        <span style="font-size:14px;font-weight:700;min-width:120px;color:#1E293B">${esc(v.word)}</span>
-        <span style="font-size:13px;color:#78350F">${esc(v.zhMeaning||'')}</span>
-        <button class="eng-play" onclick="engSpeak('${v.word.replace(/'/g,"\\'")}')">🔊</button>
-      </div>`).join('')}
-    </div>`:''}
-    ${grammar.length?`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:6px">文法重點</div>
-    <div style="display:flex;flex-direction:column;gap:6px">
-      ${grammar.map(g=>`<div style="padding:6px 8px;background:rgba(255,255,255,0.6);border-radius:8px">
-        <div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:2px">${esc(g.rule||'')}</div>
-        ${g.explanation?`<div style="font-size:12px;color:#78350F;line-height:1.5">${esc(g.explanation)}</div>`:''}
-      </div>`).join('')}
-    </div>`:''}
-    ${!vocab.length&&!grammar.length?`<div style="font-size:13px;color:#92400E">課程內容匯入後，重點會顯示在這裡</div>`:''}
+    ${!hasContent?'<div style="font-size:13px;color:#92400E;text-align:center;padding:8px">課程 JSON 匯入後，重點會自動出現這裡</div>':''}
+    ${vocab.length?section('📝 本課單字','#92400E',vocabHtml):''}
+    ${grammar.length?section('📐 文法重點','#92400E',grammarHtml):''}
+    ${idioms.length?section('💬 片語 & 慣用語','#92400E',idiomsHtml):''}
+    ${sentences.length?section('✏️ 重要句型','#92400E',sentHtml):''}
   </div>`;
 }
 
