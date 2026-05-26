@@ -368,6 +368,40 @@
     .lesson-title{font-size:14px;font-weight:700}
     .lesson-meta{font-size:11px;color:var(--muted);margin-top:3px}
 
+    /* Ledger tabs */
+    .ldg-tabs{display:flex;gap:8px;margin-bottom:16px}
+    .ldg-tab-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;background:white;color:var(--muted);transition:all .15s}
+    .ldg-tab-btn.sel{background:#CFFAFE;border-color:#0891B2;color:#164E63}
+    /* Ledger calendar */
+    .ldg-cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .ldg-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;padding:0 1px}
+    .ldg-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+    .ldg-cal-day{min-height:54px;border-radius:8px;padding:5px 3px;font-size:12px;cursor:pointer;border:1.5px solid transparent;background:#F8FAFC;text-align:center;transition:all .1s}
+    .ldg-cal-day:hover{border-color:#CBD5E1;background:white}
+    .ldg-cal-day.today{border-color:#0891B2;background:#CFFAFE}
+    .ldg-cal-day.selected{border-color:#0891B2;background:#A5F3FC}
+    .ldg-cal-day.empty{background:transparent;cursor:default;border:none}
+    .ldg-day-num{font-weight:600;color:var(--text);font-size:13px}
+    .ldg-day-exp{font-size:9px;color:#EF4444;margin-top:2px;line-height:1.3}
+    .ldg-day-inc{font-size:9px;color:#10B981;line-height:1.3}
+    /* Ledger report */
+    .ldg-period-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+    .ldg-summary-cards{display:flex;gap:8px;margin-bottom:16px}
+    .ldg-sum-card{flex:1;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+    .ldg-sum-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+    .ldg-sum-val{font-size:15px;font-weight:700}
+    .ldg-cat-section{margin-bottom:18px}
+    .ldg-cat-section-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px}
+    .ldg-cat-row{margin-bottom:10px}
+    .ldg-cat-label{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:4px}
+    .ldg-cat-pct{font-size:11px;color:var(--muted)}
+    .ldg-cat-bar-bg{height:7px;background:#F1F5F9;border-radius:4px;overflow:hidden}
+    .ldg-cat-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+    /* Ledger edit modal */
+    .ldg-edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9991;display:none;align-items:flex-end}
+    .ldg-edit-overlay.open{display:flex}
+    .ldg-edit-sheet{background:white;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:90vh;overflow-y:auto}
+
     /* Stock edit bottom sheet */
     .stock-edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9990;display:none;align-items:flex-end}
     .stock-edit-overlay.open{display:flex}
@@ -652,33 +686,63 @@
       <span class="tag" style="background:#CFFAFE;color:#164E63;">支出・收入・家用・個人</span>
     </div>
   </div>
-  <div class="cap-form">
-    <div class="type-toggle">
-      <button class="type-btn sel" id="type-expense" onclick="setLedgerType('支出')">支出</button>
-      <button class="type-btn" id="type-income" onclick="setLedgerType('收入')">收入</button>
-    </div>
-    <div class="seg" id="ledger-main-cats">
-      <button class="chip sel-cyan" data-mcat="家用" onclick="setLedgerCat('家用')">🏠 家用</button>
-      <button class="chip" data-mcat="個人" onclick="setLedgerCat('個人')">👤 個人</button>
-      <button class="chip" data-mcat="投資" onclick="setLedgerCat('投資')">📈 投資</button>
-      <button class="chip" data-mcat="定存" onclick="setLedgerCat('定存')">🏦 定存</button>
-    </div>
-    <div class="subcats" id="ledger-subcats"></div>
-    <div class="field" style="margin-top:10px"><label>金額（NT$）</label>
-      <input type="number" id="ledger-amount" class="amount-input" placeholder="0" inputmode="decimal"/>
-    </div>
-    <div class="field"><label>日期</label>
-      <input type="date" id="ledger-date"/>
-    </div>
-    <div class="field"><label>備註（選填）</label>
-      <input type="text" id="ledger-notes" placeholder="說明這筆支出…"/>
-    </div>
-    <button class="full-btn" style="background:var(--ledger)" onclick="submitLedger()">記帳</button>
+
+  <div class="ldg-tabs">
+    <button class="ldg-tab-btn sel" data-lt="record" onclick="showLedgerTab('record')">記帳</button>
+    <button class="ldg-tab-btn" data-lt="cal" onclick="showLedgerTab('cal')">日曆</button>
+    <button class="ldg-tab-btn" data-lt="report" onclick="showLedgerTab('report')">報表</button>
   </div>
-  <div id="ledger-monthly-summary"></div>
-  <div class="section-label" style="margin-top:4px">今天的記帳</div>
-  <div id="ledger-list"></div>
-  <button class="outline-btn" onclick="toggleLedgerSummary()">📊 查看本月支出報表</button>
+
+  <!-- 記帳 panel -->
+  <div id="ldg-panel-record">
+    <div class="cap-form">
+      <div class="type-toggle">
+        <button class="type-btn sel" id="type-expense" onclick="setLedgerType('支出')">支出</button>
+        <button class="type-btn" id="type-income" onclick="setLedgerType('收入')">收入</button>
+      </div>
+      <div class="seg" id="ledger-main-cats">
+        <button class="chip sel-cyan" data-mcat="家用" onclick="setLedgerCat('家用')">🏠 家用</button>
+        <button class="chip" data-mcat="個人" onclick="setLedgerCat('個人')">👤 個人</button>
+        <button class="chip" data-mcat="投資" onclick="setLedgerCat('投資')">📈 投資</button>
+        <button class="chip" data-mcat="定存" onclick="setLedgerCat('定存')">🏦 定存</button>
+      </div>
+      <div class="subcats" id="ledger-subcats"></div>
+      <div class="field" style="margin-top:10px"><label>金額（NT$）</label>
+        <input type="number" id="ledger-amount" class="amount-input" placeholder="0" inputmode="decimal"/>
+      </div>
+      <div class="field"><label>日期</label>
+        <input type="date" id="ledger-date" onchange="loadLedgerList()"/>
+      </div>
+      <div class="field"><label>備註（選填）</label>
+        <input type="text" id="ledger-notes" placeholder="說明這筆支出…"/>
+      </div>
+      <button class="full-btn" style="background:var(--ledger)" onclick="submitLedger()">記帳</button>
+    </div>
+    <div class="section-label" id="ldg-date-label" style="margin-top:4px"></div>
+    <div id="ledger-list"></div>
+  </div>
+
+  <!-- 日曆 panel -->
+  <div id="ldg-panel-cal" style="display:none">
+    <div class="ldg-cal-nav">
+      <button class="outline-btn" style="padding:6px 12px;font-size:13px" onclick="moveLedgerCal(-1)">← 上月</button>
+      <span id="ldg-cal-title" style="font-weight:700;font-size:15px"></span>
+      <button class="outline-btn" style="padding:6px 12px;font-size:13px" onclick="moveLedgerCal(1)">下月 →</button>
+    </div>
+    <div class="ldg-cal-weekdays">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    </div>
+    <div id="ldg-cal-grid" class="ldg-cal"></div>
+  </div>
+
+  <!-- 報表 panel -->
+  <div id="ldg-panel-report" style="display:none">
+    <div class="ldg-period-row">
+      <button class="ldg-tab-btn sel" data-lp="salary" onclick="setLedgerPeriod('salary')">薪月（5 日起）</button>
+      <button class="ldg-tab-btn" data-lp="month" onclick="setLedgerPeriod('month')">自然月</button>
+    </div>
+    <div id="ldg-report"></div>
+  </div>
 </div>
 
 <!-- 股票追蹤 -->
@@ -2117,8 +2181,16 @@ const LEDGER_SUBCATS={
 };
 const INCOME_CATS=['薪資','獎金','年終獎金','股利','利息','其他收入'];
 let ledgerType='支出',ledgerMainCat='家用',ledgerSubCat='家庭飲食';
-let showMonthlySummary=false;
+let ledgerCalYear=0,ledgerCalMonth=0,ledgerPeriod='salary';
 
+function showLedgerTab(tab){
+  ['record','cal','report'].forEach(t=>{
+    const el=document.getElementById('ldg-panel-'+t);if(el)el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('.ldg-tab-btn[data-lt]').forEach(b=>b.className='ldg-tab-btn'+(b.dataset.lt===tab?' sel':''));
+  if(tab==='cal')renderLedgerCal();
+  if(tab==='report')renderLedgerReport();
+}
 function setLedgerType(type){
   ledgerType=type;
   document.getElementById('type-expense').className='type-btn'+(type==='支出'?' sel':'');
@@ -2153,9 +2225,10 @@ function setLedgerSubCat(s){
   document.querySelectorAll('#ledger-subcats .sub-chip').forEach(b=>b.className='sub-chip'+(b.textContent===s?'sel':''));
 }
 function initLedger(){
-  const now=taipeiNow();document.getElementById('ledger-date').value=fmtInputDate(now);
+  const now=taipeiNow();
+  document.getElementById('ledger-date').value=fmtInputDate(now);
+  ledgerCalYear=now.getFullYear();ledgerCalMonth=now.getMonth();
   setLedgerType('支出');loadLedgerList();
-  if(showMonthlySummary)renderMonthlySummary();
   syncLedgersFromCloud();
 }
 function getLedgers(){try{return JSON.parse(localStorage.getItem('ledgers')||'[]')}catch(e){return[]}}
@@ -2170,38 +2243,211 @@ async function submitLedger(){
   const items=getLedgers();items.unshift(item);setLedgers(items);
   document.getElementById('ledger-amount').value='';document.getElementById('ledger-notes').value='';
   loadLedgerList();showToast('已記帳！');
-  if(showMonthlySummary)renderMonthlySummary();
   const ok=await postGAS({type:'ledger',date,ledger_type:ledgerType,main_cat:ledgerMainCat,sub_cat:ledgerSubCat,category,amount,notes});
   if(ok){const latest=getLedgers();const idx=latest.findIndex(l=>l.id===item.id);if(idx!==-1){latest[idx].synced=true;setLedgers(latest)}loadLedgerList();showToast('已記帳並同步 ✓')}
 }
 function loadLedgerList(){
-  const list=document.getElementById('ledger-list');const today=fmtYMD(taipeiNow()).replace(/\//g,'/');
-  const items=getLedgers().filter(l=>l.date===today);
-  if(!items.length){list.innerHTML='<div class="empty-msg">今天還沒有記帳</div>';return}
+  const list=document.getElementById('ledger-list');
+  const label=document.getElementById('ldg-date-label');
+  const dateVal=document.getElementById('ledger-date')?.value;
+  const date=dateVal?dateVal.replace(/-/g,'/'):'';
+  const todayStr=fmtYMD(taipeiNow()).replace(/\//g,'/');
+  if(label){
+    const isToday=date===todayStr;
+    label.textContent=isToday?'今天的記帳':`${date} 的記帳`;
+  }
+  if(!date||!list)return;
+  const items=getLedgers().filter(l=>l.date===date).sort((a,b)=>b.id-a.id);
+  if(!items.length){list.innerHTML='<div class="empty-msg">這天還沒有記帳</div>';return}
   const totalExp=items.filter(l=>l.type==='支出').reduce((s,l)=>s+l.amount,0);
-  list.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:8px">今日支出合計：<strong style="color:#EF4444">NT$ ${totalExp.toLocaleString()}</strong></div>`+
-    items.map(l=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:#CFFAFE;color:#164E63">${esc(l.mainCat)}</span>${l.subCat?`<span class="ledger-date">${esc(l.subCat)}</span>`:''}<span class="ledger-date">${esc(l.date)}</span></div><div class="rec-right">${l.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delLedger(${l.id})">✕</button></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="rec-body">${l.notes?esc(l.notes):'—'}</span><span style="font-size:16px;font-weight:700;color:${l.type==='支出'?'#EF4444':'#10B981'}">${l.type==='支出'?'- ':'+ '}NT$ ${l.amount.toLocaleString()}</span></div></div>`).join('')
+  const totalInc=items.filter(l=>l.type==='收入').reduce((s,l)=>s+l.amount,0);
+  list.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:8px;display:flex;gap:12px">
+    ${totalExp?`<span>支出 <strong style="color:#EF4444">NT$ ${totalExp.toLocaleString()}</strong></span>`:''}
+    ${totalInc?`<span>收入 <strong style="color:#10B981">NT$ ${totalInc.toLocaleString()}</strong></span>`:''}
+  </div>`+
+  items.map(l=>`<div class="rec-item">
+    <div class="rec-top">
+      <div class="rec-meta">
+        <span class="rec-badge" style="background:${l.type==='支出'?'#CFFAFE':'#D1FAE5'};color:${l.type==='支出'?'#164E63':'#065F46'}">${esc(l.mainCat)}</span>
+        ${l.subCat?`<span class="rec-badge" style="background:#F1F5F9;color:#475569">${esc(l.subCat)}</span>`:''}
+      </div>
+      <div class="rec-right">
+        ${l.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}
+        <button class="edit-btn" onclick="editLedger(${l.id})">✏️</button>
+        <button class="del-btn" onclick="delLedger(${l.id})">✕</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="rec-body">${l.notes?esc(l.notes):'—'}</span>
+      <span style="font-size:16px;font-weight:700;color:${l.type==='支出'?'#EF4444':'#10B981'}">${l.type==='支出'?'- ':'+ '}NT$ ${l.amount.toLocaleString()}</span>
+    </div>
+  </div>`).join('')
 }
-function delLedger(id){setLedgers(getLedgers().filter(l=>l.id!==id));loadLedgerList();if(showMonthlySummary)renderMonthlySummary()}
-function toggleLedgerSummary(){showMonthlySummary=!showMonthlySummary;renderMonthlySummary()}
-function renderMonthlySummary(){
-  const el=document.getElementById('ledger-monthly-summary');
-  if(!showMonthlySummary){el.innerHTML='';return}
-  const now=taipeiNow();const ym=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
-  const allItems=getLedgers().filter(l=>l.date.startsWith(ym));
-  const expItems=allItems.filter(l=>l.type==='支出');const incItems=allItems.filter(l=>l.type==='收入');
-  const byMainExp={};expItems.forEach(l=>{if(!byMainExp[l.mainCat])byMainExp[l.mainCat]=0;byMainExp[l.mainCat]+=l.amount});
-  const byMainInc={};incItems.forEach(l=>{if(!byMainInc[l.mainCat])byMainInc[l.mainCat]=0;byMainInc[l.mainCat]+=l.amount});
+function delLedger(id){
+  setLedgers(getLedgers().filter(l=>l.id!==id));
+  loadLedgerList();
+  const calGrid=document.getElementById('ldg-cal-grid');if(calGrid&&calGrid.children.length)renderLedgerCal();
+}
+
+/* ── 日曆 ─────────────────────────── */
+function moveLedgerCal(dir){
+  ledgerCalMonth+=dir;
+  if(ledgerCalMonth>11){ledgerCalMonth=0;ledgerCalYear++}
+  if(ledgerCalMonth<0){ledgerCalMonth=11;ledgerCalYear--}
+  renderLedgerCal();
+}
+function renderLedgerCal(){
+  const title=document.getElementById('ldg-cal-title');
+  const grid=document.getElementById('ldg-cal-grid');
+  if(!title||!grid)return;
+  const y=ledgerCalYear,m=ledgerCalMonth;
+  title.textContent=`${y} 年 ${m+1} 月`;
+  const firstDay=new Date(y,m,1).getDay(); // 0=Sun
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const todayStr=fmtYMD(taipeiNow()).replace(/\//g,'/');
+  const allItems=getLedgers();
+  // Build daily totals
+  const dayTotals={};
+  allItems.forEach(l=>{
+    const parts=l.date.split('/');
+    if(parseInt(parts[0])===y&&parseInt(parts[1])-1===m){
+      const d=parseInt(parts[2]);
+      if(!dayTotals[d])dayTotals[d]={exp:0,inc:0};
+      if(l.type==='支出')dayTotals[d].exp+=l.amount;
+      else dayTotals[d].inc+=l.amount;
+    }
+  });
+  let html='';
+  for(let i=0;i<firstDay;i++)html+='<div class="ldg-cal-day empty"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${y}/${String(m+1).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+    const isToday=ds===todayStr;
+    const t=dayTotals[d];
+    html+=`<div class="ldg-cal-day${isToday?' today':''}" onclick="ledgerCalGoDate('${ds}')">
+      <div class="ldg-day-num">${d}</div>
+      ${t&&t.exp?`<div class="ldg-day-exp">${t.exp>=1000?(t.exp/1000).toFixed(1)+'K':t.exp}</div>`:''}
+      ${t&&t.inc?`<div class="ldg-day-inc">+${t.inc>=1000?(t.inc/1000).toFixed(1)+'K':t.inc}</div>`:''}
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+function ledgerCalGoDate(ds){
+  document.getElementById('ledger-date').value=ds.replace(/\//g,'-');
+  showLedgerTab('record');loadLedgerList();
+}
+
+/* ── 報表 ─────────────────────────── */
+function setLedgerPeriod(p){
+  ledgerPeriod=p;
+  document.querySelectorAll('[data-lp]').forEach(b=>b.className='ldg-tab-btn'+(b.dataset.lp===p?' sel':''));
+  renderLedgerReport();
+}
+function getLedgerPeriodRange(){
+  const now=taipeiNow();const y=now.getFullYear();const m=now.getMonth()+1;const d=now.getDate();
+  const salaryDay=5;
+  if(ledgerPeriod==='salary'){
+    let fromY=y,fromM=m,toY=y,toM=m;
+    if(d>=salaryDay){fromY=y;fromM=m;}else{fromM=m-1;if(fromM<1){fromM=12;fromY=y-1;}}
+    const from=`${fromY}/${String(fromM).padStart(2,'0')}/${String(salaryDay).padStart(2,'0')}`;
+    const to=`${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+    return{from,to,label:`${fromY}/${fromM}/${salaryDay} — ${y}/${m}/${d}（薪月）`};
+  }else{
+    const from=`${y}/${String(m).padStart(2,'0')}/01`;
+    const to=`${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+    return{from,to,label:`${y} 年 ${m} 月`};
+  }
+}
+function renderLedgerReport(){
+  const el=document.getElementById('ldg-report');if(!el)return;
+  const{from,to,label}=getLedgerPeriodRange();
+  const allItems=getLedgers().filter(l=>l.date>=from&&l.date<=to);
+  const expItems=allItems.filter(l=>l.type==='支出');
+  const incItems=allItems.filter(l=>l.type==='收入');
   const totalExp=expItems.reduce((s,l)=>s+l.amount,0);
   const totalInc=incItems.reduce((s,l)=>s+l.amount,0);
   const net=totalInc-totalExp;
-  el.innerHTML=`<div class="month-summary"><div class="ms-title">本月收支報表（${ym}）</div>
-    ${Object.entries(byMainInc).map(([k,v])=>`<div class="ms-row"><span>💚 ${k}</span><span class="ms-amount ms-income">+ NT$ ${v.toLocaleString()}</span></div>`).join('')}
-    ${totalInc?`<div class="ms-row"><span>收入合計</span><span class="ms-amount ms-income">NT$ ${totalInc.toLocaleString()}</span></div>`:''}
-    ${Object.entries(byMainExp).map(([k,v])=>`<div class="ms-row"><span>❤️ ${k}</span><span class="ms-amount ms-expense">- NT$ ${v.toLocaleString()}</span></div>`).join('')}
-    <div class="ms-row"><span>支出合計</span><span class="ms-amount ms-expense">NT$ ${totalExp.toLocaleString()}</span></div>
-    <div class="ms-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:6px"><span>💰 結餘</span><span class="ms-amount" style="color:${net>=0?'#10B981':'#EF4444'};font-size:15px">${net>=0?'+ ':''}NT$ ${net.toLocaleString()}</span></div>
-  </div>`;
+  // Category breakdown
+  const byCat={};
+  expItems.forEach(l=>{const k=l.mainCat+(l.subCat?` · ${l.subCat}`:'');if(!byCat[k])byCat[k]=0;byCat[k]+=l.amount});
+  const catColors=['#0891B2','#7C3AED','#D97706','#059669','#DC2626','#9333EA','#0D9488'];
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const byMainInc={};incItems.forEach(l=>{if(!byMainInc[l.mainCat])byMainInc[l.mainCat]=0;byMainInc[l.mainCat]+=l.amount});
+  el.innerHTML=`
+    <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px">${label}</div>
+    <div class="ldg-summary-cards">
+      <div class="ldg-sum-card">
+        <div class="ldg-sum-label">支出</div>
+        <div class="ldg-sum-val" style="color:#EF4444">NT$ ${totalExp.toLocaleString()}</div>
+      </div>
+      <div class="ldg-sum-card">
+        <div class="ldg-sum-label">收入</div>
+        <div class="ldg-sum-val" style="color:#10B981">NT$ ${totalInc.toLocaleString()}</div>
+      </div>
+      <div class="ldg-sum-card">
+        <div class="ldg-sum-label">結餘</div>
+        <div class="ldg-sum-val" style="color:${net>=0?'#10B981':'#EF4444'}">${net>=0?'+':''}NT$ ${net.toLocaleString()}</div>
+      </div>
+    </div>
+    ${cats.length?`<div class="ldg-cat-section">
+      <div class="ldg-cat-section-title">支出明細</div>
+      ${cats.map(([k,v],i)=>{const pct=totalExp?Math.round(v/totalExp*100):0;return`<div class="ldg-cat-row">
+        <div class="ldg-cat-label"><span>${k}</span><span><strong>NT$ ${v.toLocaleString()}</strong> <span class="ldg-cat-pct">${pct}%</span></span></div>
+        <div class="ldg-cat-bar-bg"><div class="ldg-cat-bar-fill" style="width:${pct}%;background:${catColors[i%catColors.length]}"></div></div>
+      </div>`}).join('')}
+    </div>`:'<div class="empty-msg">這段期間沒有支出紀錄</div>'}
+    ${Object.keys(byMainInc).length?`<div class="ldg-cat-section">
+      <div class="ldg-cat-section-title">收入明細</div>
+      ${Object.entries(byMainInc).map(([k,v])=>`<div class="ldg-cat-row">
+        <div class="ldg-cat-label"><span>${k}</span><span style="color:#10B981;font-weight:700">NT$ ${v.toLocaleString()}</span></div>
+      </div>`).join('')}
+    </div>`:''}
+  `;
+}
+
+/* ── 記帳編輯 ─────────────────────── */
+let ldgEditState={type:'支出',mainCat:'家用',subCat:''};
+function editLedger(id){
+  const l=getLedgers().find(l=>l.id===id);if(!l)return;
+  ldgEditState={type:l.type,mainCat:l.mainCat,subCat:l.subCat||''};
+  document.getElementById('ldg-edit-id').value=id;
+  document.getElementById('ldg-edit-date').value=l.date.replace(/\//g,'-');
+  document.getElementById('ldg-edit-amount').value=l.amount;
+  document.getElementById('ldg-edit-notes').value=l.notes||'';
+  renderLdgEditCats();
+  document.getElementById('ldg-edit-overlay').classList.add('open');
+}
+function renderLdgEditCats(){
+  const t=ldgEditState.type;
+  document.getElementById('ldg-edit-type-exp').className='type-btn'+(t==='支出'?' sel':'');
+  document.getElementById('ldg-edit-type-inc').className='type-btn'+(t==='收入'?' sel':'');
+  const mainEl=document.getElementById('ldg-edit-maincats');
+  const subEl=document.getElementById('ldg-edit-subcats');
+  if(t==='收入'){
+    mainEl.innerHTML=INCOME_CATS.map(c=>`<button class="chip${c===ldgEditState.mainCat?' sel-green':''}" onclick="ldgEditSetMain('${c}')">${c}</button>`).join('');
+    subEl.innerHTML='';
+  }else{
+    const cats=['家用','個人','投資','定存'];
+    mainEl.innerHTML=cats.map(c=>`<button class="chip${c===ldgEditState.mainCat?' sel-cyan':''}" onclick="ldgEditSetMain('${c}')">${c}</button>`).join('');
+    const subs=LEDGER_SUBCATS[ldgEditState.mainCat]||[];
+    subEl.innerHTML=subs.map(s=>`<button class="sub-chip${s===ldgEditState.subCat?' sel':''}" onclick="ldgEditSetSub('${s}')">${s}</button>`).join('');
+  }
+}
+function ldgEditSetType(t){ldgEditState.type=t;const cats=t==='支出'?['家用','個人','投資','定存']:INCOME_CATS;ldgEditState.mainCat=cats[0];ldgEditState.subCat='';renderLdgEditCats()}
+function ldgEditSetMain(c){ldgEditState.mainCat=c;ldgEditState.subCat=(LEDGER_SUBCATS[c]||[])[0]||'';renderLdgEditCats()}
+function ldgEditSetSub(s){ldgEditState.subCat=s;document.querySelectorAll('#ldg-edit-subcats .sub-chip').forEach(b=>b.className='sub-chip'+(b.textContent===s?' sel':''))}
+function closeLedgerEdit(){document.getElementById('ldg-edit-overlay').classList.remove('open')}
+function saveLedgerEdit(){
+  const id=parseInt(document.getElementById('ldg-edit-id').value);
+  const items=getLedgers();const idx=items.findIndex(l=>l.id===id);if(idx===-1)return;
+  const l=items[idx];
+  l.date=document.getElementById('ldg-edit-date').value.replace(/-/g,'/');
+  l.amount=parseFloat(document.getElementById('ldg-edit-amount').value)||l.amount;
+  l.notes=document.getElementById('ldg-edit-notes').value.trim();
+  l.type=ldgEditState.type;
+  l.mainCat=ldgEditState.mainCat;
+  l.subCat=ldgEditState.subCat;
+  l.category=l.mainCat+(l.subCat?` · ${l.subCat}`:'');
+  setLedgers(items);closeLedgerEdit();loadLedgerList();showToast('已更新記帳紀錄 ✓');
 }
 
 /* ════════════════════════════════
@@ -2644,6 +2890,32 @@ function renderPlan(rows){
 }
 window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
 </script>
+<!-- Ledger Edit Modal -->
+<div class="ldg-edit-overlay" id="ldg-edit-overlay" onclick="if(event.target===this)closeLedgerEdit()">
+  <div class="ldg-edit-sheet">
+    <div class="sheet-title">✏️ 編輯記帳</div>
+    <input type="hidden" id="ldg-edit-id"/>
+    <div class="type-toggle" style="margin-bottom:12px">
+      <button class="type-btn sel" id="ldg-edit-type-exp" onclick="ldgEditSetType('支出')">支出</button>
+      <button class="type-btn" id="ldg-edit-type-inc" onclick="ldgEditSetType('收入')">收入</button>
+    </div>
+    <div class="seg" id="ldg-edit-maincats" style="margin-bottom:8px"></div>
+    <div class="subcats" id="ldg-edit-subcats" style="margin-bottom:10px"></div>
+    <div class="field"><label>金額（NT$）</label>
+      <input type="number" id="ldg-edit-amount" class="amount-input" placeholder="0" inputmode="decimal"/>
+    </div>
+    <div class="field"><label>日期</label>
+      <input type="date" id="ldg-edit-date"/>
+    </div>
+    <div class="field"><label>備註</label>
+      <input type="text" id="ldg-edit-notes"/>
+    </div>
+    <div class="sheet-actions">
+      <button class="full-btn" style="background:var(--muted)" onclick="closeLedgerEdit()">取消</button>
+      <button class="full-btn" style="background:var(--ledger)" onclick="saveLedgerEdit()">儲存</button>
+    </div>
+  </div>
+</div>
 <!-- Stock Edit Modal -->
 <div class="stock-edit-overlay" id="stock-edit-overlay" onclick="if(event.target===this)closeStockEdit()">
   <div class="stock-edit-sheet">
