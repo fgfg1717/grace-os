@@ -259,6 +259,29 @@
     .ms-expense{color:#EF4444}.ms-income{color:#10B981}
     .ledger-date{font-size:11px;color:var(--muted);font-weight:600}
 
+    /* Ledger redesign */
+    .ldg-tabs{display:flex;gap:4px;margin-bottom:14px;background:var(--bg);border-radius:12px;padding:4px}
+    .ldg-tab-btn{flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;background:none;color:var(--muted);transition:all .18s}
+    .ldg-tab-btn.active{background:white;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+    .ldg-period{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .ldg-period-label{font-size:14px;font-weight:700;text-align:center}
+    .ldg-period-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:18px;cursor:pointer;color:var(--text);line-height:1}
+    .ldg-cat-item{display:flex;flex-direction:column;padding:10px 0;border-bottom:1px solid var(--border)}
+    .ldg-cat-item:last-child{border-bottom:none}
+    .cat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+    .cat-bar{height:6px;border-radius:3px;background:#E2E8F0;overflow:hidden}
+    .cat-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+    .ldg-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+    .ldg-cal-head{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0}
+    .ldg-cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;position:relative;font-size:13px;font-weight:600;color:var(--text)}
+    .ldg-cal-day:hover{background:#F1F5F9}
+    .ldg-cal-day.today{background:#DBEAFE;color:#1E40AF;font-weight:800}
+    .ldg-cal-day.has-rec::after{content:'';width:4px;height:4px;border-radius:50%;background:#0891B2;position:absolute;bottom:3px}
+    .ldg-cal-day.selected{background:#0891B2!important;color:white!important}
+    .ldg-cal-day.selected::after{background:white}
+    .ldg-rec-item{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--border)}
+    .ldg-rec-item:last-child{border-bottom:none}
+
     /* Stock */
     .stock-tabs{display:flex;gap:8px;margin-bottom:16px}
     .stab{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;
@@ -344,6 +367,15 @@
       margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
     .lesson-title{font-size:14px;font-weight:700}
     .lesson-meta{font-size:11px;color:var(--muted);margin-top:3px}
+
+    /* Stock edit bottom sheet */
+    .stock-edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9990;display:none;align-items:flex-end}
+    .stock-edit-overlay.open{display:flex}
+    .stock-edit-sheet{background:white;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:90vh;overflow-y:auto}
+    .sheet-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)}
+    .sheet-actions{display:flex;gap:10px;margin-top:20px}
+    .edit-btn{background:none;border:none;cursor:pointer;color:#94A3B8;font-size:14px;padding:2px 5px}
+    .edit-btn:hover{color:var(--stock)}
   </style>
 </head>
 <body>
@@ -692,10 +724,14 @@
         <div class="field" style="flex:1;margin-bottom:0"><label>成交價</label>
           <input type="number" id="stock-price" placeholder="0" inputmode="decimal" oninput="calcStockTotal()"/></div>
       </div>
-      <div class="field" style="margin-top:10px"><label>總金額（自動計算）</label>
-        <input type="text" id="stock-total" placeholder="0" readonly style="background:#F8FAFC;font-weight:700"/></div>
-      <div class="field"><label>備註（選填）</label>
-        <input type="text" id="stock-notes" placeholder="手續費、理由…"/></div>
+      <div class="btn-row" style="margin-top:10px">
+        <div class="field" style="flex:1;margin-bottom:0"><label>總金額（自動計算）</label>
+          <input type="text" id="stock-total" placeholder="0" readonly style="background:#F8FAFC;font-weight:700"/></div>
+        <div class="field" style="flex:1;margin-bottom:0"><label>手續費（選填）</label>
+          <input type="number" id="stock-fee" placeholder="0" inputmode="decimal"/></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>備註（選填）</label>
+        <input type="text" id="stock-notes" placeholder="例：逢低加碼"/></div>
       <button class="full-btn" style="background:var(--stock)" onclick="submitStock()">記錄交易</button>
     </div>
   </div>
@@ -2204,13 +2240,14 @@ async function submitStock(){
   const name=document.getElementById('stock-name').value.trim();
   const qty=parseFloat(document.getElementById('stock-qty').value);
   const price=parseFloat(document.getElementById('stock-price').value);
+  const fee=parseFloat(document.getElementById('stock-fee').value)||0;
   const notes=document.getElementById('stock-notes').value.trim();
   if(!code||!qty||!price){showToast('請填寫代號、數量和價格');return}
   const total=qty*price;
-  const item={id:Date.now(),date,...stockState,code,name,qty,price,total,notes,synced:false};
+  const item={id:Date.now(),date,...stockState,code,name,qty,price,total,fee,notes,synced:false};
   const items=getStocks();items.unshift(item);setStocks(items);
   document.getElementById('stock-code').value='';document.getElementById('stock-name').value='';
-  document.getElementById('stock-qty').value='';document.getElementById('stock-price').value='';document.getElementById('stock-total').value='';document.getElementById('stock-notes').value='';
+  document.getElementById('stock-qty').value='';document.getElementById('stock-price').value='';document.getElementById('stock-total').value='';document.getElementById('stock-fee').value='';document.getElementById('stock-notes').value='';
   loadStockHoldings();loadStockHistory();showToast('已記錄交易！');
   const ok=await postGAS({type:'stock',date,account:stockState.account,market:stockState.market,action:stockState.action,code,name,qty,price,total,notes});
   if(ok){const latest=getStocks();const idx=latest.findIndex(s=>s.id===item.id);if(idx!==-1){latest[idx].synced=true;setStocks(latest)}showToast('已記錄並同步 ✓')}
@@ -2228,8 +2265,8 @@ function loadStockHoldings(){
   allItems.forEach(s=>{
     const key=`${s.account}|${s.market}|${s.code}`;
     if(!groups[key])groups[key]={account:s.account,market:s.market,code:s.code,name:s.name,buyQty:0,sellQty:0,totalCost:0,totalSell:0};
-    if(s.action==='買入'||s.action==='定期定額'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total}
-    else if(s.action==='賣出'){groups[key].sellQty+=s.qty;groups[key].totalSell+=s.total}
+    if(s.action==='買入'||s.action==='定期定額'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total+(s.fee||0)}
+    else if(s.action==='賣出'){groups[key].sellQty+=s.qty;groups[key].totalSell+=s.total-(s.fee||0)}
   });
   let holdings=Object.entries(groups).filter(([,g])=>g.buyQty>g.sellQty);
   if(holdingsFilter!=='全部')holdings=holdings.filter(([,g])=>g.account===holdingsFilter);
@@ -2280,9 +2317,45 @@ function loadStockHistory(){
   const list=document.getElementById('stock-history-list');if(!list)return;
   let items=getStocks();if(stockHistFilter!=='全部')items=items.filter(s=>s.account===stockHistFilter);
   if(!items.length){list.innerHTML='<div class="empty-msg">沒有交易紀錄</div>';return}
-  list.innerHTML=items.map(s=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:${s.action==='買入'?'#D1FAE5':'#FEE2E2'};color:${s.action==='買入'?'#065F46':'#991B1B'}">${esc(s.action)}</span><span class="rec-badge" style="background:#F1F5F9;color:#475569">${esc(s.account)}</span><span class="rec-badge" style="background:#FED7AA;color:#7C2D12">${esc(s.market)}</span><span class="rec-time">${esc(s.date)}</span></div><div class="rec-right">${s.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delStock(${s.id})">✕</button></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="rec-body"><strong>${esc(s.code)}</strong> ${esc(s.name||'')} × ${s.qty} 股 @ ${s.price}</span><span class="stock-rec-amount">NT$ ${s.total.toLocaleString()}</span></div>${s.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(s.notes)}</div>`:''}</div>`).join('')
+  list.innerHTML=items.map(s=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:${s.action==='買入'||s.action==='定期定額'?'#D1FAE5':'#FEE2E2'};color:${s.action==='買入'||s.action==='定期定額'?'#065F46':'#991B1B'}">${esc(s.action)}</span><span class="rec-badge" style="background:#F1F5F9;color:#475569">${esc(s.account)}</span><span class="rec-badge" style="background:#FED7AA;color:#7C2D12">${esc(s.market)}</span><span class="rec-time">${esc(s.date)}</span></div><div class="rec-right">${s.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="edit-btn" onclick="editStock(${s.id})">✏️</button><button class="del-btn" onclick="delStock(${s.id})">✕</button></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="rec-body"><strong>${esc(s.code)}</strong> ${esc(s.name||'')} × ${s.qty} 股 @ ${s.price}${s.fee?` <span style="font-size:11px;color:var(--muted)">手續費 ${s.fee}</span>`:''}</span><span class="stock-rec-amount">NT$ ${s.total.toLocaleString()}</span></div>${s.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(s.notes)}</div>`:''}</div>`).join('')
 }
 function delStock(id){setStocks(getStocks().filter(s=>s.id!==id));loadStockHoldings();loadStockHistory()}
+
+let editStockState={action:'買入',account:'個人'};
+function editStock(id){
+  const s=getStocks().find(s=>s.id===id);if(!s)return;
+  editStockState={action:s.action,account:s.account};
+  document.getElementById('edit-stock-id').value=id;
+  document.getElementById('edit-stock-date').value=s.date.replace(/\//g,'-');
+  document.getElementById('edit-stock-code').value=s.code;
+  document.getElementById('edit-stock-name').value=s.name||'';
+  document.getElementById('edit-stock-qty').value=s.qty;
+  document.getElementById('edit-stock-price').value=s.price;
+  document.getElementById('edit-stock-fee').value=s.fee||'';
+  document.getElementById('edit-stock-notes').value=s.notes||'';
+  const actions=['買入','賣出','定期定額'];
+  const accounts=['個人','家庭'];
+  document.getElementById('edit-action-chips').innerHTML=actions.map(a=>`<button class="chip${editStockState.action===a?' sel-orange':''}" onclick="editStockState.action='${a}';document.querySelectorAll('#edit-action-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
+  document.getElementById('edit-account-chips').innerHTML=accounts.map(a=>`<button class="chip${editStockState.account===a?' sel-orange':''}" onclick="editStockState.account='${a}';document.querySelectorAll('#edit-account-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
+  document.getElementById('stock-edit-overlay').classList.add('open');
+}
+function closeStockEdit(){document.getElementById('stock-edit-overlay').classList.remove('open')}
+function saveStockEdit(){
+  const id=parseInt(document.getElementById('edit-stock-id').value);
+  const items=getStocks();const idx=items.findIndex(s=>s.id===id);if(idx===-1)return;
+  const s=items[idx];
+  s.date=document.getElementById('edit-stock-date').value.replace(/-/g,'/');
+  s.code=document.getElementById('edit-stock-code').value.trim().toUpperCase();
+  s.name=document.getElementById('edit-stock-name').value.trim();
+  s.qty=parseFloat(document.getElementById('edit-stock-qty').value)||s.qty;
+  s.price=parseFloat(document.getElementById('edit-stock-price').value)||s.price;
+  s.fee=parseFloat(document.getElementById('edit-stock-fee').value)||0;
+  s.notes=document.getElementById('edit-stock-notes').value.trim();
+  s.total=s.qty*s.price;
+  s.action=editStockState.action;
+  s.account=editStockState.account;
+  setStocks(items);closeStockEdit();loadStockHoldings();loadStockHistory();showToast('交易紀錄已更新 ✓');
+}
 
 /* ════════════════════════════════
    AAR 讀取
@@ -2571,6 +2644,36 @@ function renderPlan(rows){
 }
 window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
 </script>
+<!-- Stock Edit Modal -->
+<div class="stock-edit-overlay" id="stock-edit-overlay" onclick="if(event.target===this)closeStockEdit()">
+  <div class="stock-edit-sheet">
+    <div class="sheet-title">✏️ 編輯交易紀錄</div>
+    <input type="hidden" id="edit-stock-id"/>
+    <div class="field"><label>日期</label><input type="date" id="edit-stock-date"/></div>
+    <div class="btn-row">
+      <div class="field" style="flex:1;margin-bottom:0"><label>股票代號</label><input type="text" id="edit-stock-code"/></div>
+      <div class="field" style="flex:1;margin-bottom:0"><label>股票名稱</label><input type="text" id="edit-stock-name"/></div>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <div class="field" style="flex:1;margin-bottom:0"><label>數量（股）</label><input type="number" id="edit-stock-qty" inputmode="decimal"/></div>
+      <div class="field" style="flex:1;margin-bottom:0"><label>成交價</label><input type="number" id="edit-stock-price" inputmode="decimal"/></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label>手續費</label><input type="number" id="edit-stock-fee" placeholder="0" inputmode="decimal"/></div>
+    <div class="field"><label>備註</label><input type="text" id="edit-stock-notes"/></div>
+    <div style="margin-top:10px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">操作</div>
+      <div class="btn-row" id="edit-action-chips"></div>
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">帳戶</div>
+      <div class="btn-row" id="edit-account-chips"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="full-btn" style="background:var(--muted)" onclick="closeStockEdit()">取消</button>
+      <button class="full-btn" style="background:var(--stock)" onclick="saveStockEdit()">儲存</button>
+    </div>
+  </div>
+</div>
 <button id="back-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:24px;right:20px;width:44px;height:44px;border-radius:50%;background:#1E293B;color:white;border:none;font-size:20px;cursor:pointer;display:none;z-index:9998;box-shadow:0 4px 14px rgba(0,0,0,.25);align-items:center;justify-content:center;line-height:1">↑</button>
 </body>
 </html>
