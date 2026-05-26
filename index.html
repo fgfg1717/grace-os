@@ -413,6 +413,17 @@
     .ldg-edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9991;display:none;align-items:flex-end}
     .ldg-edit-overlay.open{display:flex}
     .ldg-edit-sheet{background:white;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:90vh;overflow-y:auto}
+    /* Budget */
+    .budget-bar-bg{height:9px;background:#F1F5F9;border-radius:5px;overflow:hidden}
+    .budget-bar-fill{height:100%;border-radius:5px;transition:width .4s}
+    .budget-ok{background:#10B981}
+    .budget-warn{background:#F59E0B}
+    .budget-over{background:#EF4444}
+    .budget-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9994;display:none;align-items:flex-end}
+    .budget-modal-overlay.open{display:flex}
+    .budget-modal-sheet{background:white;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:88vh;overflow-y:auto}
+    .budget-cat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .budget-cat-input{width:120px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;text-align:right}
 
     /* Stock edit bottom sheet */
     .stock-edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9990;display:none;align-items:flex-end}
@@ -751,10 +762,14 @@
 
   <!-- 報表 panel -->
   <div id="ldg-panel-report" style="display:none">
-    <div class="ldg-period-row">
-      <button class="ldg-tab-btn sel" data-lp="salary" onclick="setLedgerPeriod('salary')">薪月（5 日起）</button>
-      <button class="ldg-tab-btn" data-lp="month" onclick="setLedgerPeriod('month')">自然月</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="ldg-period-row" style="margin-bottom:0;flex:1">
+        <button class="ldg-tab-btn sel" data-lp="salary" onclick="setLedgerPeriod('salary')">薪月（5 日起）</button>
+        <button class="ldg-tab-btn" data-lp="month" onclick="setLedgerPeriod('month')">自然月</button>
+      </div>
+      <button class="outline-btn" style="padding:6px 12px;font-size:12px;white-space:nowrap;margin-left:8px" onclick="openBudgetModal()">🎯 設定預算</button>
     </div>
+    <div id="ldg-budget-display"></div>
     <div id="ldg-report"></div>
   </div>
 </div>
@@ -2314,9 +2329,26 @@ async function submitLedger(){
   const item={id:Date.now(),date,type:ledgerType,mainCat:ledgerMainCat,subCat:'',category,amount,notes,synced:false};
   const items=getLedgers();items.unshift(item);setLedgers(items);
   document.getElementById('ledger-amount').value='';document.getElementById('ledger-notes').value='';
-  loadLedgerList();showToast('已記帳！');
+  loadLedgerList();checkBudgetAfterRecord(ledgerMainCat);showToast('已記帳！');
   const ok=await postGAS({type:'ledger',date,ledger_type:ledgerType,main_cat:ledgerMainCat,sub_cat:ledgerSubCat,category,amount,notes});
   if(ok){const latest=getLedgers();const idx=latest.findIndex(l=>l.id===item.id);if(idx!==-1){latest[idx].synced=true;setLedgers(latest)}loadLedgerList();showToast('已記帳並同步 ✓')}
+}
+function checkBudgetAfterRecord(mainCat){
+  if(ledgerType!=='支出')return;
+  const b=getLedgerBudget();if(!b.total&&!b.cats)return;
+  const{from,to}=getLedgerPeriodRange();
+  const expItems=getLedgers().filter(l=>l.date>=from&&l.date<=to&&l.type==='支出');
+  const totalSpent=expItems.reduce((s,l)=>s+l.amount,0);
+  if(b.total>0){
+    if(totalSpent>b.total)setTimeout(()=>showToast(`⚠️ 已超出本期總預算！超支 NT$ ${(totalSpent-b.total).toLocaleString()}`),1500);
+    else if(totalSpent>=b.total*0.8)setTimeout(()=>showToast(`🔶 總預算已用 ${Math.round(totalSpent/b.total*100)}%，快到上限了`),1500);
+  }
+  const catLimit=(b.cats||{})[mainCat];
+  if(catLimit>0){
+    const catSpent=expItems.filter(l=>l.mainCat===mainCat).reduce((s,l)=>s+l.amount,0);
+    if(catSpent>catLimit)setTimeout(()=>showToast(`⚠️ ${mainCat} 已超出警戒線！`),2500);
+    else if(catSpent>=catLimit*0.8)setTimeout(()=>showToast(`🔶 ${mainCat} 已用 ${Math.round(catSpent/catLimit*100)}%`),2500);
+  }
 }
 function loadLedgerList(){
   const list=document.getElementById('ledger-list');
@@ -2438,6 +2470,7 @@ function getLedgerPeriodRange(){
   }
 }
 function renderLedgerReport(){
+  renderBudgetDisplay();
   const el=document.getElementById('ldg-report');if(!el)return;
   const{from,to,label}=getLedgerPeriodRange();
   const allItems=getLedgers().filter(l=>l.date>=from&&l.date<=to);
@@ -2482,6 +2515,83 @@ function renderLedgerReport(){
       </div>`).join('')}
     </div>`:''}
   `;
+}
+
+/* ── 預算管理 ─────────────────────── */
+function getLedgerBudget(){try{return JSON.parse(localStorage.getItem('ledger_budget_v1')||'{}')}catch(e){return{}}}
+function setLedgerBudget(b){localStorage.setItem('ledger_budget_v1',JSON.stringify(b))}
+function openBudgetModal(){
+  const b=getLedgerBudget();
+  document.getElementById('budget-total-input').value=b.total||'';
+  const cats=getLedgerCats();const catLimits=b.cats||{};
+  document.getElementById('budget-cats-inputs').innerHTML=cats.map(c=>`
+    <div class="budget-cat-row">
+      <span style="flex:1;font-size:13px;font-weight:600">${c.emoji} ${c.name}</span>
+      <input type="number" class="budget-cat-input" data-cat="${c.name}"
+        value="${catLimits[c.name]||''}" placeholder="不設" inputmode="decimal"/>
+    </div>`).join('');
+  document.getElementById('budget-modal-overlay').classList.add('open');
+}
+function closeBudgetModal(){document.getElementById('budget-modal-overlay').classList.remove('open')}
+function saveBudget(){
+  const total=parseFloat(document.getElementById('budget-total-input').value)||0;
+  const cats={};
+  document.querySelectorAll('#budget-cats-inputs .budget-cat-input').forEach(inp=>{
+    const v=parseFloat(inp.value)||0;if(v>0)cats[inp.dataset.cat]=v;
+  });
+  setLedgerBudget({total,cats});
+  closeBudgetModal();renderLedgerReport();showToast('預算已儲存 ✓');
+}
+function renderBudgetDisplay(){
+  const el=document.getElementById('ldg-budget-display');if(!el)return;
+  const b=getLedgerBudget();
+  const hasTotal=b.total>0;const catLimits=b.cats||{};
+  const hasCatLimits=Object.values(catLimits).some(v=>v>0);
+  if(!hasTotal&&!hasCatLimits){el.innerHTML='';return}
+  const{from,to}=getLedgerPeriodRange();
+  const expItems=getLedgers().filter(l=>l.date>=from&&l.date<=to&&l.type==='支出');
+  const totalSpent=expItems.reduce((s,l)=>s+l.amount,0);
+  let html='';
+  if(hasTotal){
+    const pct=Math.min(Math.round(totalSpent/b.total*100),100);
+    const over=totalSpent>b.total;const warn=totalSpent>=b.total*0.8;
+    const cls=over?'budget-over':warn?'budget-warn':'budget-ok';
+    const remaining=b.total-totalSpent;
+    html+=`<div style="background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">本期總預算</span>
+        <span style="font-size:13px;font-weight:700;color:${over?'#EF4444':warn?'#F59E0B':'#10B981'}">
+          ${over?'⚠️ 已超支 NT$ '+Math.abs(remaining).toLocaleString():'剩 NT$ '+remaining.toLocaleString()}
+        </span>
+      </div>
+      <div class="budget-bar-bg"><div class="budget-bar-fill ${cls}" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">
+        <span>已用 NT$ ${totalSpent.toLocaleString()}</span>
+        <span>${pct}% ／ NT$ ${b.total.toLocaleString()}</span>
+      </div>
+    </div>`;
+  }
+  if(hasCatLimits){
+    const byCat={};expItems.forEach(l=>{if(!byCat[l.mainCat])byCat[l.mainCat]=0;byCat[l.mainCat]+=l.amount});
+    const rows=Object.entries(catLimits).filter(([,v])=>v>0).map(([cat,limit])=>{
+      const spent=byCat[cat]||0;const pct=Math.min(Math.round(spent/limit*100),100);
+      const over=spent>limit;const warn=spent>=limit*0.8;
+      const cls=over?'budget-over':warn?'budget-warn':'budget-ok';
+      const catObj=getLedgerCats().find(c=>c.name===cat)||{emoji:'🏷️'};
+      return`<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="font-weight:600">${catObj.emoji} ${cat}</span>
+          <span style="color:${over?'#EF4444':warn?'#F59E0B':'var(--muted)'}">
+            ${over?'⚠️ ':warn?'🔶 ':''}NT$ ${spent.toLocaleString()} ／ ${limit.toLocaleString()}
+          </span>
+        </div>
+        <div class="budget-bar-bg"><div class="budget-bar-fill ${cls}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+    if(rows)html+=`<div style="background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px">分類警戒線</div>${rows}</div>`;
+  }
+  el.innerHTML=html;
 }
 
 /* ── 記帳編輯 ─────────────────────── */
@@ -2989,6 +3099,22 @@ function renderPlan(rows){
 }
 window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
 </script>
+<!-- Budget Modal -->
+<div class="budget-modal-overlay" id="budget-modal-overlay" onclick="if(event.target===this)closeBudgetModal()">
+  <div class="budget-modal-sheet">
+    <div class="sheet-title">🎯 設定預算</div>
+    <div class="field">
+      <label>本期總預算（NT$）</label>
+      <input type="number" id="budget-total-input" class="amount-input" placeholder="留空 = 不設總預算" inputmode="decimal"/>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin:16px 0 10px">各分類警戒線（選填）</div>
+    <div id="budget-cats-inputs"></div>
+    <div class="sheet-actions">
+      <button class="full-btn" style="background:var(--muted)" onclick="closeBudgetModal()">取消</button>
+      <button class="full-btn" style="background:var(--ledger)" onclick="saveBudget()">儲存</button>
+    </div>
+  </div>
+</div>
 <!-- Category Picker -->
 <div class="cat-picker-overlay" id="cat-picker-overlay" onclick="if(event.target===this)closeCatPicker()">
   <div class="cat-picker-sheet">
