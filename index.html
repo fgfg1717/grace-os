@@ -368,6 +368,18 @@
     .lesson-title{font-size:14px;font-weight:700}
     .lesson-meta{font-size:11px;color:var(--muted);margin-top:3px}
 
+    /* Category picker */
+    .cat-selector-btn{width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;background:white;font-size:14px;cursor:pointer;text-align:left;margin-bottom:0}
+    .cat-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9993;display:none;align-items:flex-end}
+    .cat-picker-overlay.open{display:flex}
+    .cat-picker-sheet{background:white;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:82vh;overflow-y:auto}
+    .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+    .cat-item{padding:12px 6px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:white;position:relative}
+    .cat-item.sel{border-color:#0891B2;background:#CFFAFE;color:#164E63}
+    .cat-item-emoji{font-size:20px;margin-bottom:2px}
+    .cat-del-x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:#EF4444;color:white;border:2px solid white;font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;z-index:2}
+    .cat-manage-mode .cat-del-x{display:flex}
+
     /* Ledger tabs */
     .ldg-tabs{display:flex;gap:8px;margin-bottom:16px}
     .ldg-tab-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;background:white;color:var(--muted);transition:all .15s}
@@ -700,13 +712,15 @@
         <button class="type-btn sel" id="type-expense" onclick="setLedgerType('支出')">支出</button>
         <button class="type-btn" id="type-income" onclick="setLedgerType('收入')">收入</button>
       </div>
-      <div class="seg" id="ledger-main-cats">
-        <button class="chip sel-cyan" data-mcat="家用" onclick="setLedgerCat('家用')">🏠 家用</button>
-        <button class="chip" data-mcat="個人" onclick="setLedgerCat('個人')">👤 個人</button>
-        <button class="chip" data-mcat="投資" onclick="setLedgerCat('投資')">📈 投資</button>
-        <button class="chip" data-mcat="定存" onclick="setLedgerCat('定存')">🏦 定存</button>
+      <div id="ldg-exp-section">
+        <button class="cat-selector-btn" onclick="openCatPicker('new')">
+          <span id="ledger-cat-display">🏠 家用</span>
+          <span style="color:var(--muted);font-size:12px">選擇 ▾</span>
+        </button>
       </div>
-      <div class="subcats" id="ledger-subcats"></div>
+      <div id="ldg-inc-section" style="display:none">
+        <div class="seg" id="ledger-main-cats"></div>
+      </div>
       <div class="field" style="margin-top:10px"><label>金額（NT$）</label>
         <input type="number" id="ledger-amount" class="amount-input" placeholder="0" inputmode="decimal"/>
       </div>
@@ -2174,13 +2188,16 @@ function saveTodayVocab(){}
 /* ════════════════════════════════
    記帳
 ════════════════════════════════ */
-const LEDGER_SUBCATS={
-  '家用':['家庭飲食','孩子相關','家庭雜支','水電費','房租/房貸','其他家用'],
-  '個人':['飲食','交通','娛樂','保險','買車存款','其他個人'],
-  '投資':[],'定存':[]
-};
+const DEFAULT_EXP_CATS=[
+  {name:'家用',emoji:'🏠'},{name:'投資',emoji:'📈'},{name:'定存',emoji:'🏦'},
+  {name:'醫療',emoji:'🏥'},{name:'運動',emoji:'💪'},{name:'飲食',emoji:'🍜'},
+  {name:'交際',emoji:'🎉'},{name:'悠遊卡',emoji:'🚌'},{name:'計程車',emoji:'🚕'}
+];
 const INCOME_CATS=['薪資','獎金','年終獎金','股利','利息','其他收入'];
-let ledgerType='支出',ledgerMainCat='家用',ledgerSubCat='家庭飲食';
+function getLedgerCats(){try{const c=JSON.parse(localStorage.getItem('ledger_cats_v2')||'null');return c&&c.length?c:DEFAULT_EXP_CATS}catch(e){return DEFAULT_EXP_CATS}}
+function setLedgerCatsData(cats){localStorage.setItem('ledger_cats_v2',JSON.stringify(cats))}
+let ledgerType='支出',ledgerMainCat='家用',ledgerMainEmoji='🏠',ledgerSubCat='';
+let catPickerContext='new',catManageMode=false,catAddRowOpen=false;
 let ledgerCalYear=0,ledgerCalMonth=0,ledgerPeriod='salary';
 
 function showLedgerTab(tab){
@@ -2195,34 +2212,29 @@ function setLedgerType(type){
   ledgerType=type;
   document.getElementById('type-expense').className='type-btn'+(type==='支出'?' sel':'');
   document.getElementById('type-income').className='type-btn'+(type==='收入'?' sel':'');
-  const mainCatsEl=document.getElementById('ledger-main-cats');
+  const expSec=document.getElementById('ldg-exp-section');
+  const incSec=document.getElementById('ldg-inc-section');
   const notesEl=document.getElementById('ledger-notes');
   if(type==='收入'){
+    if(expSec)expSec.style.display='none';
+    if(incSec)incSec.style.display='';
     ledgerMainCat=INCOME_CATS[0];ledgerSubCat='';
-    mainCatsEl.innerHTML=INCOME_CATS.map(c=>`<button class="chip${c===ledgerMainCat?' sel-green':''}" data-mcat="${c}" onclick="setIncomeCat('${c}')">${c}</button>`).join('');
-    document.getElementById('ledger-subcats').innerHTML='';
+    const el=document.getElementById('ledger-main-cats');
+    if(el)el.innerHTML=INCOME_CATS.map(c=>`<button class="chip${c===ledgerMainCat?' sel-green':''}" onclick="setIncomeCat('${c}')">${c}</button>`).join('');
     if(notesEl)notesEl.placeholder='說明這筆收入…';
   }else{
-    ledgerMainCat='家用';ledgerSubCat='家庭飲食';
-    mainCatsEl.innerHTML=`<button class="chip sel-cyan" data-mcat="家用" onclick="setLedgerCat('家用')">🏠 家用</button><button class="chip" data-mcat="個人" onclick="setLedgerCat('個人')">👤 個人</button><button class="chip" data-mcat="投資" onclick="setLedgerCat('投資')">📈 投資</button><button class="chip" data-mcat="定存" onclick="setLedgerCat('定存')">🏦 定存</button>`;
-    setLedgerCat('家用');
+    if(expSec)expSec.style.display='';
+    if(incSec)incSec.style.display='none';
+    const first=getLedgerCats()[0]||{name:'家用',emoji:'🏠'};
+    ledgerMainCat=first.name;ledgerMainEmoji=first.emoji;ledgerSubCat='';
+    const disp=document.getElementById('ledger-cat-display');
+    if(disp)disp.textContent=`${first.emoji} ${first.name}`;
     if(notesEl)notesEl.placeholder='說明這筆支出…';
   }
 }
 function setIncomeCat(cat){
   ledgerMainCat=cat;ledgerSubCat='';
-  document.querySelectorAll('#ledger-main-cats .chip').forEach(b=>b.className='chip'+(b.dataset.mcat===cat?' sel-green':''));
-}
-function setLedgerCat(cat){
-  ledgerMainCat=cat;
-  document.querySelectorAll('#ledger-main-cats .chip').forEach(b=>b.className='chip'+(b.dataset.mcat===cat?' sel-cyan':''));
-  const subs=LEDGER_SUBCATS[cat]||[];ledgerSubCat=subs[0]||'';
-  const sc=document.getElementById('ledger-subcats');
-  sc.innerHTML=subs.map(s=>`<button class="sub-chip ${s===ledgerSubCat?'sel':''}" onclick="setLedgerSubCat('${s}')">${s}</button>`).join('');
-}
-function setLedgerSubCat(s){
-  ledgerSubCat=s;
-  document.querySelectorAll('#ledger-subcats .sub-chip').forEach(b=>b.className='sub-chip'+(b.textContent===s?'sel':''));
+  document.querySelectorAll('#ledger-main-cats .chip').forEach(b=>b.className='chip'+(b.textContent===cat?' sel-green':''));
 }
 function initLedger(){
   const now=taipeiNow();
@@ -2231,6 +2243,66 @@ function initLedger(){
   setLedgerType('支出');loadLedgerList();
   syncLedgersFromCloud();
 }
+
+/* ── Category Picker ─────────────── */
+function openCatPicker(ctx){
+  catPickerContext=ctx;catManageMode=false;catAddRowOpen=false;
+  const addRow=document.getElementById('cat-add-row');if(addRow)addRow.style.display='none';
+  renderCatPickerGrid();
+  document.getElementById('cat-picker-overlay').classList.add('open');
+}
+function closeCatPicker(){document.getElementById('cat-picker-overlay').classList.remove('open')}
+function toggleCatManage(){
+  catManageMode=!catManageMode;
+  document.getElementById('cat-manage-btn').textContent=catManageMode?'完成':'管理';
+  renderCatPickerGrid();
+}
+function toggleCatAddRow(){
+  catAddRowOpen=!catAddRowOpen;
+  const r=document.getElementById('cat-add-row');if(r)r.style.display=catAddRowOpen?'block':'none';
+  if(catAddRowOpen){document.getElementById('cat-add-name').focus();}
+}
+function renderCatPickerGrid(){
+  const cats=getLedgerCats();
+  const grid=document.getElementById('cat-picker-grid');if(!grid)return;
+  if(catManageMode)grid.classList.add('cat-manage-mode');
+  else grid.classList.remove('cat-manage-mode');
+  const curName=catPickerContext==='edit'?ldgEditState.mainCat:ledgerMainCat;
+  grid.innerHTML=cats.map(c=>`<div class="cat-item${c.name===curName?' sel':''}" onclick="${catManageMode?'':'`selectCatFromPicker(\''+c.name+'\',\''+c.emoji+'\')`'}">
+    <div class="cat-item-emoji">${c.emoji}</div>
+    <div>${esc(c.name)}</div>
+    <button class="cat-del-x" onclick="event.stopPropagation();deleteLedgerCat('${c.name}')">✕</button>
+  </div>`).join('');
+}
+function selectCatFromPicker(name,emoji){
+  if(catPickerContext==='new'){
+    ledgerMainCat=name;ledgerMainEmoji=emoji;ledgerSubCat='';
+    const disp=document.getElementById('ledger-cat-display');if(disp)disp.textContent=`${emoji} ${name}`;
+  }else{
+    ldgEditState.mainCat=name;ldgEditState.subCat='';
+    const disp=document.getElementById('ldg-edit-cat-display');if(disp)disp.textContent=`${emoji} ${name}`;
+  }
+  closeCatPicker();
+}
+function confirmAddCat(){
+  const name=document.getElementById('cat-add-name').value.trim();
+  const emoji=document.getElementById('cat-add-emoji').value.trim()||'🏷️';
+  if(!name){showToast('請輸入分類名稱');return}
+  const cats=getLedgerCats();
+  if(cats.find(c=>c.name===name)){showToast('這個分類已存在');return}
+  cats.push({name,emoji});setLedgerCatsData(cats);
+  document.getElementById('cat-add-name').value='';document.getElementById('cat-add-emoji').value='';
+  catAddRowOpen=false;const r=document.getElementById('cat-add-row');if(r)r.style.display='none';
+  renderCatPickerGrid();showToast(`已新增「${name}」✓`);
+}
+function deleteLedgerCat(name){
+  const count=getLedgers().filter(l=>l.mainCat===name).length;
+  const msg=count?`「${name}」有 ${count} 筆舊紀錄（不受影響）。\n確定刪除此分類？`:`確定刪除「${name}」？`;
+  if(!confirm(msg))return;
+  setLedgerCatsData(getLedgerCats().filter(c=>c.name!==name));
+  if(ledgerMainCat===name){const first=getLedgerCats()[0];if(first){ledgerMainCat=first.name;ledgerMainEmoji=first.emoji;const d=document.getElementById('ledger-cat-display');if(d)d.textContent=`${first.emoji} ${first.name}`;}}
+  renderCatPickerGrid();showToast(`已刪除「${name}」`);
+}
 function getLedgers(){try{return JSON.parse(localStorage.getItem('ledgers')||'[]')}catch(e){return[]}}
 function setLedgers(items){localStorage.setItem('ledgers',JSON.stringify(items))}
 async function submitLedger(){
@@ -2238,8 +2310,8 @@ async function submitLedger(){
   const date=document.getElementById('ledger-date').value.replace(/-/g,'/');
   const notes=document.getElementById('ledger-notes').value.trim();
   if(!amount||isNaN(amount)){showToast('請輸入金額');return}
-  const category=ledgerMainCat+(ledgerSubCat?` · ${ledgerSubCat}`:'');
-  const item={id:Date.now(),date,type:ledgerType,mainCat:ledgerMainCat,subCat:ledgerSubCat,category,amount,notes,synced:false};
+  const category=ledgerMainCat;
+  const item={id:Date.now(),date,type:ledgerType,mainCat:ledgerMainCat,subCat:'',category,amount,notes,synced:false};
   const items=getLedgers();items.unshift(item);setLedgers(items);
   document.getElementById('ledger-amount').value='';document.getElementById('ledger-notes').value='';
   loadLedgerList();showToast('已記帳！');
@@ -2421,6 +2493,11 @@ function editLedger(id){
   document.getElementById('ldg-edit-date').value=l.date.replace(/\//g,'-');
   document.getElementById('ldg-edit-amount').value=l.amount;
   document.getElementById('ldg-edit-notes').value=l.notes||'';
+  // Set cat display
+  if(l.type==='支出'){
+    const cats=getLedgerCats();const cur=cats.find(c=>c.name===l.mainCat)||{name:l.mainCat,emoji:'🏷️'};
+    const disp=document.getElementById('ldg-edit-cat-display');if(disp)disp.textContent=`${cur.emoji} ${cur.name}`;
+  }
   renderLdgEditCats();
   document.getElementById('ldg-edit-overlay').classList.add('open');
 }
@@ -2428,21 +2505,29 @@ function renderLdgEditCats(){
   const t=ldgEditState.type;
   document.getElementById('ldg-edit-type-exp').className='type-btn'+(t==='支出'?' sel':'');
   document.getElementById('ldg-edit-type-inc').className='type-btn'+(t==='收入'?' sel':'');
-  const mainEl=document.getElementById('ldg-edit-maincats');
-  const subEl=document.getElementById('ldg-edit-subcats');
+  const expCatDiv=document.getElementById('ldg-edit-exp-cat');
+  const incCatDiv=document.getElementById('ldg-edit-inc-cat');
   if(t==='收入'){
-    mainEl.innerHTML=INCOME_CATS.map(c=>`<button class="chip${c===ldgEditState.mainCat?' sel-green':''}" onclick="ldgEditSetMain('${c}')">${c}</button>`).join('');
-    subEl.innerHTML='';
+    if(expCatDiv)expCatDiv.style.display='none';
+    if(incCatDiv)incCatDiv.style.display='';
+    const el=document.getElementById('ldg-edit-maincats');
+    if(el)el.innerHTML=INCOME_CATS.map(c=>`<button class="chip${c===ldgEditState.mainCat?' sel-green':''}" onclick="ldgEditSetMain('${c}')">${c}</button>`).join('');
   }else{
-    const cats=['家用','個人','投資','定存'];
-    mainEl.innerHTML=cats.map(c=>`<button class="chip${c===ldgEditState.mainCat?' sel-cyan':''}" onclick="ldgEditSetMain('${c}')">${c}</button>`).join('');
-    const subs=LEDGER_SUBCATS[ldgEditState.mainCat]||[];
-    subEl.innerHTML=subs.map(s=>`<button class="sub-chip${s===ldgEditState.subCat?' sel':''}" onclick="ldgEditSetSub('${s}')">${s}</button>`).join('');
+    if(expCatDiv)expCatDiv.style.display='';
+    if(incCatDiv)incCatDiv.style.display='none';
+    const cats=getLedgerCats();
+    const cur=cats.find(c=>c.name===ldgEditState.mainCat)||cats[0]||{name:'家用',emoji:'🏠'};
+    const disp=document.getElementById('ldg-edit-cat-display');
+    if(disp)disp.textContent=`${cur.emoji} ${cur.name}`;
   }
 }
-function ldgEditSetType(t){ldgEditState.type=t;const cats=t==='支出'?['家用','個人','投資','定存']:INCOME_CATS;ldgEditState.mainCat=cats[0];ldgEditState.subCat='';renderLdgEditCats()}
-function ldgEditSetMain(c){ldgEditState.mainCat=c;ldgEditState.subCat=(LEDGER_SUBCATS[c]||[])[0]||'';renderLdgEditCats()}
-function ldgEditSetSub(s){ldgEditState.subCat=s;document.querySelectorAll('#ldg-edit-subcats .sub-chip').forEach(b=>b.className='sub-chip'+(b.textContent===s?' sel':''))}
+function ldgEditSetType(t){
+  ldgEditState.type=t;
+  if(t==='支出'){const first=getLedgerCats()[0]||{name:'家用'};ldgEditState.mainCat=first.name;}
+  else{ldgEditState.mainCat=INCOME_CATS[0];}
+  ldgEditState.subCat='';renderLdgEditCats();
+}
+function ldgEditSetMain(c){ldgEditState.mainCat=c;ldgEditState.subCat='';renderLdgEditCats()}
 function closeLedgerEdit(){document.getElementById('ldg-edit-overlay').classList.remove('open')}
 function saveLedgerEdit(){
   const id=parseInt(document.getElementById('ldg-edit-id').value);
@@ -2904,6 +2989,24 @@ function renderPlan(rows){
 }
 window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
 </script>
+<!-- Category Picker -->
+<div class="cat-picker-overlay" id="cat-picker-overlay" onclick="if(event.target===this)closeCatPicker()">
+  <div class="cat-picker-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:15px;font-weight:700">選擇分類</span>
+      <button class="outline-btn" id="cat-manage-btn" style="padding:5px 12px;font-size:12px" onclick="toggleCatManage()">管理</button>
+    </div>
+    <div id="cat-picker-grid" class="cat-grid"></div>
+    <div id="cat-add-row" style="display:none;margin:8px 0">
+      <div class="btn-row" style="gap:8px;align-items:center">
+        <input type="text" id="cat-add-emoji" placeholder="😀" maxlength="2" style="width:52px;text-align:center;padding:8px 4px;border:1.5px solid var(--border);border-radius:8px;font-size:20px"/>
+        <input type="text" id="cat-add-name" placeholder="分類名稱" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"/>
+        <button class="chip sel-cyan" onclick="confirmAddCat()">新增</button>
+      </div>
+    </div>
+    <button class="outline-btn" style="width:100%;margin-top:6px" onclick="toggleCatAddRow()">＋ 新增分類</button>
+  </div>
+</div>
 <!-- Ledger Edit Modal -->
 <div class="ldg-edit-overlay" id="ldg-edit-overlay" onclick="if(event.target===this)closeLedgerEdit()">
   <div class="ldg-edit-sheet">
@@ -2913,8 +3016,15 @@ window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-
       <button class="type-btn sel" id="ldg-edit-type-exp" onclick="ldgEditSetType('支出')">支出</button>
       <button class="type-btn" id="ldg-edit-type-inc" onclick="ldgEditSetType('收入')">收入</button>
     </div>
-    <div class="seg" id="ldg-edit-maincats" style="margin-bottom:8px"></div>
-    <div class="subcats" id="ldg-edit-subcats" style="margin-bottom:10px"></div>
+    <div id="ldg-edit-exp-cat" style="margin-bottom:10px">
+      <button class="cat-selector-btn" onclick="openCatPicker('edit')">
+        <span id="ldg-edit-cat-display">選擇分類</span>
+        <span style="color:var(--muted);font-size:12px">選擇 ▾</span>
+      </button>
+    </div>
+    <div id="ldg-edit-inc-cat" style="display:none;margin-bottom:10px">
+      <div class="seg" id="ldg-edit-maincats"></div>
+    </div>
     <div class="field"><label>金額（NT$）</label>
       <input type="number" id="ldg-edit-amount" class="amount-input" placeholder="0" inputmode="decimal"/>
     </div>
