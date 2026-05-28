@@ -331,7 +331,7 @@ function buildFreshTemplate(main, today) {
   // 反思欄
   r(4,2).setValue('選一件讓我有感覺、有啟發的事情');
   r(5,2).setValue('');
-  r(7,2).setValue('有出門的零碎時間多，但都忘記五分鐘小抽屜');
+  r(7,2).setValue('');
   r(9,2).setValue('我從過程中學習或觀察到什麼事情？');
   r(10,2).setValue('');
 
@@ -412,6 +412,14 @@ function setupTodayTemplate() {
     if (aarDataRows > 0) {
       main.getRange(colHeaderOffset + 2, 1, aarDataRows, 4).clearContent();
     }
+
+    // 補回固定標籤（clearContent 清掉值，每天重新寫入）
+    main.getRange(2, 1, 1, numCols).merge()
+        .setValue('上班坐到座位上的前 30 分鐘，嚴禁打開 Email 與通訊軟體。');
+    main.getRange(4, 2).setValue('選一件讓我有感覺、有啟發的事情');
+    const q2Row = Math.min(7, colHeaderOffset - 1);
+    if (q2Row >= 5) main.getRange(q2Row, 2).setValue('我從過程中學習或觀察到什麼事情？');
+    if (colHeaderOffset >= 2) main.getRange(colHeaderOffset, 2).setValue('AAR');
   }
 
   safeAlert('✓ 已建立 ' + today + ' 的範本，已加在最上方！');

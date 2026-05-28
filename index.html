@@ -2332,7 +2332,7 @@ function renderCatPickerGrid(){
   if(catManageMode)grid.classList.add('cat-manage-mode');
   else grid.classList.remove('cat-manage-mode');
   const curName=catPickerContext==='edit'?ldgEditState.mainCat:ledgerMainCat;
-  grid.innerHTML=cats.map(c=>`<div class="cat-item${c.name===curName?' sel':''}" onclick="${catManageMode?'':'`selectCatFromPicker(\''+c.name+'\',\''+c.emoji+'\')`'}">
+  grid.innerHTML=cats.map(c=>`<div class="cat-item${c.name===curName?' sel':''}"${catManageMode?'':` onclick="selectCatFromPicker('${c.name}','${c.emoji}')"`}>
     <div class="cat-item-emoji">${c.emoji}</div>
     <div>${esc(c.name)}</div>
     <button class="cat-del-x" onclick="event.stopPropagation();deleteLedgerCat('${c.name}')">✕</button>
