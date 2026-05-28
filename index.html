@@ -1111,7 +1111,7 @@ function _importCourseData(data){
       examples:(g.examples||[]).map(e=>typeof e==='string'?e:e.en||'').filter(Boolean),
       source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
   });
-  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:count});setLessons(lessons);
+  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:count,topicSummary:data.topicSummary||'',discussion:data.discussion||[]});setLessons(lessons);
 }
 
 async function syncEngItemsFromCloud(){
@@ -1912,22 +1912,31 @@ function lessonStatusBadge(dateStr){
 function renderLessonList(){
   const list=document.getElementById('lesson-list');if(!list)return;
   const today=getTodayStr();
-  const lessons=[...getLessons()].sort((a,b)=>{
-    const af=a.date&&a.date>today,bf=b.date&&b.date>today;
-    if(af&&bf)return a.date<b.date?-1:1;   // 都是未來：近的排前
-    if(af)return -1;                         // a 未來、b 過去：a 排前
-    if(bf)return 1;                          // b 未來、a 過去：b 排前
-    return a.date>b.date?-1:1;              // 都是過去：最近的排前
-  });
-  if(!lessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
-  list.innerHTML=lessons.map(l=>`<div class="lesson-card">
+  const seen=new Set();
+  const allLessons=[...getLessons()].filter(l=>{const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;});
+  const future=allLessons.filter(l=>l.date&&l.date>today).sort((a,b)=>a.date<b.date?-1:1);
+  const past=allLessons.filter(l=>!l.date||l.date<=today).sort((a,b)=>a.date>b.date?-1:1);
+  if(!allLessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
+  const cardHtml=l=>`<div class="lesson-card">
     <div style="flex:1">
       <div class="lesson-title">${esc(l.title)}</div>
       <div class="lesson-meta">${esc(l.date)} · ${l.itemCount} 個學習項目</div>
       <div style="margin-top:5px">${lessonStatusBadge(l.date)}</div>
     </div>
     <button class="del-btn" onclick="delLesson(${l.id})">✕</button>
-  </div>`).join('');
+  </div>`;
+  list.innerHTML=future.map(cardHtml).join('')
+    +(past.length?`<div style="margin-top:8px">
+      <button id="past-lessons-btn" onclick="togglePastLessons()" style="font-size:12px;color:var(--muted);background:none;border:none;padding:4px 0;cursor:pointer;text-decoration:underline">顯示已上課（${past.length} 堂）</button>
+      <div id="past-lessons-wrap" style="display:none">${past.map(cardHtml).join('')}</div>
+    </div>`:'');
+}
+function togglePastLessons(){
+  const wrap=document.getElementById('past-lessons-wrap');const btn=document.getElementById('past-lessons-btn');
+  if(!wrap||!btn)return;
+  const show=wrap.style.display==='none';
+  wrap.style.display=show?'block':'none';
+  btn.textContent=show?'收起已上課':`顯示已上課（${wrap.querySelectorAll('.lesson-card').length} 堂）`;
 }
 function delLesson(id){setLessons(getLessons().filter(l=>l.id!==id));renderLessonList();showToast('已刪除課程紀錄')}
 
@@ -2031,12 +2040,28 @@ function renderTodayPreview(){
         ${s.translation?`<div style="font-size:12px;color:#78350F;margin-top:2px">${esc(s.translation)}</div>`:''}
       </div>`).join('');
 
+    const topicHtml=lesson.topicSummary?`
+      <div style="margin-bottom:14px;padding:12px 14px;background:rgba(255,255,255,0.85);border-radius:10px;border-left:4px solid #3B82F6">
+        <div style="font-size:11px;font-weight:800;color:#1D4ED8;letter-spacing:.5px;margin-bottom:6px">🎬 這堂課在講什麼</div>
+        <div style="font-size:13px;color:#1E293B;line-height:1.7">${esc(lesson.topicSummary)}</div>
+      </div>`:'';
+    const discussionHtml=(lesson.discussion||[]).length?`
+      <div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:800;color:#7C3AED;letter-spacing:.5px;margin-bottom:7px">💬 課前可以想想</div>
+        ${(lesson.discussion||[]).map((q,i)=>`
+          <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #DDD6FE">
+            <span style="font-size:13px;color:#6D28D9;font-weight:700;min-width:18px">${i+1}.</span>
+            <span style="font-size:13px;color:#1E293B;line-height:1.6">${esc(q)}</span>
+          </div>`).join('')}
+      </div>`:'';
     const bodyHtml=`
-      ${!hasContent?'<div style="font-size:13px;color:#92400E;text-align:center;padding:8px">課程 JSON 匯入後，重點會自動出現這裡</div>':''}
+      ${topicHtml}
+      ${!hasContent&&!lesson.topicSummary?'<div style="font-size:13px;color:#92400E;text-align:center;padding:8px">課程 JSON 匯入後，重點會自動出現這裡</div>':''}
       ${vocab.length?section('📝 本課單字','#92400E',vocabHtml):''}
       ${grammar.length?section('📐 文法重點','#92400E',grammarHtml):''}
       ${idioms.length?section('💬 片語 & 慣用語','#92400E',idiomsHtml):''}
-      ${sentences.length?section('✏️ 重要句型','#92400E',sentHtml):''}`;
+      ${sentences.length?section('✏️ 重要句型','#92400E',sentHtml):''}
+      ${discussionHtml}`;
 
     if(idx===0){
       return `<div style="background:#FFFBEB;border:2px solid #F59E0B;border-radius:16px;padding:16px;margin-bottom:12px">
