@@ -326,14 +326,10 @@ function buildFreshTemplate(main, today) {
 
   // 日期 header
   r(1,1).setValue(today).setFontSize(14).setFontWeight('bold');
-  rng(2,1,1,numCols).merge().setValue('上班坐到座位上的前 30 分鐘，嚴禁打開 Email 與通訊軟體。');
+  r(1,4).setValue('選一件讓我有感覺、有啟發的事情');
 
-  // 反思欄
-  r(4,2).setValue('選一件讓我有感覺、有啟發的事情');
-  r(5,2).setValue('');
-  r(7,2).setValue('');
-  r(9,2).setValue('我從過程中學習或觀察到什麼事情？');
-  r(10,2).setValue('');
+  // 反思欄（第二問在 D4，約在 D1 下方 3 列）
+  r(4,4).setValue('我從過程中學習或觀察到什麼事情？');
 
   // AAR header
   r(12,2).setValue('AAR');
@@ -413,12 +409,9 @@ function setupTodayTemplate() {
       main.getRange(colHeaderOffset + 2, 1, aarDataRows, 4).clearContent();
     }
 
-    // 補回固定標籤（clearContent 清掉值，每天重新寫入）
-    main.getRange(2, 1, 1, numCols).merge()
-        .setValue('上班坐到座位上的前 30 分鐘，嚴禁打開 Email 與通訊軟體。');
-    main.getRange(4, 2).setValue('選一件讓我有感覺、有啟發的事情');
-    const q2Row = Math.min(7, colHeaderOffset - 1);
-    if (q2Row >= 5) main.getRange(q2Row, 2).setValue('我從過程中學習或觀察到什麼事情？');
+    // 更新反思標籤（D1）並補第二問（D4）
+    main.getRange(1, 4).setValue('選一件讓我有感覺、有啟發的事情');
+    if (colHeaderOffset >= 5) main.getRange(4, 4).setValue('我從過程中學習或觀察到什麼事情？');
     if (colHeaderOffset >= 2) main.getRange(colHeaderOffset, 2).setValue('AAR');
   }
 
