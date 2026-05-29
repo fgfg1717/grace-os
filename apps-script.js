@@ -283,19 +283,19 @@ function doPost(e) {
 
     // ── 寫入復盤紀錄 ──
     if (type === 'review') {
-      const sheet = getOrCreateReviewSheet(ss);
+      const isWeekly = (data.review_type || '週') === '週';
+      const sheet = isWeekly ? getOrCreateWeekReviewSheet(ss) : getOrCreateMonthReviewSheet(ss);
       sheet.appendRow([
-        fmt(new Date()),          // A: 寫入日期
-        data.review_type || '週', // B: 類型（週/月）
-        data.period      || '',   // C: 週期（例：2026/05/04-05/08）
-        data.highlight   || '',   // D: 亮點
-        data.pain        || '',   // E: 痛點
-        data.action      || '',   // F: 防呆行動
-        data.co_pct      || '',   // G: 公司目標%
-        data.personal_pct|| '',   // H: 個人目標%
-        data.life_pct    || '',   // I: 個人生活%
-        data.misc_pct    || '',   // J: 瑣務%
-        data.full_report || ''    // K: 完整報告
+        fmt(new Date()),         // A: 寫入日期
+        data.period      || '',  // B: 週期
+        data.highlight   || '',  // C: 亮點
+        data.pain        || '',  // D: 痛點
+        data.action      || '',  // E: 防呆行動
+        data.co_pct      || '',  // F: 公司目標%
+        data.personal_pct|| '',  // G: 個人目標%
+        data.life_pct    || '',  // H: 個人生活%
+        data.misc_pct    || '',  // I: 瑣務%
+        data.full_report || ''   // J: 完整報告
       ]);
       return out({ ok: true });
     }
@@ -679,6 +679,28 @@ function getOrCreateReviewSheet(ss) {
     s.setFrozenRows(1);
     s.setColumnWidths(1, 11, 120);
     s.setColumnWidth(11, 400);
+  }
+  return s;
+}
+function getOrCreateWeekReviewSheet(ss) {
+  let s = ss.getSheetByName('週覆盤');
+  if (!s) {
+    s = ss.insertSheet('週覆盤');
+    s.appendRow(['寫入日期', '週期', '亮點', '痛點', '防呆行動', '公司目標%', '個人目標%', '個人生活%', '瑣務%', '完整報告']);
+    s.setFrozenRows(1);
+    s.setColumnWidths(1, 9, 120);
+    s.setColumnWidth(10, 500);
+  }
+  return s;
+}
+function getOrCreateMonthReviewSheet(ss) {
+  let s = ss.getSheetByName('月覆盤');
+  if (!s) {
+    s = ss.insertSheet('月覆盤');
+    s.appendRow(['寫入日期', '週期', '月度亮點', '需改變模式', '下月行動', '公司目標%', '個人目標%', '個人生活%', '瑣務%', '完整報告']);
+    s.setFrozenRows(1);
+    s.setColumnWidths(1, 9, 120);
+    s.setColumnWidth(10, 500);
   }
   return s;
 }
