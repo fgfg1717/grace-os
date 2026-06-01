@@ -637,7 +637,10 @@
   <div id="eng-panel-list" class="e-hidden">
     <div style="margin-bottom:14px">
       <div class="today-sec-label" style="margin-top:0">
-        <span>📖 我的課程</span>
+        <button onclick="toggleLessonList()" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--text)">
+          <span>📖 我的課程</span>
+          <span id="lesson-list-arrow" style="font-size:11px;color:var(--muted)">▶</span>
+        </button>
         <div style="display:flex;gap:6px">
           <button class="nb-btn" style="font-size:11px;opacity:0.7" onclick="fixCorruptCourses()">🔄 重新同步</button>
           <button class="nb-btn" onclick="toggleLessonImport()">+ 匯入課程</button>
@@ -648,7 +651,7 @@
         <textarea id="lesson-json-input" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;font-family:'SF Mono','Courier New',monospace;min-height:100px;resize:vertical;background:white;margin-bottom:8px" placeholder='{"courseTitle":"...","classDate":"...","vocabulary":[...],"idioms":[]}'></textarea>
         <button class="full-btn" style="background:var(--vocab)" onclick="importLessonJSON()">匯入課程 ✓</button>
       </div>
-      <div id="lesson-list"></div>
+      <div id="lesson-list" style="display:none"></div>
     </div>
     <div style="border-top:1px solid var(--border);padding-top:10px">
       <div class="section-label" style="margin-top:0">我的學習內容</div>
@@ -1913,9 +1916,9 @@ function renderLessonList(){
   const list=document.getElementById('lesson-list');if(!list)return;
   const today=getTodayStr();
   const seen=new Set();
-  const allLessons=[...getLessons()].filter(l=>{const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;});
-  const future=allLessons.filter(l=>l.date&&l.date>today).sort((a,b)=>a.date<b.date?-1:1);
-  const past=allLessons.filter(l=>!l.date||l.date<=today).sort((a,b)=>a.date>b.date?-1:1);
+  const allLessons=[...getLessons()]
+    .filter(l=>{const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;})
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   if(!allLessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
   const cardHtml=l=>`<div class="lesson-card">
     <div style="flex:1">
@@ -1925,18 +1928,15 @@ function renderLessonList(){
     </div>
     <button class="del-btn" onclick="delLesson(${l.id})">✕</button>
   </div>`;
-  list.innerHTML=future.map(cardHtml).join('')
-    +(past.length?`<div style="margin-top:8px">
-      <button id="past-lessons-btn" onclick="togglePastLessons()" style="font-size:12px;color:var(--muted);background:none;border:none;padding:4px 0;cursor:pointer;text-decoration:underline">顯示已上課（${past.length} 堂）</button>
-      <div id="past-lessons-wrap" style="display:none">${past.map(cardHtml).join('')}</div>
-    </div>`:'');
+  list.innerHTML=allLessons.map(cardHtml).join('');
 }
-function togglePastLessons(){
-  const wrap=document.getElementById('past-lessons-wrap');const btn=document.getElementById('past-lessons-btn');
-  if(!wrap||!btn)return;
-  const show=wrap.style.display==='none';
-  wrap.style.display=show?'block':'none';
-  btn.textContent=show?'收起已上課':`顯示已上課（${wrap.querySelectorAll('.lesson-card').length} 堂）`;
+function toggleLessonList(){
+  const list=document.getElementById('lesson-list');
+  const arrow=document.getElementById('lesson-list-arrow');
+  if(!list||!arrow)return;
+  const show=list.style.display==='none';
+  list.style.display=show?'block':'none';
+  arrow.textContent=show?'▼':'▶';
 }
 function delLesson(id){setLessons(getLessons().filter(l=>l.id!==id));renderLessonList();showToast('已刪除課程紀錄')}
 
