@@ -1399,15 +1399,24 @@ async function engLookup(){
   const r=document.getElementById('dict-result');
   r.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">查詢中…</div>';
   try{
-    const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-    if(!res.ok)throw new Error('找不到這個單字，請確認拼字');
-    const data=await res.json();
+    const [engRes,zhRes]=await Promise.allSettled([
+      fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`),
+      fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|zh-TW`)
+    ]);
+    if(engRes.status==='rejected'||!engRes.value.ok)throw new Error('找不到這個單字，請確認拼字');
+    const data=await engRes.value.json();
     _dictEntry=data[0];
-    renderDictResult(_dictEntry);
+    let zhGuess='';
+    if(zhRes.status==='fulfilled'&&zhRes.value.ok){
+      const zhData=await zhRes.value.json();
+      const t=zhData?.responseData?.translatedText||'';
+      if(t&&t.toLowerCase()!==word.toLowerCase())zhGuess=t;
+    }
+    renderDictResult(_dictEntry,zhGuess);
   }catch(e){r.innerHTML=`<div style="text-align:center;padding:20px;color:#EF4444">${e.message}</div>`}
 }
 
-function renderDictResult(entry){
+function renderDictResult(entry,zhGuess=''){
   const ph=entry.phonetics||[];
   const ipa=ph.find(p=>p.text)?.text||'';
   const au=ph.find(p=>p.audio&&p.audio.length>4)?.audio||'';
@@ -1425,8 +1434,9 @@ function renderDictResult(entry){
   });
   html+=`<div style="margin-top:14px">
     <label style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px">中文意思</label>
-    <input type="text" id="dict-zh" placeholder="輸入中文意思…"
+    <input type="text" id="dict-zh" placeholder="輸入中文意思…" value="${esc(zhGuess)}"
       style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:15px;font-family:inherit;margin-bottom:8px"/>
+    ${zhGuess?`<div style="font-size:11px;color:var(--muted);margin:-4px 0 8px">由 AI 自動帶入，可自行修改</div>`:''}
     <button class="full-btn" style="background:var(--vocab)" onclick="saveDictWord()">記住這個字 ✓</button>
   </div></div>`;
   document.getElementById('dict-result').innerHTML=html;
@@ -1918,7 +1928,7 @@ function renderLessonList(){
   const seen=new Set();
   const allLessons=[...getLessons()]
     .filter(l=>{const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;})
-    .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   if(!allLessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
   const cardHtml=l=>`<div class="lesson-card">
     <div style="flex:1">
