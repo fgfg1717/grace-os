@@ -1522,6 +1522,15 @@ function renderEngList(){
   let items=getEngItems();
   if(engTypeFilter!=='all')items=items.filter(i=>i.type===engTypeFilter);
   if(engSrcFilter!=='all')items=items.filter(i=>i.source===engSrcFilter);
+  const today=getTodayStr();
+  items.sort((a,b)=>{
+    const da=a.lessonDate||'',db=b.lessonDate||'';
+    if(!da&&!db)return(b.date||'').localeCompare(a.date||'');
+    if(!da)return 1;if(!db)return -1;
+    const ap=da<=today,bp=db<=today;
+    if(ap!==bp)return ap?-1:1;
+    return ap?db.localeCompare(da):da.localeCompare(db);
+  });
   const cnt=document.getElementById('eng-item-count');if(cnt)cnt.textContent=`共 ${items.length} 筆`;
   const list=document.getElementById('eng-list');
   if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄</div>';return}
