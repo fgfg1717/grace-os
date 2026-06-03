@@ -14,7 +14,7 @@
       --capture:#059669; --vocab:#7C3AED; --ledger:#0891B2;
       --stock:#EA580C;   --plan:#2563EB;  --aar:#64748B;
       --review:#64748B;  --monthly:#0EA5E9;
-      --health:#EF4444;  --english:#D97706; --pr:#1E3A8A;
+      --health:#EF4444;  --english:#D97706; --pr:#1E3A8A; --ceo:#6D28D9;
       --bg:#F8FAFC; --card:#FFFFFF; --text:#1E293B;
       --muted:#64748B; --border:#E2E8F0; --radius:16px;
     }
@@ -59,6 +59,7 @@
     .card-monthly:hover{background:#F0F9FF;border-color:var(--monthly)}
     .card-english:hover{background:#FFFBEB;border-color:var(--english)}
     .card-pr:hover     {background:#EFF6FF;border-color:var(--pr)}
+    .card-ceo:hover    {background:#F5F3FF;border-color:var(--ceo)}
 
     /* Embed overlay */
     .embed-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
@@ -344,6 +345,19 @@
     .plan-cat{font-size:11px;font-weight:600;padding:6px 6px;color:var(--muted);flex-shrink:0}
     .plan-empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
 
+    /* CEO 思維庫 */
+    .ceo-pattern-card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .18s}
+    .ceo-pattern-card:hover{border-color:var(--ceo)}
+    .ceo-pat-title{font-size:14px;font-weight:700;color:var(--text);display:flex;justify-content:space-between;align-items:center}
+    .ceo-pat-title::after{content:'▶';font-size:10px;color:var(--muted);transition:transform .2s}
+    .ceo-pattern-card.open .ceo-pat-title::after{transform:rotate(90deg)}
+    .ceo-pat-body{font-size:13px;line-height:1.7;color:var(--text);margin-top:10px}
+    .ceo-phrase{background:#F5F3FF;border-left:3px solid var(--ceo);padding:6px 10px;border-radius:0 8px 8px 0;font-size:12px;color:#4C1D95;margin-top:8px;font-style:italic}
+    .ceo-case-item{background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+    .ceo-case-date{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px}
+    .ceo-case-quote{font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap}
+    .ceo-case-ctx{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic}
+
     /* Today tasks */
     .today-sec-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
       color:var(--muted);margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center}
@@ -484,10 +498,15 @@
 
   <div class="section-label">職涯發展</div>
   <div class="grid">
-    <div class="card card-pr full" onclick="openEmbed('pr')">
+    <div class="card card-pr" onclick="openEmbed('pr')">
       <span class="icon">🎯</span>
       <div class="label">幕僚沙盤</div>
-      <div class="hint">危機模擬 · AI 雙角色評估 · 公關策略練習</div>
+      <div class="hint">危機模擬 · AI 雙角色評估</div>
+    </div>
+    <div class="card card-ceo" onclick="show('ceo')">
+      <span class="icon">🧠</span>
+      <div class="label">CEO 思維庫</div>
+      <div class="hint">模式 · 新增回饋 · 問 Claude</div>
     </div>
   </div>
 
@@ -1002,6 +1021,99 @@
   <button class="full-btn" style="background:var(--monthly)" onclick="copyOnly('monthly')">複製內容 → NotebookLM</button>
 </div>
 
+<!-- CEO 思維庫 -->
+<div class="tpl" id="tpl-ceo">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">🧠</span>
+    <div><h2>CEO 思維庫</h2>
+      <span class="tag" style="background:#EDE9FE;color:#4C1D95;">向 CEO 學思考</span>
+    </div>
+  </div>
+  <div class="eng-tabs">
+    <button class="eng-tab-btn active" id="ceo-tab-patterns" onclick="switchCEOTab('patterns')">💡 思維模式</button>
+    <button class="eng-tab-btn" id="ceo-tab-add" onclick="switchCEOTab('add')">＋ 新增回饋</button>
+    <button class="eng-tab-btn" id="ceo-tab-cases" onclick="switchCEOTab('cases')">📝 我的案例</button>
+  </div>
+
+  <!-- 思維模式 -->
+  <div id="ceo-panel-patterns">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">從例會逐字稿萃取，每次新會議分析後由 Claude 更新。</div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">🔗 現在 × 未來雙軌思考</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>看任何現況問題，同時在腦袋裡保留「2-3 年後的樣子」。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：討論網站改版 → 問「這怎麼幫三年後資料庫願景鋪路」</p>
+        <p class="ceo-phrase">練習句：「這個決定對我們兩三年後的目標有什麼幫助？」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">🎯 利害關係人說服力轉換</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>所有產品/執行決策，最終轉成「對方為什麼要繼續支持你」。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：看完網站改版 → 「成果怎麼讓贊助者知道，他明年為什麼還要支持」</p>
+        <p class="ceo-phrase">練習句：「這件事情，對（對象）來說，說服力在哪裡？」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">📐 拆層思考</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>先把問題拆成 2-3 個不同層面，再逐一回應，不混著說。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">口頭語：「這牽涉到兩個層面，第一個是⋯⋯，第二個是⋯⋯」</p>
+        <p class="ceo-phrase">練習：遇到任何問題，先問自己「這個問題有幾個維度？」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">⏱️ 壓時間節點，不讓討論懸空</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>討論完方向，一定接具體時間節點，永遠以「時間 + 行動」結束。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：「希望六月底我們先針對明年的願景先有個數，好不好？」</p>
+        <p class="ceo-phrase">練習句：「那我們就壓一個時間，＿月＿日前先⋯⋯」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">🔭 機會嗅覺（外部趨勢 → 我能做什麼）</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>看到外部趨勢，立刻連到「我們能接上什麼」。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：美國退出孔子學院 → 臺灣華語教材進入美國學校的機會</p>
+        <p class="ceo-phrase">練習：「這件事如果發生，對我們是機會還是威脅？怎麼接上？」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">📦 資源意識下的分階段規劃</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>永遠考量現有能量/資源限制，做可行的分階段計畫，不空談。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">口頭語：「現階段我們能做⋯⋯，明年⋯⋯，兩三年後⋯⋯」</p>
+        <p class="ceo-phrase">練習：「如果資源只有一半，這件事的優先順序怎麼排？」</p>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">最後更新：2026-06-03（新臺灣史例會）</div>
+  </div>
+
+  <!-- 新增回饋 -->
+  <div id="ceo-panel-add" class="e-hidden">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">把 CEO 說的話、做的決定記下來，累積越多我就能給你越準確的 CEO 視角。</div>
+    <div class="cap-form">
+      <div class="field"><label>會議日期</label>
+        <input type="date" id="ceo-case-date" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit"/>
+      </div>
+      <div class="field"><label>CEO 的原話或決策</label>
+        <textarea id="ceo-case-quote" placeholder="貼上 CEO 說的話，或描述他做了什麼決定⋯" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;min-height:120px;resize:vertical"></textarea>
+      </div>
+      <div class="field"><label>當時情境（選填）</label>
+        <textarea id="ceo-case-context" placeholder="在討論什麼話題？有沒有你覺得特別的地方？" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;min-height:72px;resize:vertical"></textarea>
+      </div>
+      <button class="full-btn" style="background:var(--ceo)" onclick="addCEOCase()">記錄這個案例 ✓</button>
+    </div>
+  </div>
+
+  <!-- 我的案例 -->
+  <div id="ceo-panel-cases" class="e-hidden">
+    <div id="ceo-cases-list"></div>
+    <button class="full-btn" style="background:var(--ceo);margin-top:8px" onclick="copyCEOPrompt()">複製「CEO 視角」提示 → 貼給 Claude</button>
+  </div>
+</div>
+
 </div><!-- /wrap -->
 <div class="toast" id="toast"></div>
 
@@ -1198,6 +1310,7 @@ function show(type){
   else if(type==='daily')initDailyStrategy();
   else if(type==='plan'){}
   else if(type==='review'){loadNb(type);initReview();}
+  else if(type==='ceo')initCEO();
   else loadNb(type);
   window.scrollTo(0,0);
 }
@@ -3191,6 +3304,88 @@ function renderPlan(rows){
   document.getElementById('plan-content').innerHTML=html||'<div class="plan-empty">計畫格式無法解析</div>';
 }
 window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
+
+/* ════ CEO 思維庫 ════ */
+function getCEOCases(){try{return JSON.parse(localStorage.getItem('ceo_cases')||'[]')}catch(e){return[]}}
+function setCEOCases(items){localStorage.setItem('ceo_cases',JSON.stringify(items))}
+
+function initCEO(){
+  switchCEOTab('patterns');
+  const d=document.getElementById('ceo-case-date');
+  if(d)d.value=fmtInputDate(taipeiNow());
+}
+
+function switchCEOTab(tab){
+  ['patterns','add','cases'].forEach(t=>{
+    document.getElementById('ceo-panel-'+t).classList.toggle('e-hidden',t!==tab);
+    const btn=document.getElementById('ceo-tab-'+t);
+    if(btn)btn.classList.toggle('active',t===tab);
+  });
+  if(tab==='cases')renderCEOCases();
+}
+
+function toggleCEOPattern(el){
+  el.classList.toggle('open');
+  const body=el.querySelector('.ceo-pat-body');
+  body.style.display=el.classList.contains('open')?'block':'none';
+}
+
+function addCEOCase(){
+  const date=document.getElementById('ceo-case-date').value;
+  const quote=document.getElementById('ceo-case-quote').value.trim();
+  const ctx=document.getElementById('ceo-case-context').value.trim();
+  if(!quote){showToast('請填入 CEO 的話或決策');return;}
+  const cases=getCEOCases();
+  cases.unshift({id:Date.now(),date:date||fmtInputDate(taipeiNow()),quote,ctx});
+  setCEOCases(cases);
+  document.getElementById('ceo-case-quote').value='';
+  document.getElementById('ceo-case-context').value='';
+  showToast('案例已記錄 ✓');
+  switchCEOTab('cases');
+}
+
+function renderCEOCases(){
+  const cases=getCEOCases();
+  const el=document.getElementById('ceo-cases-list');
+  if(!cases.length){
+    el.innerHTML='<div class="empty-msg">還沒有案例。<br>去「＋ 新增回饋」記錄 CEO 說過的話！</div>';
+    return;
+  }
+  el.innerHTML=cases.map((c,i)=>`
+    <div class="ceo-case-item">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="ceo-case-date">${esc(c.date)}</div>
+        <button onclick="delCEOCase(${i})" style="background:none;border:none;cursor:pointer;color:#CBD5E1;font-size:13px">✕</button>
+      </div>
+      <div class="ceo-case-quote">${esc(c.quote)}</div>
+      ${c.ctx?`<div class="ceo-case-ctx">情境：${esc(c.ctx)}</div>`:''}
+    </div>`).join('');
+}
+
+function delCEOCase(i){
+  const cases=getCEOCases();cases.splice(i,1);setCEOCases(cases);renderCEOCases();
+}
+
+function copyCEOPrompt(){
+  const cases=getCEOCases();
+  const casesText=cases.length
+    ?'\n\n【我累積的 CEO 案例】\n'+cases.slice(0,10).map(c=>`[${c.date}] ${c.quote}${c.ctx?' (情境：'+c.ctx+')':''}`).join('\n')
+    :'';
+  const prompt=`【CEO 思維庫背景】
+以下是我從例會觀察到的 CEO 六個核心思維模式：
+1. 現在 × 未來雙軌思考：看現況問題，同步在想 2-3 年後的樣子
+2. 利害關係人說服力轉換：任何決策最終要說明「對方為什麼要持續支持你」
+3. 拆層思考：把問題拆成 2-3 個不同層面，逐一回應
+4. 壓時間節點：討論完方向一定有具體時間（「六月底先有個數」）
+5. 機會嗅覺：看到外部趨勢，立刻連到「我們能做什麼」
+6. 資源意識下的分階段規劃：考量現有能量，做可行的分階段計畫${casesText}
+
+【我的問題】
+（在這裡貼上你想問的問題或情況描述）
+
+請用 CEO 的視角幫我分析，指出我可能沒想到的角度。`;
+  doCopy(prompt,'CEO 視角提示已複製！貼給 Claude');
+}
 </script>
 <!-- Budget Modal -->
 <div class="budget-modal-overlay" id="budget-modal-overlay" onclick="if(event.target===this)closeBudgetModal()">
