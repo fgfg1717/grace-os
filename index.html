@@ -640,6 +640,7 @@
       <button class="nb-btn" onclick="saveTodayVocab()">存入 ✓</button>
     </div>
     <div id="today-vocab-list"></div>
+    <div id="toeic-daily-words"></div>
     <div class="today-sec-label">💬 任務二：句子練習 × 3</div>
     <div id="today-sentence-list"></div>
     <div class="today-sec-label">✍️ 任務三：英文輸出</div>
@@ -1218,29 +1219,35 @@ async function fixCorruptCourses(){
 function _importCourseData(data){
   const title=data.courseTitle||data.title||'未命名課程';
   const date=data.classDate||data.date||fmtYMD(taipeiNow());
-  const now=fmtYMD(taipeiNow());let count=0;
+  const now=fmtYMD(taipeiNow());
+  const items=[];
   [...(data.vocabulary||[]),(data.idioms||[])].flat().forEach(v=>{
     const word=v.word||v.english||v.term||'';const zh=v.zh||v.chinese||v.meaning||v.translation||'';
     if(!word||!zh)return;
-    addEngItem({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
+    items.push({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
       enDef:v.definition||'',zhMeaning:zh,example:v.example||v.ex||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
   });
   (data.sentences||data.dialogues||[]).forEach(s=>{
     const sent=s.sentence||s.english||s.text||'';const zh=s.zh||s.chinese||s.translation||'';
     if(!sent||!zh)return;
-    addEngItem({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
+    items.push({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
       translation:zh,notes:s.notes||s.context||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
   });
   (data.grammar||[]).forEach(g=>{
     const rule=g.rule||g.title||'';if(!rule)return;
-    addEngItem({id:Date.now()+Math.random(),type:'grammar',rule,
+    items.push({id:Date.now()+Math.random(),type:'grammar',rule,
       explanation:g.explanation||g.desc||'',
       examples:(g.examples||[]).map(e=>typeof e==='string'?e:e.en||'').filter(Boolean),
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
   });
-  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:count,topicSummary:data.topicSummary||'',discussion:data.discussion||[]});setLessons(lessons);
+  // Stagger: 15 items per day to avoid flooding the daily queue
+  items.forEach((item,i)=>{
+    item.srs={nextReview:srsAddDays(Math.floor(i/15)),interval:0,reps:0,lastRating:0,lastReview:''};
+    addEngItem(item);
+  });
+  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:items.length,topicSummary:data.topicSummary||'',discussion:data.discussion||[]});setLessons(lessons);
 }
 
 async function syncEngItemsFromCloud(){
@@ -2042,32 +2049,38 @@ function importLessonJSON(){
   let data;try{data=JSON.parse(raw)}catch{showToast('JSON 格式有誤，請重新貼上');return}
   const title=data.courseTitle||data.title||'未命名課程';
   const date=data.classDate||data.date||fmtYMD(taipeiNow());
-  const now=fmtYMD(taipeiNow());let count=0;
+  const now=fmtYMD(taipeiNow());
+  const items=[];
   [...(data.vocabulary||[]),...(data.idioms||[])].forEach(v=>{
     const word=v.word||v.english||v.term||'';const zh=v.zh||v.chinese||v.meaning||v.translation||'';
     if(!word||!zh)return;
-    addEngItem({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
+    items.push({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
       enDef:v.definition||'',zhMeaning:zh,example:v.example||v.ex||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
   });
   (data.sentences||data.dialogues||[]).forEach(s=>{
     const sent=s.sentence||s.english||s.text||'';const zh=s.zh||s.chinese||s.translation||'';
     if(!sent||!zh)return;
-    addEngItem({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
+    items.push({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
       translation:zh,notes:s.notes||s.context||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
   });
   (data.grammar||[]).forEach(g=>{
     const rule=g.rule||g.title||'';if(!rule)return;
-    addEngItem({id:Date.now()+Math.random(),type:'grammar',rule,
+    items.push({id:Date.now()+Math.random(),type:'grammar',rule,
       explanation:g.explanation||g.desc||'',
       examples:(g.examples||[]).map(e=>typeof e==='string'?e:e.en||'').filter(Boolean),
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});count++;
+      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
   });
-  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:count});setLessons(lessons);
+  // Stagger: 15 items per day to avoid flooding the daily queue
+  items.forEach((item,i)=>{
+    item.srs={nextReview:srsAddDays(Math.floor(i/15)),interval:0,reps:0,lastRating:0,lastReview:''};
+    addEngItem(item);
+  });
+  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:items.length});setLessons(lessons);
   document.getElementById('lesson-json-input').value='';
   toggleLessonImport();renderLessonList();
-  showToast(`已匯入「${title}」，共 ${count} 個項目 ✓`);
+  showToast(`已匯入「${title}」，共 ${items.length} 個項目 ✓`);
   postGAS({type:'eng_course',...data});
   _scheduleEngBackup();
 }
@@ -2215,15 +2228,29 @@ function migrateSRS(){
 }
 
 /* ── 今日任務 ── */
-let todayReviewItems=[],todayReviewIdx=0,todayShowingAnswer=false;
+const DAILY_REVIEW_CAP=20;
+let todayReviewItems=[],todayReviewIdx=0,todayShowingAnswer=false,todayReviewTotal=0;
 
 function initTodayTab(){
   migrateSRS();
-  todayReviewItems=getDueItems();
+  const allDue=getDueItems();
+  todayReviewTotal=allDue.length;
+  todayReviewItems=allDue.slice(0,DAILY_REVIEW_CAP);
+  // Push overflow items forward so they don't pile up every day
+  if(allDue.length>DAILY_REVIEW_CAP){
+    const overflow=allDue.slice(DAILY_REVIEW_CAP);
+    const engItems=getEngItems();
+    overflow.forEach((dueItem,idx)=>{
+      const i=engItems.findIndex(x=>x.id===dueItem.id);
+      if(i>=0){const daysOff=1+Math.floor(idx/DAILY_REVIEW_CAP);engItems[i].srs.nextReview=srsAddDays(daysOff);}
+    });
+    setEngItems(engItems);
+  }
   todayReviewIdx=0;todayShowingAnswer=false;
   renderTodayPreview();
   renderToeicProgressBar();
   renderTodayContent();
+  renderToeicDailyWords();
   renderTodaySentenceTask();
 }
 
@@ -2391,9 +2418,11 @@ function renderTodayContent(){
   const newWords=getToeicNewWords(5);const doneCount=todayReviewItems.length;
   let html='';
   if(doneCount>0){
+    const remaining=Math.max(0,todayReviewTotal-DAILY_REVIEW_CAP);
+    const remNote=remaining>0?`<div style="font-size:12px;color:var(--muted);margin-top:4px">還有 ${remaining} 個已排到後幾天，輕鬆繼續 📅</div>`:'<div style="font-size:12px;color:var(--muted)">記憶越來越穩固，繼續保持</div>';
     html+=`<div style="text-align:center;padding:16px 0 8px"><div style="font-size:36px;margin-bottom:6px">🎉</div>
-      <div style="font-size:16px;font-weight:800;margin-bottom:3px">完成 ${doneCount} 個複習！</div>
-      <div style="font-size:12px;color:var(--muted)">記憶越來越穩固，繼續保持</div></div>`;
+      <div style="font-size:16px;font-weight:800;margin-bottom:3px">今日 ${doneCount} 張完成！</div>
+      ${remNote}</div>`;
   }else if(!newWords.length){
     html+=`<div style="text-align:center;padding:20px"><div style="font-size:36px;margin-bottom:8px">🌱</div>
       <div style="font-size:15px;font-weight:700;margin-bottom:4px">今天沒有待複習項目</div>
@@ -2428,7 +2457,28 @@ function learnTodayToeic(){
       enDef:'',zhMeaning:w.zh,example:w.ex||'',partOfSpeech:w.pos,source:'toeic',date:now});
   });
   showToast(`${newWords.length} 個新詞已加入複習佇列 ✓`);
-  renderToeicProgressBar();renderTodayContent();
+  renderToeicProgressBar();renderToeicDailyWords();renderTodayContent();
+}
+
+function renderToeicDailyWords(){
+  const el=document.getElementById('toeic-daily-words');if(!el)return;
+  const newWords=getToeicNewWords(5);
+  if(!newWords.length){el.innerHTML='';return}
+  el.innerHTML=`
+    <div class="today-sec-label" style="margin-top:4px">
+      <span>📚 今日 TOEIC 新詞 × ${newWords.length}</span>
+      <button class="nb-btn" id="learn-toeic-btn" onclick="learnTodayToeic()">加入學習 ✓</button>
+    </div>
+    ${newWords.map(w=>`<div class="today-task-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div class="toeic-word-en">${esc(w.w)}&nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
+          <div class="toeic-word-zh">${esc(w.zh)}</div>
+          ${w.ex?`<div class="toeic-word-ex">"${esc(w.ex)}"</div>`:''}
+        </div>
+        <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button>
+      </div>
+    </div>`).join('')}`;
 }
 
 function getSourceLabel(src){
