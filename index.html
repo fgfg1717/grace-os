@@ -3299,7 +3299,7 @@ function renderPlan(rows){
     const cell0=String(row[0]||'').trim();
     if(/\d+\/\d+/.test(cell0)&&(cell0.includes('（')||cell0.includes('(')||/[一二三四五六日]/.test(cell0))){flush();currentDay=cell0;isToday=cell0.includes(todayLabel)}
     else if(cell0==='時段'||!cell0||row.every(c=>!String(c||'').trim())){}
-    else if(currentDay){const time=String(row[0]||'');const task=String(row[1]||'');const cat=String(row[2]||'');if(time||task)dayRows+=`<div class="plan-row"><span class="plan-time">${esc(time)}</span><span class="plan-task">${esc(task)}</span><span class="plan-cat">${esc(cat)}</span></div>`}
+    else if(currentDay){const time=String(row[0]||'');const task=String(row[1]||'');const cat=String(row[2]||'');const mins=String(row[3]||'');const isHeaderRow=mins!==''&&!/^\d+$/.test(mins);if(!isHeaderRow&&(time||task))dayRows+=`<div class="plan-row"><span class="plan-time">${esc(time)}</span><span class="plan-task">${esc(task)}</span><span class="plan-cat">${esc(cat)}</span></div>`}
   });flush();
   document.getElementById('plan-content').innerHTML=html||'<div class="plan-empty">計畫格式無法解析</div>';
 }

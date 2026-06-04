@@ -27,7 +27,10 @@ function doGet(e) {
     if (!planSheet || planSheet.getLastRow() === 0)
       return ContentService.createTextOutput(JSON.stringify({ ok: true, data: [], message: '尚未建立本週計畫' }))
         .setMimeType(ContentService.MimeType.JSON);
-    const data = planSheet.getDataRange().getValues().map(r => r.map(c => String(c)));
+    const data = planSheet.getDataRange().getValues().map(r => r.map(c => {
+      if (c instanceof Date) return Utilities.formatDate(c, 'Asia/Taipei', 'yyyy/MM/dd');
+      return String(c);
+    }));
     return ContentService.createTextOutput(JSON.stringify({ ok: true, data }))
       .setMimeType(ContentService.MimeType.JSON);
   }
