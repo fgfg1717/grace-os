@@ -598,6 +598,20 @@
       </div>
     </div>
   </div>
+  <div class="cap-settings" style="margin-top:12px">
+    <button class="settings-toggle" onclick="toggleGroqSettings()">🎯 幕僚沙盤 API Key 設定</button>
+    <div id="groq-settings-body" class="settings-body" style="display:none;margin-top:10px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+        幕僚沙盤使用 <strong>Groq</strong> AI 服務，需要 <code>gsk_</code> 開頭的免費 API Key。<br>
+        申請網址：<strong>console.groq.com</strong>
+      </div>
+      <div class="field"><label>Groq API Key</label>
+        <input type="password" id="groq-key-input" placeholder="gsk_..." autocomplete="off"
+          style="font-family:'SF Mono','Courier New',monospace"/></div>
+      <div id="groq-key-status" style="font-size:12px;margin-bottom:8px"></div>
+      <button class="btn-primary" style="background:#059669;width:100%" onclick="saveGroqKey()">儲存 API Key</button>
+    </div>
+  </div>
 </div>
 
 <!-- 英文學習中心 -->
@@ -1456,6 +1470,28 @@ function loadCaptureList(){
 function delCapture(id){setCaptures(getCaptures().filter(c=>c.id!==id));loadCaptureList()}
 function toggleCapSettings(){const b=document.getElementById('cap-settings-body');b.style.display=b.style.display==='none'?'block':'none'}
 function saveCapSettings(){localStorage.setItem('gas-url',document.getElementById('cap-gas-url').value.trim());showToast('設定已儲存')}
+function toggleGroqSettings(){
+  const b=document.getElementById('groq-settings-body');
+  const show=b.style.display==='none';
+  b.style.display=show?'block':'none';
+  if(show){
+    const existing=localStorage.getItem('pr_gemini_key_v1')||'';
+    const inp=document.getElementById('groq-key-input');
+    if(inp)inp.value=existing?'（已設定，重新輸入可更新）':'';
+    const st=document.getElementById('groq-key-status');
+    if(st)st.textContent=existing?'✅ 目前狀態：已設定':'⚠️ 目前狀態：尚未設定';
+    if(st)st.style.color=existing?'#059669':'#F59E0B';
+  }
+}
+function saveGroqKey(){
+  const v=document.getElementById('groq-key-input').value.trim();
+  if(!v||v.startsWith('（')){showToast('請輸入 API Key');return}
+  if(!v.startsWith('gsk_')){showToast('格式錯誤，應以 gsk_ 開頭');return}
+  localStorage.setItem('pr_gemini_key_v1',v);
+  const st=document.getElementById('groq-key-status');
+  if(st){st.textContent='✅ 已儲存';st.style.color='#059669'}
+  showToast('✅ Groq API Key 已儲存，幕僚沙盤即可使用');
+}
 
 /* ════ 語音辨識 ════ */
 let recognition=null,isRecording=false;
