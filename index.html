@@ -2050,7 +2050,7 @@ function renderLessonList(){
   const seen=new Set();
   const allLessons=[...getLessons()]
     .filter(l=>{const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;})
-    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   if(!allLessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
   const cardHtml=l=>`<div class="lesson-card">
     <div style="flex:1">
