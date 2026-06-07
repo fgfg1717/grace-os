@@ -524,15 +524,6 @@
     </div>
   </div>
 
-  <div class="section-label">資料讀取</div>
-  <div class="grid">
-    <div class="card card-aar full" onclick="show('aar')">
-      <span class="icon">📋</span>
-      <div class="label">讀取 AAR</div>
-      <div class="hint">從 Sheets 抓資料・一鍵複製給 NotebookLM</div>
-    </div>
-  </div>
-
   <div class="section-label">覆盤與成果</div>
   <div class="grid">
     <div class="card card-review" onclick="show('review')">
@@ -915,33 +906,6 @@
   <div id="bank-list"></div>
   <div class="section-label" style="margin-top:16px">📊 資產快照</div>
   <div id="finance-assets"></div>
-</div>
-
-<!-- AAR 讀取 -->
-<div class="tpl" id="tpl-aar">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">📋</span>
-    <div><h2>讀取 AAR</h2>
-      <span class="tag" style="background:#F1F5F9;color:#475569;">從 Sheets 抓資料</span>
-    </div>
-  </div>
-  <div class="aar-range">
-    <button class="range-btn sel" onclick="setAarRange('week')">本週</button>
-    <button class="range-btn" onclick="setAarRange('month')">本月</button>
-    <button class="range-btn" onclick="setAarRange('custom')">自訂</button>
-  </div>
-  <div class="date-row" id="aar-custom-dates" style="display:none">
-    <input type="date" id="aar-from" class="date-input"/>
-    <span style="color:var(--muted)">→</span>
-    <input type="date" id="aar-to" class="date-input"/>
-  </div>
-  <button class="full-btn" style="background:var(--aar);margin-bottom:14px" onclick="fetchAAR()">讀取 AAR 資料</button>
-  <div id="aar-content"><div class="plan-empty">點上方「讀取」按鈕開始</div></div>
-  <div class="copy-bar" id="aar-copy-bar" style="display:none">
-    <button class="btn-primary" style="background:var(--review)" onclick="copyAARFmt('week')">複製週覆盤格式</button>
-    <button class="btn-primary" style="background:var(--monthly)" onclick="copyAARFmt('month')">複製月回顧格式</button>
-  </div>
 </div>
 
 <!-- 今日策略 -->
