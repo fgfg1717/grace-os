@@ -643,6 +643,8 @@
     <div id="today-sentence-list"></div>
     <div class="today-sec-label">✍️ 今日造句</div>
     <div id="today-output"></div>
+    <div class="today-sec-label">📐 今日文法題</div>
+    <div id="today-grammar-q"></div>
   </div>
 
   <!-- 查記 -->
@@ -1226,7 +1228,7 @@ async function fixCorruptCourses(){
 
 function _importCourseData(data){
   const title=data.courseTitle||data.title||'未命名課程';
-  const date=data.classDate||data.date||fmtYMD(taipeiNow());
+  const date=(data.classDate||data.date||fmtYMD(taipeiNow())).replace(/-/g,'/');
   const now=fmtYMD(taipeiNow());
   const items=[];
   [...(data.vocabulary||[]),(data.idioms||[])].flat().forEach(v=>{
@@ -1750,6 +1752,10 @@ function startEngPractice(){
     if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
     pool=filterByLesson(pool);
   }
+  if(pracRange==='grammar'||pracRange==='all'){
+    const toeicGrammarItems=engShuffle(TOEIC_GRAMMAR).slice(0,5).map((g,i)=>({id:'tg_'+i,...g,toeicQ:true,type:'grammar',source:'toeic'}));
+    pool=[...pool,...toeicGrammarItems];
+  }
   if(pool.length<2){showToast('至少需要 2 個項目才能練習');return}
   pracPool=engShuffle(pool);pracIdx=0;pracScore={c:0,t:0};
   document.getElementById('eng-practice-setup').style.display='none';
@@ -1757,6 +1763,9 @@ function startEngPractice(){
   renderPracQ();
 }
 function genEngQ(item,all,mode){
+  if(item.toeicQ){
+    return{prompt:item.prompt,hint:`文法：${item.rule}`,answer:item.opts[item.ans].toLowerCase(),options:item.opts,audioText:'',audioUrl:'',reveal:`✅ 正確答案：${item.opts[item.ans]}\n\n📖 ${item.expl}`,selfAssess:false};
+  }
   const pool=all.filter(i=>i.type===item.type&&i.id!==item.id);
   const sa=(prompt,hint,answer,audio,audioUrl,reveal)=>({prompt,hint,answer,audioText:audio,audioUrl:audioUrl||'',reveal,selfAssess:true,options:null});
   if(mode==='choice'){
@@ -1899,6 +1908,34 @@ function resetEngPrac(){
 /* ════════════════════════════════
    英文學習中心 — SRS + 今日任務 + 課程管理
 ════════════════════════════════ */
+
+const TOEIC_GRAMMAR=[
+  {rule:'時態：過去簡單式',prompt:'The shipment ______ two days ago.',opts:['arrived','arrives','will arrive','has arrived'],ans:0,expl:'two days ago 指過去時間點，用過去簡單式 arrived。'},
+  {rule:'時態：現在完成式',prompt:'The manager ______ already reviewed the proposal.',opts:['has','have','had','is'],ans:0,expl:'主詞 the manager 是單數，現在完成式用 has + 過去分詞。'},
+  {rule:'時態：未來式',prompt:'The conference ______ place next Monday.',opts:['will take','took','takes','is taken'],ans:0,expl:'next Monday 是未來時間，用 will + 原形動詞。'},
+  {rule:'被動語態',prompt:'The new policy ______ by the board last week.',opts:['was approved','approved','has approved','approves'],ans:0,expl:'主詞 policy 是被批准的（受詞），用被動語態 was approved。'},
+  {rule:'被動語態：現在完成',prompt:'All employees ______ notified about the change.',opts:['have been','has been','were','had been'],ans:0,expl:'主詞 all employees 是複數，現在完成被動用 have been + 過去分詞。'},
+  {rule:'介系詞：at/in/on',prompt:'The meeting is scheduled ______ 3 PM on Friday.',opts:['at','in','on','for'],ans:0,expl:'具體時刻前用 at（at 3 PM）；日期/星期前用 on；月份/年份前用 in。'},
+  {rule:'介系詞：for/since',prompt:'She has worked here ______ five years.',opts:['for','since','during','from'],ans:0,expl:'表示持續一段時間用 for；自某個時間點起用 since（since 2019）。'},
+  {rule:'介系詞：by/until',prompt:'Please submit the report ______ Friday.',opts:['by','until','at','during'],ans:0,expl:'by 表示「最晚在某時之前」（deadline）；until 表示「一直持續到某時」。'},
+  {rule:'冠詞：a/an',prompt:'She is ______ honest and hardworking employee.',opts:['an','a','the','—'],ans:0,expl:'honest 以母音音素 /ɒ/ 開頭，前面用 an，不看字母而是看發音。'},
+  {rule:'冠詞：定冠詞 the',prompt:'______ CEO announced the merger this morning.',opts:['The','A','An','—'],ans:0,expl:'特指雙方都知道是誰的人用定冠詞 the。'},
+  {rule:'連接詞：Although/Despite',prompt:'______ the heavy rain, the event went smoothly.',opts:['Despite','Although','However','Because of'],ans:0,expl:'Despite + 名詞片語；Although 後面要接完整子句（主詞＋動詞）。'},
+  {rule:'連接詞：Therefore/Because',prompt:'Sales declined; ______, we revised our strategy.',opts:['therefore','because','although','unless'],ans:0,expl:'therefore 是副詞，表示「因此」，常接在分號後連接兩個獨立句子。'},
+  {rule:'連接詞：Unless',prompt:'______ you confirm your reservation, it will be cancelled.',opts:['Unless','Except','Without','Despite'],ans:0,expl:'unless = if ... not，除非。表示「如果不……，那麼……」。'},
+  {rule:'動名詞 vs 不定詞：suggest',prompt:'The manager suggested ______ the meeting to next week.',opts:['postponing','to postpone','postpone','postponed'],ans:0,expl:'suggest 後接動名詞（-ing），不接不定詞。同類：recommend、avoid、consider。'},
+  {rule:'動名詞 vs 不定詞：decide',prompt:'We decided ______ a new supplier for the project.',opts:['to hire','hiring','hire','hired'],ans:0,expl:'decide 後接不定詞（to + 原形）。同類：plan、want、choose、agree。'},
+  {rule:'形容詞 vs 副詞',prompt:'The project was completed ______ ahead of schedule.',opts:['significantly','significant','more significant','significance'],ans:0,expl:'修飾副詞 ahead，需要用副詞 significantly（-ly 結尾）。'},
+  {rule:'形容詞 vs 副詞',prompt:'The results were ______ better than expected.',opts:['considerably','considerable','more considerable','considering'],ans:0,expl:'修飾比較級 better，需要用副詞 considerably。'},
+  {rule:'主謂一致：neither...nor',prompt:'Neither the manager nor the staff ______ informed.',opts:['were','was','is','are'],ans:0,expl:'neither...nor... 就近原則：動詞形式由靠近它的名詞（staff，複數）決定。'},
+  {rule:'主謂一致：each of',prompt:'Each of the employees ______ required to sign the form.',opts:['is','are','were','have'],ans:0,expl:'each of + 複數名詞，動詞仍用單數（is/was）。同類：everyone、someone。'},
+  {rule:'關係子句：that/which',prompt:'The report ______ was submitted last week has been approved.',opts:['that','who','whom','where'],ans:0,expl:'that 引導限制性關係子句，修飾事物（the report）；who 修飾人。'},
+  {rule:'關係子句：whose',prompt:'The employee ______ proposal was selected will lead the project.',opts:['whose','who','which','that'],ans:0,expl:'whose 表示所有關係（= the employee\'s proposal），修飾人或物。'},
+  {rule:'比較級',prompt:'This quarter\'s profit is ______ than last quarter\'s.',opts:['higher','more high','highest','much high'],ans:0,expl:'兩音節以下的形容詞比較級通常加 -er（higher），不用 more。'},
+  {rule:'假設語氣',prompt:'If the budget ______ approved, we would expand the team.',opts:['were','was','is','will be'],ans:0,expl:'與現在事實相反的假設（虛擬語氣），if 子句用 were，即使主詞是單數。'},
+  {rule:'分詞片語',prompt:'______ the presentation, she noticed several errors.',opts:['While reviewing','Reviewed','To review','Having review'],ans:0,expl:'主詞 she 主動在審閱，用現在分詞 While reviewing（= While she was reviewing）。'},
+  {rule:'情態動詞',prompt:'You ______ submit the form by end of day, or you will miss the deadline.',opts:['must','should','might','could'],ans:0,expl:'must 表示強制義務；should 表示建議；might/could 表示可能性。'},
+];
 
 const TOEIC_WORDS=[
   // 動詞
@@ -2072,7 +2109,7 @@ function importLessonJSON(){
   if(!raw){showToast('請貼上課程 JSON');return}
   let data;try{data=JSON.parse(raw)}catch{showToast('JSON 格式有誤，請重新貼上');return}
   const title=data.courseTitle||data.title||'未命名課程';
-  const date=data.classDate||data.date||fmtYMD(taipeiNow());
+  const date=(data.classDate||data.date||fmtYMD(taipeiNow())).replace(/-/g,'/');
   const now=fmtYMD(taipeiNow());
   const items=[];
   [...(data.vocabulary||[]),...(data.idioms||[])].forEach(v=>{
@@ -2277,6 +2314,7 @@ function initTodayTab(){
   renderToeicDailyWords();
   renderTodaySentenceTask();
   renderTodayOutput();
+  renderTodayGrammarQ();
 }
 
 function renderTodayPreview(){
@@ -2365,6 +2403,7 @@ function renderTodayPreview(){
           </div>
         </div>
         ${bodyHtml}
+        <button onclick="switchEngTab('practice');setPracRange('preview')" style="width:100%;padding:12px;border:none;border-radius:12px;background:#F59E0B;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">📝 看完了，去練習這堂課的內容 →</button>
       </div>`;
     }
     return `<div style="background:#FFFDF0;border:1.5px solid #FCD34D;border-radius:14px;margin-bottom:10px;overflow:hidden">
@@ -2495,6 +2534,37 @@ function speakOutputSentence(){
   const v=(document.getElementById('output-ta')?.value||'').trim();
   if(!v){showToast('先寫一個句子');return}
   engSpeak(v);showToast('說得好！繼續練習 💪');
+}
+
+function renderTodayGrammarQ(){
+  const el=document.getElementById('today-grammar-q');if(!el)return;
+  const today=getTodayStr();
+  const seed=today.replace(/\//g,'')|0;
+  const q=TOEIC_GRAMMAR[seed%TOEIC_GRAMMAR.length];
+  el.innerHTML=`<div class="today-task-card" id="tgq-card">
+    <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:8px">TOEIC 文法 · ${esc(q.rule)}</div>
+    <div style="font-size:15px;font-weight:600;line-height:1.8;margin-bottom:12px">${esc(q.prompt)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="tgq-opts">
+      ${q.opts.map((o,i)=>`<button class="prac-opt" onclick="checkTodayGrammarQ(this,${i},${q.ans},'${o.replace(/'/g,"\\'")}','${q.expl.replace(/'/g,"\\'")}','${q.opts[q.ans].replace(/'/g,"\\'")}')">
+        <span style="font-size:11px;color:var(--muted);margin-right:4px">${String.fromCharCode(65+i)}.</span>${esc(o)}
+      </button>`).join('')}
+    </div>
+    <div id="tgq-fb" style="display:none;margin-top:10px"></div>
+  </div>`;
+}
+function checkTodayGrammarQ(btn,chosen,correct,chosenText,expl,correctText){
+  document.querySelectorAll('#tgq-opts .prac-opt').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===correct)b.classList.add('correct');
+    else if(b===btn&&chosen!==correct)b.classList.add('wrong');
+  });
+  const ok=chosen===correct;
+  const fb=document.getElementById('tgq-fb');
+  fb.style.display='block';
+  fb.innerHTML=`<div style="padding:10px 12px;background:${ok?'#ECFDF5':'#FEF2F2'};border-radius:10px;border:1.5px solid ${ok?'#059669':'#EF4444'};font-size:13px;line-height:1.7">
+    ${ok?'✅ 正確！':'❌ 答錯了 — 正確答案：<strong>'+esc(correctText)+'</strong>'}<br>
+    <span style="color:#475569">${esc(expl)}</span>
+  </div>`;
 }
 
 function renderTodayContent(){
