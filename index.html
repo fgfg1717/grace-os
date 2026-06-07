@@ -2280,6 +2280,14 @@ function getToeicNewWords(n){
   const existing=new Set(getEngItems().filter(i=>i.source==='toeic').map(i=>(i.word||'').toLowerCase()));
   return TOEIC_WORDS.filter(w=>!existing.has(w.w.toLowerCase())).slice(0,n);
 }
+function migrateLessonDates(){
+  const lessons=getLessons();let lc=false;
+  lessons.forEach(l=>{if(l.date&&l.date.includes('-')){l.date=l.date.replace(/-/g,'/');lc=true;}});
+  if(lc)setLessons(lessons);
+  const items=getEngItems();let ic=false;
+  items.forEach(i=>{if(i.lessonDate&&i.lessonDate.includes('-')){i.lessonDate=i.lessonDate.replace(/-/g,'/');ic=true;}});
+  if(ic)setEngItems(items);
+}
 function migrateSRS(){
   const items=getEngItems();let changed=false;
   items.forEach((item,i)=>{
@@ -2293,6 +2301,7 @@ const DAILY_REVIEW_CAP=20;
 let todayReviewItems=[],todayReviewIdx=0,todayShowingAnswer=false,todayReviewTotal=0;
 
 function initTodayTab(){
+  migrateLessonDates();
   migrateSRS();
   const allDue=getDueItems();
   todayReviewTotal=allDue.length;
