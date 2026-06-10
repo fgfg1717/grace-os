@@ -1504,11 +1504,25 @@ function getEngItems(){try{return JSON.parse(localStorage.getItem(ENG_KEY)||'[]'
 function setEngItems(a){localStorage.setItem(ENG_KEY,JSON.stringify(a))}
 function addEngItem(item){
   if(!item.srs)item.srs={nextReview:fmtYMD(taipeiNow()),interval:0,reps:0,lastRating:0,lastReview:''};
-  const a=getEngItems();const i=a.findIndex(x=>x.id===item.id);i>=0?a[i]=item:a.unshift(item);setEngItems(a);
+  const a=getEngItems();
+  const byId=a.findIndex(x=>x.id===item.id);
+  if(byId>=0){a[byId]=item;setEngItems(a);_scheduleEngBackup();return;}
+  const key=item.word||item.sentence||item.rule||'';
+  if(key&&item.lessonTitle){
+    const dup=a.findIndex(x=>(x.word||x.sentence||x.rule||'')===key&&x.lessonTitle===item.lessonTitle&&x.lessonDate===item.lessonDate);
+    if(dup>=0){setEngItems(a);_scheduleEngBackup();return;}
+  }
+  a.unshift(item);setEngItems(a);
   _scheduleEngBackup();
 }
 
-function initEngCenter(){switchEngTab('today');renderEngManualForm();syncCoursesFromCloud();syncEngItemsFromCloud();}
+function dedupeEngItems(){
+  const a=getEngItems();const seen=new Set();
+  const clean=a.filter(x=>{const k=(x.word||x.sentence||x.rule||x.id)+'|'+(x.lessonTitle||'')+'|'+(x.lessonDate||'');if(seen.has(k))return false;seen.add(k);return true;});
+  if(clean.length<a.length)setEngItems(clean);
+}
+
+function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncCoursesFromCloud();syncEngItemsFromCloud();}
 
 function switchEngTab(tab){
   ['today','dict','list','practice'].forEach(t=>{
@@ -2306,10 +2320,11 @@ function renderTodayPreview(){
     const diff=Math.round((new Date(lesson.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/864e5);
     const dayLabel=diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
     const items=getEngItems().filter(i=>i.lessonTitle===lesson.title&&i.lessonDate===lesson.date);
-    const vocab=items.filter(i=>i.type==='vocab');
-    const grammar=items.filter(i=>i.type==='grammar');
-    const idioms=items.filter(i=>i.type==='idiom');
-    const sentences=items.filter(i=>i.type==='sentence');
+    const seenV=new Set(),seenS=new Set(),seenG=new Set(),seenI=new Set();
+    const vocab=items.filter(i=>i.type==='vocab'&&!seenV.has(i.word)&&seenV.add(i.word));
+    const grammar=items.filter(i=>i.type==='grammar'&&!seenG.has(i.rule)&&seenG.add(i.rule));
+    const idioms=items.filter(i=>i.type==='idiom'&&!seenI.has(i.word)&&seenI.add(i.word));
+    const sentences=items.filter(i=>i.type==='sentence'&&!seenS.has(i.sentence)&&seenS.add(i.sentence));
     const hasContent=vocab.length||grammar.length||idioms.length||sentences.length;
 
     const vocabHtml=vocab.map(v=>`
