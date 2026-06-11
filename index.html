@@ -2335,7 +2335,13 @@ function initTodayTab(){
 function renderTodayPreview(){
   const el=document.getElementById('today-preview-section');if(!el)return;
   const today=getTodayStr();
-  const upcoming=getLessons().filter(l=>l.date&&l.date>=today).sort((a,b)=>a.date<b.date?-1:1);
+  const nowHour=taipeiNow().getHours();
+  const upcoming=getLessons().filter(l=>{
+    if(!l.date)return false;
+    if(l.date>today)return true;
+    if(l.date===today)return nowHour<12; // 上課前（12點前）才顯示當天課程
+    return false;
+  }).sort((a,b)=>a.date<b.date?-1:1);
   if(!upcoming.length){el.innerHTML='';return}
 
   const section=(label,color,html)=>`
