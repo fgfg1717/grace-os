@@ -587,6 +587,9 @@
         <button class="btn-primary" style="background:var(--text)" onclick="saveCapSettings()">儲存</button>
         <button class="btn-secondary" onclick="retrySyncAll()">重試未同步</button>
       </div>
+      <div class="btn-row" style="margin-top:4px">
+        <button class="btn-secondary" style="font-size:12px" onclick="forceResyncAll()">🔁 強制重新同步所有帳目</button>
+      </div>
     </div>
   </div>
   <div class="cap-settings" style="margin-top:12px">
@@ -1169,6 +1172,7 @@ async function syncCoursesFromCloud(){
   let added=0;
   for(const course of res.data){
     const title=course.courseTitle||course.title||'';
+    if(title==='__GOS_SETTINGS__')continue;
     const date=course.classDate||course.date||'';
     if(localKeys.has(`${title}|${date}`))continue;
     _importCourseData(course); added++;
@@ -1440,6 +1444,30 @@ async function retrySyncAll(){
   if(!pending.length){showToast('沒有待同步的項目');return}showToast(`正在重試 ${pending.length} 筆…`);
   for(const c of pending){const ok=await postGAS({type:'capture',...c});if(ok){const idx=items.findIndex(x=>x.id===c.id);if(idx!==-1)items[idx].synced=true}}
   setCaptures(items);loadCaptureList();showToast('重試完成');
+}
+async function forceResyncAll(){
+  if(!gasUrl()){showToast('請先設定 Apps Script 網址');return}
+  if(!confirm('強制從雲端重新同步所有記帳、快速記錄、股票紀錄，並覆蓋本機資料，確定嗎？'))return;
+  showToast('同步中…請稍候');
+  const[l,c,s]=await Promise.all([getGAS({type:'ledgers'}),getGAS({type:'captures'}),getGAS({type:'stocks'})]);
+  if(l?.ok&&l.data){
+    const mapped=l.data.map(r=>({id:Date.now()+Math.random(),synced:true,date:r.date,type:r.ledger_type,mainCat:r.main_cat,subCat:r.sub_cat||'',category:r.main_cat+(r.sub_cat?` · ${r.sub_cat}`:''),amount:r.amount,notes:r.notes||''}));
+    setLedgers(mapped.sort((a,b)=>b.date.localeCompare(a.date)));
+  }
+  if(c?.ok&&c.data){
+    const local=getCaptures().filter(x=>!x.synced);
+    const cloud=c.data.map(r=>({id:Date.now()+Math.random(),synced:true,is_attack:r.is_attack,category:r.category,time:r.time,summary:r.summary,date:r.date}));
+    const keys=new Set(cloud.map(x=>`${x.date}|${x.category}|${x.summary}`));
+    const merged=[...cloud,...local.filter(x=>!keys.has(`${x.date}|${x.category}|${x.summary}`))];
+    setCaptures(merged.sort((a,b)=>b.date.localeCompare(a.date)));
+    loadCaptureList();
+  }
+  if(s?.ok&&s.data){
+    const mapped=s.data.map(r=>({id:Date.now()+Math.random(),synced:true,...r}));
+    setStocks(mapped);
+  }
+  await syncAppSettingsFromCloud();
+  showToast('全部重新同步完成 ✓');
 }
 function loadCaptureList(){
   const list=document.getElementById('cap-list');if(!list)return;
@@ -2137,7 +2165,7 @@ function renderLessonList(){
   const today=getTodayStr();
   const seen=new Set();
   const allLessons=[...getLessons()]
-    .filter(l=>{const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;})
+    .filter(l=>{if((l.title||'')==='__GOS_SETTINGS__')return false;const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;})
     .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   if(!allLessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
   const cardHtml=l=>`<div class="lesson-card" style="flex-direction:column;align-items:flex-start">
@@ -2721,8 +2749,8 @@ const INCOME_CATS=['薪資','獎金','年終獎金','股利','利息','其他收
 function getLedgerCats(){try{const c=JSON.parse(localStorage.getItem('ledger_cats_v2')||'null');return c&&c.length?c:DEFAULT_EXP_CATS}catch(e){return DEFAULT_EXP_CATS}}
 function setLedgerCatsData(cats){
   localStorage.setItem('ledger_cats_v2',JSON.stringify(cats));
-  const ts=Date.now();localStorage.setItem('ledger_cats_ts',String(ts));
-  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'ledger_cats',data:cats});
+  localStorage.setItem('ledger_cats_ts',String(Date.now()));
+  pushSettingsToCloud();
 }
 let ledgerType='支出',ledgerMainCat='家用',ledgerMainEmoji='🏠',ledgerSubCat='';
 let catPickerContext='new',catManageMode=false,catAddRowOpen=false;
@@ -3036,15 +3064,31 @@ function getLedgerBudget(){try{return JSON.parse(localStorage.getItem('ledger_bu
 function setLedgerBudget(b){
   b._savedAt=Date.now();
   localStorage.setItem('ledger_budget_v1',JSON.stringify(b));
-  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'budget',data:b});
+  pushSettingsToCloud();
+}
+function pushSettingsToCloud(){
+  if(!gasUrl())return;
+  const b=getLedgerBudget();
+  postGAS({
+    type:'eng_course',
+    courseTitle:'__GOS_SETTINGS__',
+    classDate:'settings',
+    settings:{
+      budget:{ts:b._savedAt||0,data:b},
+      ledger_cats:{ts:Number(localStorage.getItem('ledger_cats_ts')||0),data:getLedgerCats()},
+      bank_accounts:{ts:Number(localStorage.getItem('bank_accounts_ts')||0),data:getBanks()},
+      stock_prices:{ts:Number(localStorage.getItem('stock_prices_ts')||0),data:getStockPrices()}
+    }
+  });
 }
 async function syncAppSettingsFromCloud(){
   if(!gasUrl())return;
-  const res=await getGAS({type:'app_settings'});
+  const res=await getGAS({type:'eng_courses'});
   if(!res?.ok||!res.data)return;
-  const s=res.data;
+  const entry=res.data.find(c=>(c.courseTitle||c.title)==='__GOS_SETTINGS__');
+  if(!entry?.settings)return;
+  const s=entry.settings;
   let changed=false;
-  // 預算設定
   if(s.budget?.data){
     const local=getLedgerBudget();
     if((s.budget.ts||0)>(local._savedAt||0)){
@@ -3052,7 +3096,6 @@ async function syncAppSettingsFromCloud(){
       changed=true;
     }
   }
-  // 記帳分類
   if(s.ledger_cats?.data&&Array.isArray(s.ledger_cats.data)){
     const localTs=Number(localStorage.getItem('ledger_cats_ts')||0);
     if((s.ledger_cats.ts||0)>localTs){
@@ -3061,7 +3104,6 @@ async function syncAppSettingsFromCloud(){
       changed=true;
     }
   }
-  // 銀行帳戶
   if(s.bank_accounts?.data&&Array.isArray(s.bank_accounts.data)){
     const localTs=Number(localStorage.getItem('bank_accounts_ts')||0);
     if((s.bank_accounts.ts||0)>localTs){
@@ -3070,7 +3112,6 @@ async function syncAppSettingsFromCloud(){
       changed=true;
     }
   }
-  // 股票現價
   if(s.stock_prices?.data&&typeof s.stock_prices.data==='object'){
     const localTs=Number(localStorage.getItem('stock_prices_ts')||0);
     if((s.stock_prices.ts||0)>localTs){
@@ -3079,7 +3120,7 @@ async function syncAppSettingsFromCloud(){
       changed=true;
     }
   }
-  if(changed){renderBudgetDisplay();showToast('設定已同步 ✓');}
+  if(changed){renderBudgetDisplay();renderBankList();showToast('設定已同步 ✓');}
 }
 function openBudgetModal(){
   const b=getLedgerBudget();
@@ -3245,8 +3286,8 @@ function setStocks(items){localStorage.setItem('stocks',JSON.stringify(items))}
 function getStockPrices(){try{return JSON.parse(localStorage.getItem('stock_prices')||'{}')}catch(e){return{}}}
 function setStockPrices(obj){
   localStorage.setItem('stock_prices',JSON.stringify(obj));
-  const ts=Date.now();localStorage.setItem('stock_prices_ts',String(ts));
-  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'stock_prices',data:obj});
+  localStorage.setItem('stock_prices_ts',String(Date.now()));
+  pushSettingsToCloud();
 }
 function initStock(){
   const now=taipeiNow();document.getElementById('stock-date').value=fmtInputDate(now);
@@ -3518,8 +3559,8 @@ const BANKS_KEY='bank_accounts_v1';
 function getBanks(){try{return JSON.parse(localStorage.getItem(BANKS_KEY)||'[]')}catch{return[]}}
 function setBanks(a){
   localStorage.setItem(BANKS_KEY,JSON.stringify(a));
-  const ts=Date.now();localStorage.setItem('bank_accounts_ts',String(ts));
-  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'bank_accounts',data:a});
+  localStorage.setItem('bank_accounts_ts',String(Date.now()));
+  pushSettingsToCloud();
 }
 
 function initFinance(){
