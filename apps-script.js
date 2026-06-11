@@ -10,6 +10,7 @@ const REVIEW_TAB     = '復盤紀錄';
 const VOCAB_TAB      = '英文單字庫';
 const LEDGER_TAB     = '記帳明細';
 const STOCK_TAB      = '股票紀錄';
+const BUDGET_TAB     = '預算設定';
 const MAIN_GID       = 974288665;
 const READ_TOKEN     = 'graceos2026read';
 
@@ -103,6 +104,16 @@ function doGet(e) {
       notes:   String(r[9] || ''),
     })).filter(r => r.date && r.code);
     return out({ ok: true, data });
+  }
+
+  // ── 跨裝置同步：讀取預算設定 ──
+  if (params.type === 'budget') {
+    const sheet = getOrCreateBudgetSheet(ss);
+    if (sheet.getLastRow() <= 1) return out({ ok: true, data: null, ts: 0 });
+    const row = sheet.getRange(2, 1, 1, 2).getValues()[0];
+    let budgetData = null;
+    try { budgetData = JSON.parse(String(row[1])); } catch(e) {}
+    return out({ ok: true, data: budgetData, ts: Number(row[0]) || 0 });
   }
 
   const from = params.from || '';
@@ -308,6 +319,16 @@ function doPost(e) {
       const sheet = getOrCreateEngItemsSheet(ss);
       const ts   = data.ts || Date.now();
       const json = JSON.stringify(data.items || []);
+      if (sheet.getLastRow() <= 1) { sheet.appendRow([ts, json]); }
+      else { sheet.getRange(2, 1, 1, 2).setValues([[ts, json]]); }
+      return out({ ok: true });
+    }
+
+    // ── 儲存預算設定（需 token）──
+    if (type === 'budget') {
+      const sheet = getOrCreateBudgetSheet(ss);
+      const ts   = Date.now();
+      const json = JSON.stringify(data.data || {});
       if (sheet.getLastRow() <= 1) { sheet.appendRow([ts, json]); }
       else { sheet.getRange(2, 1, 1, 2).setValues([[ts, json]]); }
       return out({ ok: true });
@@ -772,6 +793,16 @@ function getOrCreateEngItemsSheet(ss) {
   if (!s) {
     s = ss.insertSheet('英文詞庫快照');
     s.getRange(1,1,1,2).setValues([['時間戳','JSON資料']]);
+    s.setFrozenRows(1);
+  }
+  return s;
+}
+
+function getOrCreateBudgetSheet(ss) {
+  let s = ss.getSheetByName(BUDGET_TAB);
+  if (!s) {
+    s = ss.insertSheet(BUDGET_TAB);
+    s.getRange(1,1,1,2).setValues([['時間戳','預算 JSON']]);
     s.setFrozenRows(1);
   }
   return s;

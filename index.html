@@ -2766,6 +2766,7 @@ function initLedger(){
   ledgerCalYear=now.getFullYear();ledgerCalMonth=now.getMonth();
   setLedgerType('支出');loadLedgerList();
   syncLedgersFromCloud();
+  syncBudgetFromCloud();
 }
 
 /* ── Category Picker ─────────────── */
@@ -3028,7 +3029,23 @@ function renderLedgerReport(){
 
 /* ── 預算管理 ─────────────────────── */
 function getLedgerBudget(){try{return JSON.parse(localStorage.getItem('ledger_budget_v1')||'{}')}catch(e){return{}}}
-function setLedgerBudget(b){localStorage.setItem('ledger_budget_v1',JSON.stringify(b))}
+function setLedgerBudget(b){
+  b._savedAt=Date.now();
+  localStorage.setItem('ledger_budget_v1',JSON.stringify(b));
+  if(gasUrl())postGAS({type:'budget',token:'graceos2026read',data:b});
+}
+async function syncBudgetFromCloud(){
+  if(!gasUrl())return;
+  const res=await getGAS({type:'budget'});
+  if(!res?.ok||!res.data)return;
+  const cloudTs=res.ts||0;
+  const local=getLedgerBudget();
+  if(cloudTs>(local._savedAt||0)){
+    localStorage.setItem('ledger_budget_v1',JSON.stringify({...res.data,_savedAt:cloudTs}));
+    renderBudgetDisplay();
+    showToast('已同步雲端預算設定 ✓');
+  }
+}
 function openBudgetModal(){
   const b=getLedgerBudget();
   document.getElementById('budget-total-input').value=b.total||'';
