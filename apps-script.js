@@ -10,7 +10,7 @@ const REVIEW_TAB     = '復盤紀錄';
 const VOCAB_TAB      = '英文單字庫';
 const LEDGER_TAB     = '記帳明細';
 const STOCK_TAB      = '股票紀錄';
-const BUDGET_TAB     = '預算設定';
+const SETTINGS_TAB   = 'App 設定';
 const MAIN_GID       = 974288665;
 const READ_TOKEN     = 'graceos2026read';
 
@@ -106,14 +106,20 @@ function doGet(e) {
     return out({ ok: true, data });
   }
 
-  // ── 跨裝置同步：讀取預算設定 ──
-  if (params.type === 'budget') {
-    const sheet = getOrCreateBudgetSheet(ss);
-    if (sheet.getLastRow() <= 1) return out({ ok: true, data: null, ts: 0 });
-    const row = sheet.getRange(2, 1, 1, 2).getValues()[0];
-    let budgetData = null;
-    try { budgetData = JSON.parse(String(row[1])); } catch(e) {}
-    return out({ ok: true, data: budgetData, ts: Number(row[0]) || 0 });
+  // ── 跨裝置同步：讀取 App 設定（預算/分類/銀行/股票現價）──
+  if (params.type === 'app_settings') {
+    const sheet = getOrCreateSettingsSheet(ss);
+    if (sheet.getLastRow() <= 1) return out({ ok: true, data: {} });
+    const rows = sheet.getDataRange().getValues().slice(1);
+    const settings = {};
+    rows.forEach(r => {
+      const key = String(r[0] || '');
+      const ts  = Number(r[1]) || 0;
+      let data  = null;
+      try { data = JSON.parse(String(r[2])); } catch(e) {}
+      if (key) settings[key] = { ts, data };
+    });
+    return out({ ok: true, data: settings });
   }
 
   const from = params.from || '';
@@ -324,13 +330,23 @@ function doPost(e) {
       return out({ ok: true });
     }
 
-    // ── 儲存預算設定（需 token）──
-    if (type === 'budget') {
-      const sheet = getOrCreateBudgetSheet(ss);
-      const ts   = Date.now();
-      const json = JSON.stringify(data.data || {});
-      if (sheet.getLastRow() <= 1) { sheet.appendRow([ts, json]); }
-      else { sheet.getRange(2, 1, 1, 2).setValues([[ts, json]]); }
+    // ── 儲存 App 設定（需 token）──
+    if (type === 'app_settings') {
+      const sheet = getOrCreateSettingsSheet(ss);
+      const key   = String(data.key || '');
+      const ts    = Date.now();
+      const json  = JSON.stringify(data.data || null);
+      if (!key) return out({ ok: false, error: 'missing key' });
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        const rows = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+        const idx  = rows.findIndex(r => String(r[0]) === key);
+        if (idx >= 0) {
+          sheet.getRange(idx + 2, 1, 1, 3).setValues([[key, ts, json]]);
+          return out({ ok: true });
+        }
+      }
+      sheet.appendRow([key, ts, json]);
       return out({ ok: true });
     }
 
@@ -798,12 +814,15 @@ function getOrCreateEngItemsSheet(ss) {
   return s;
 }
 
-function getOrCreateBudgetSheet(ss) {
-  let s = ss.getSheetByName(BUDGET_TAB);
+function getOrCreateSettingsSheet(ss) {
+  let s = ss.getSheetByName(SETTINGS_TAB);
   if (!s) {
-    s = ss.insertSheet(BUDGET_TAB);
-    s.getRange(1,1,1,2).setValues([['時間戳','預算 JSON']]);
+    s = ss.insertSheet(SETTINGS_TAB);
+    s.getRange(1,1,1,3).setValues([['key','ts','json_data']]);
     s.setFrozenRows(1);
+    s.setColumnWidth(1, 120);
+    s.setColumnWidth(2, 130);
+    s.setColumnWidth(3, 500);
   }
   return s;
 }

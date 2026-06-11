@@ -2719,7 +2719,11 @@ const DEFAULT_EXP_CATS=[
 ];
 const INCOME_CATS=['薪資','獎金','年終獎金','股利','利息','其他收入'];
 function getLedgerCats(){try{const c=JSON.parse(localStorage.getItem('ledger_cats_v2')||'null');return c&&c.length?c:DEFAULT_EXP_CATS}catch(e){return DEFAULT_EXP_CATS}}
-function setLedgerCatsData(cats){localStorage.setItem('ledger_cats_v2',JSON.stringify(cats))}
+function setLedgerCatsData(cats){
+  localStorage.setItem('ledger_cats_v2',JSON.stringify(cats));
+  const ts=Date.now();localStorage.setItem('ledger_cats_ts',String(ts));
+  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'ledger_cats',data:cats});
+}
 let ledgerType='支出',ledgerMainCat='家用',ledgerMainEmoji='🏠',ledgerSubCat='';
 let catPickerContext='new',catManageMode=false,catAddRowOpen=false;
 let ledgerCalYear=0,ledgerCalMonth=0,ledgerPeriod='salary';
@@ -2766,7 +2770,7 @@ function initLedger(){
   ledgerCalYear=now.getFullYear();ledgerCalMonth=now.getMonth();
   setLedgerType('支出');loadLedgerList();
   syncLedgersFromCloud();
-  syncBudgetFromCloud();
+  syncAppSettingsFromCloud();
 }
 
 /* ── Category Picker ─────────────── */
@@ -3032,19 +3036,50 @@ function getLedgerBudget(){try{return JSON.parse(localStorage.getItem('ledger_bu
 function setLedgerBudget(b){
   b._savedAt=Date.now();
   localStorage.setItem('ledger_budget_v1',JSON.stringify(b));
-  if(gasUrl())postGAS({type:'budget',token:'graceos2026read',data:b});
+  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'budget',data:b});
 }
-async function syncBudgetFromCloud(){
+async function syncAppSettingsFromCloud(){
   if(!gasUrl())return;
-  const res=await getGAS({type:'budget'});
+  const res=await getGAS({type:'app_settings'});
   if(!res?.ok||!res.data)return;
-  const cloudTs=res.ts||0;
-  const local=getLedgerBudget();
-  if(cloudTs>(local._savedAt||0)){
-    localStorage.setItem('ledger_budget_v1',JSON.stringify({...res.data,_savedAt:cloudTs}));
-    renderBudgetDisplay();
-    showToast('已同步雲端預算設定 ✓');
+  const s=res.data;
+  let changed=false;
+  // 預算設定
+  if(s.budget?.data){
+    const local=getLedgerBudget();
+    if((s.budget.ts||0)>(local._savedAt||0)){
+      localStorage.setItem('ledger_budget_v1',JSON.stringify({...s.budget.data,_savedAt:s.budget.ts}));
+      changed=true;
+    }
   }
+  // 記帳分類
+  if(s.ledger_cats?.data&&Array.isArray(s.ledger_cats.data)){
+    const localTs=Number(localStorage.getItem('ledger_cats_ts')||0);
+    if((s.ledger_cats.ts||0)>localTs){
+      localStorage.setItem('ledger_cats_v2',JSON.stringify(s.ledger_cats.data));
+      localStorage.setItem('ledger_cats_ts',String(s.ledger_cats.ts));
+      changed=true;
+    }
+  }
+  // 銀行帳戶
+  if(s.bank_accounts?.data&&Array.isArray(s.bank_accounts.data)){
+    const localTs=Number(localStorage.getItem('bank_accounts_ts')||0);
+    if((s.bank_accounts.ts||0)>localTs){
+      localStorage.setItem('bank_accounts_v1',JSON.stringify(s.bank_accounts.data));
+      localStorage.setItem('bank_accounts_ts',String(s.bank_accounts.ts));
+      changed=true;
+    }
+  }
+  // 股票現價
+  if(s.stock_prices?.data&&typeof s.stock_prices.data==='object'){
+    const localTs=Number(localStorage.getItem('stock_prices_ts')||0);
+    if((s.stock_prices.ts||0)>localTs){
+      localStorage.setItem('stock_prices',JSON.stringify(s.stock_prices.data));
+      localStorage.setItem('stock_prices_ts',String(s.stock_prices.ts));
+      changed=true;
+    }
+  }
+  if(changed){renderBudgetDisplay();showToast('設定已同步 ✓');}
 }
 function openBudgetModal(){
   const b=getLedgerBudget();
@@ -3208,12 +3243,17 @@ function calcStockTotal(){
 function getStocks(){try{return JSON.parse(localStorage.getItem('stocks')||'[]')}catch(e){return[]}}
 function setStocks(items){localStorage.setItem('stocks',JSON.stringify(items))}
 function getStockPrices(){try{return JSON.parse(localStorage.getItem('stock_prices')||'{}')}catch(e){return{}}}
-function setStockPrices(obj){localStorage.setItem('stock_prices',JSON.stringify(obj))}
+function setStockPrices(obj){
+  localStorage.setItem('stock_prices',JSON.stringify(obj));
+  const ts=Date.now();localStorage.setItem('stock_prices_ts',String(ts));
+  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'stock_prices',data:obj});
+}
 function initStock(){
   const now=taipeiNow();document.getElementById('stock-date').value=fmtInputDate(now);
   setStockField('account','個人');setStockField('market','台股');setStockField('action','買入');
   loadStockHoldings();loadStockHistory();
   syncStocksFromCloud();
+  syncAppSettingsFromCloud();
 }
 async function submitStock(){
   const date=document.getElementById('stock-date').value.replace(/-/g,'/');
@@ -3476,12 +3516,17 @@ function updateHomeDailyHint(top1){
 ════════════════════════════════ */
 const BANKS_KEY='bank_accounts_v1';
 function getBanks(){try{return JSON.parse(localStorage.getItem(BANKS_KEY)||'[]')}catch{return[]}}
-function setBanks(a){localStorage.setItem(BANKS_KEY,JSON.stringify(a))}
+function setBanks(a){
+  localStorage.setItem(BANKS_KEY,JSON.stringify(a));
+  const ts=Date.now();localStorage.setItem('bank_accounts_ts',String(ts));
+  if(gasUrl())postGAS({type:'app_settings',token:'graceos2026read',key:'bank_accounts',data:a});
+}
 
 function initFinance(){
   renderFinanceMonthly();
   renderBankList();
   document.getElementById('bank-add-form').style.display='none';
+  syncAppSettingsFromCloud().then(()=>renderBankList());
 }
 
 function renderFinanceMonthly(){
