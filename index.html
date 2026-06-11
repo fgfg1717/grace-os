@@ -2335,7 +2335,7 @@ function initTodayTab(){
 function renderTodayPreview(){
   const el=document.getElementById('today-preview-section');if(!el)return;
   const today=getTodayStr();
-  const upcoming=getLessons().filter(l=>l.date&&l.date>today).sort((a,b)=>a.date<b.date?-1:1);
+  const upcoming=getLessons().filter(l=>l.date&&l.date>=today).sort((a,b)=>a.date<b.date?-1:1);
   if(!upcoming.length){el.innerHTML='';return}
 
   const section=(label,color,html)=>`
@@ -2346,7 +2346,7 @@ function renderTodayPreview(){
 
   const buildCard=(lesson,idx)=>{
     const diff=Math.round((new Date(lesson.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/864e5);
-    const dayLabel=diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
+    const dayLabel=diff===0?'今天上課':diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
     const items=getEngItems().filter(i=>i.lessonTitle===lesson.title&&i.lessonDate===lesson.date);
     const seenV=new Set(),seenS=new Set(),seenG=new Set(),seenI=new Set();
     const vocab=items.filter(i=>i.type==='vocab'&&!seenV.has(i.word)&&seenV.add(i.word));
