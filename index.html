@@ -357,6 +357,15 @@
     .ceo-case-date{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px}
     .ceo-case-quote{font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap}
     .ceo-case-ctx{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic}
+    .ceo-cat-label{font-size:11px;font-weight:700;color:#7C3AED;letter-spacing:.6px;text-transform:uppercase;margin:16px 0 8px 2px}
+    .ceo-cat-label:first-child{margin-top:4px}
+    .ceo-quiz-ans{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;min-height:100px;resize:vertical;display:block;box-sizing:border-box}
+    .ceo-quiz-q-box{background:#F5F3FF;border-radius:14px;padding:16px;margin-bottom:14px;font-size:14px;line-height:1.8;color:var(--text)}
+    .ceo-quiz-fb-box{background:#EDE9FE;border-left:4px solid var(--ceo);padding:14px 16px;border-radius:0 12px 12px 0;font-size:13px;line-height:1.8;margin-bottom:14px;white-space:pre-wrap}
+    .ceo-quiz-hist{border-top:1px dashed var(--border);padding-top:14px;margin-top:20px}
+    .ceo-quiz-hist-title{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px}
+    .ceo-quiz-hist-item{background:white;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.6;color:var(--text)}
+    .ceo-quiz-hist-date{font-size:11px;color:var(--muted);margin-bottom:4px}
 
     /* Today tasks */
     .today-sec-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
@@ -1022,8 +1031,9 @@
       <span class="tag" style="background:#EDE9FE;color:#4C1D95;">向 CEO 學思考</span>
     </div>
   </div>
-  <div class="eng-tabs">
+  <div class="eng-tabs" style="flex-wrap:wrap;gap:6px">
     <button class="eng-tab-btn active" id="ceo-tab-patterns" onclick="switchCEOTab('patterns')">💡 思維模式</button>
+    <button class="eng-tab-btn" id="ceo-tab-quiz" onclick="switchCEOTab('quiz')">🎯 出考題</button>
     <button class="eng-tab-btn" id="ceo-tab-add" onclick="switchCEOTab('add')">＋ 新增回饋</button>
     <button class="eng-tab-btn" id="ceo-tab-cases" onclick="switchCEOTab('cases')">📝 我的案例</button>
   </div>
@@ -1031,14 +1041,8 @@
   <!-- 思維模式 -->
   <div id="ceo-panel-patterns">
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px">從例會逐字稿萃取，每次新會議分析後由 Claude 更新。</div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">🔗 現在 × 未來雙軌思考</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>看任何現況問題，同時在腦袋裡保留「2-3 年後的樣子」。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：討論網站改版 → 問「這怎麼幫三年後資料庫願景鋪路」</p>
-        <p class="ceo-phrase">練習句：「這個決定對我們兩三年後的目標有什麼幫助？」</p>
-      </div>
-    </div>
+
+    <div class="ceo-cat-label">👥 說服與溝通</div>
     <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
       <div class="ceo-pat-title">🎯 利害關係人說服力轉換</div>
       <div class="ceo-pat-body" style="display:none">
@@ -1055,12 +1059,40 @@
         <p class="ceo-phrase">練習：遇到任何問題，先問自己「這個問題有幾個維度？」</p>
       </div>
     </div>
+
+    <div class="ceo-cat-label">🎯 目標與執行</div>
     <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
       <div class="ceo-pat-title">⏱️ 壓時間節點，不讓討論懸空</div>
       <div class="ceo-pat-body" style="display:none">
         <p>討論完方向，一定接具體時間節點，永遠以「時間 + 行動」結束。</p>
         <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：「希望六月底我們先針對明年的願景先有個數，好不好？」</p>
         <p class="ceo-phrase">練習句：「那我們就壓一個時間，＿月＿日前先⋯⋯」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">📋 目標層級才能落地</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>重要的事一定要放進 OGSM，並要求各部門指派明確負責人；只是策略就會因為忙碌被割捨。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（2O例會）：資料庫建置各說各的 → CEO 改成公司整體目標，強制各部門有人承攬</p>
+        <p class="ceo-phrase">練習句：「這件事如果不放進目標裡，有沒有可能真的被執行？」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">✂️ 目標 vs 策略嚴格區分</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>「建資料庫」是方法，「每月一支短影音」才是目標；目標必須是可測量的成果。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（CEO 例會）：把「建資料庫」當目標 → CEO 說應改成「7 月起每月至少一支短影音」</p>
+        <p class="ceo-phrase">練習句：「這件事是我要做的方法，還是我要達到的結果？結果是什麼？」</p>
+      </div>
+    </div>
+
+    <div class="ceo-cat-label">🔭 策略與視野</div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">🔗 現在 × 未來雙軌思考</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>看任何現況問題，同時在腦袋裡保留「2-3 年後的樣子」。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：討論網站改版 → 問「這怎麼幫三年後資料庫願景鋪路」</p>
+        <p class="ceo-phrase">練習句：「這個決定對我們兩三年後的目標有什麼幫助？」</p>
       </div>
     </div>
     <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
@@ -1079,7 +1111,62 @@
         <p class="ceo-phrase">練習：「如果資源只有一半，這件事的優先順序怎麼排？」</p>
       </div>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">最後更新：2026-06-03（新臺灣史例會）</div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">🔀 兩條軌道並行，不互相等待</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>基礎建設和業務產出同步進行，不讓一方等另一方完成。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（CEO 例會）：「等資料庫建好再做媒體合作」→ CEO 說媒體合作先跑，資料庫同時建</p>
+        <p class="ceo-phrase">練習句：「這兩件事一定要有先後順序嗎？能不能同時推進？」</p>
+      </div>
+    </div>
+
+    <div class="ceo-cat-label">🗄️ 資料與 AI</div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">💾 資料先於 AI</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>沒有系統性整理的資料，AI 只能服務個人，無法變成公司資產；資料整理是 AI 真正發揮效益的前提。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（2O例會）：行銷部門用個人 Claude 訂閱存公司資料 → 資料分散、無法被傳承</p>
+        <p class="ceo-phrase">練習句：「如果今天問 AI 這件事，資料夠不夠完整？問題出在資料還是 AI？」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">🔨 土炮過程是學習，不是浪費</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>手工整理資料的過程能讓你真正弄清楚需要哪些資料、如何下標籤、哪些欄位真正有用。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（CEO 例會）：截圖做簡報的土炮過程，反而釐清了資料庫要收什麼</p>
+        <p class="ceo-phrase">練習句：「先做一次土法煉鋼，看看過程中卡在哪裡，那個卡點就是系統要解決的問題。」</p>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">最後更新：2026-06-16（2O例會 + CEO 例會）</div>
+  </div>
+
+  <!-- 出考題 -->
+  <div id="ceo-panel-quiz" class="e-hidden">
+    <div id="ceo-quiz-no-key" class="e-hidden">
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">需要 Groq API Key 才能出題。<br>請先到 <strong>🎯 幕僚沙盤</strong> → 右上角設定 → 輸入 Key，這裡會自動讀取。</div>
+    </div>
+    <div id="ceo-quiz-body">
+      <div id="ceo-quiz-idle">
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">AI 會出一個你在臺灣吧可能真實遇到的工作情境，考你會用哪個 CEO 框架思考。</div>
+        <button class="full-btn" style="background:var(--ceo)" onclick="generateCEOQuiz()">出一題 →</button>
+      </div>
+      <div id="ceo-quiz-loading" class="e-hidden" style="text-align:center;padding:28px;color:var(--muted);font-size:14px">⋯ 出題中</div>
+      <div id="ceo-quiz-question" class="e-hidden">
+        <div class="ceo-quiz-q-box" id="ceo-quiz-q-text"></div>
+        <textarea id="ceo-quiz-ans" class="ceo-quiz-ans" placeholder="你會怎麼做？說明你的思考方向⋯"></textarea>
+        <button class="full-btn" style="background:var(--ceo);margin-top:10px" onclick="submitCEOAnswer()">送出答案 →</button>
+      </div>
+      <div id="ceo-quiz-fb-loading" class="e-hidden" style="text-align:center;padding:28px;color:var(--muted);font-size:14px">⋯ 分析中</div>
+      <div id="ceo-quiz-feedback" class="e-hidden">
+        <div class="ceo-quiz-fb-box" id="ceo-quiz-fb-text"></div>
+        <button class="full-btn" style="background:var(--ceo)" onclick="generateCEOQuiz()">再出一題 →</button>
+      </div>
+    </div>
+    <div id="ceo-quiz-hist" class="ceo-quiz-hist e-hidden">
+      <div class="ceo-quiz-hist-title">最近練習紀錄</div>
+      <div id="ceo-quiz-hist-list"></div>
+    </div>
   </div>
 
   <!-- 新增回饋 -->
@@ -1102,7 +1189,6 @@
   <!-- 我的案例 -->
   <div id="ceo-panel-cases" class="e-hidden">
     <div id="ceo-cases-list"></div>
-    <button class="full-btn" style="background:var(--ceo);margin-top:8px" onclick="copyCEOPrompt()">複製「CEO 視角」提示 → 貼給 Claude</button>
   </div>
 </div>
 
@@ -3718,8 +3804,26 @@ function renderPlan(rows){
 window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
 
 /* ════ CEO 思維庫 ════ */
+const CEO_FRAMEWORKS=[
+  {id:1,cat:'策略與視野',title:'現在 × 未來雙軌思考',desc:'看任何現況問題，同時在腦袋裡保留「2-3 年後的樣子」。',phrase:'這個決定對我們兩三年後的目標有什麼幫助？'},
+  {id:2,cat:'說服與溝通',title:'利害關係人說服力轉換',desc:'所有產品/執行決策，最終轉成「對方為什麼要繼續支持你」。',phrase:'這件事情，對（對象）來說，說服力在哪裡？'},
+  {id:3,cat:'說服與溝通',title:'拆層思考',desc:'先把問題拆成 2-3 個不同層面，再逐一回應，不混著說。',phrase:'這個問題有幾個維度？'},
+  {id:4,cat:'目標與執行',title:'壓時間節點，不讓討論懸空',desc:'討論完方向，一定接具體時間節點，永遠以時間加行動結束。',phrase:'那我們就壓一個時間，＿月＿日前先⋯⋯'},
+  {id:5,cat:'策略與視野',title:'機會嗅覺（外部趨勢 → 我能做什麼）',desc:'看到外部趨勢，立刻連到「我們能接上什麼」。',phrase:'這件事如果發生，對我們是機會還是威脅？怎麼接上？'},
+  {id:6,cat:'策略與視野',title:'資源意識下的分階段規劃',desc:'永遠考量現有能量/資源限制，做可行的分階段計畫，不空談。',phrase:'如果資源只有一半，這件事的優先順序怎麼排？'},
+  {id:7,cat:'目標與執行',title:'目標層級才能落地',desc:'重要的事一定要放進 OGSM，並要求各部門指派明確負責人；只是策略就會因為忙碌被割捨。',phrase:'這件事如果不放進目標裡，有沒有可能真的被執行？'},
+  {id:8,cat:'資料與AI',title:'資料先於 AI',desc:'沒有系統性整理的資料，AI 只能服務個人，無法變成公司資產；資料整理是 AI 真正發揮效益的前提。',phrase:'如果今天問 AI 這件事，資料夠不夠完整？問題出在資料還是 AI？'},
+  {id:9,cat:'目標與執行',title:'目標 vs 策略嚴格區分',desc:'「建資料庫」是方法，「每月一支短影音」才是目標；目標必須是可測量的成果。',phrase:'這件事是我要做的方法，還是我要達到的結果？結果是什麼？'},
+  {id:10,cat:'策略與視野',title:'兩條軌道並行，不互相等待',desc:'基礎建設和業務產出同步進行，不讓一方等另一方完成。',phrase:'這兩件事一定要有先後順序嗎？能不能同時推進？'},
+  {id:11,cat:'資料與AI',title:'土炮過程是學習，不是浪費',desc:'手工整理資料的過程能讓你真正弄清楚需要哪些資料、如何下標籤、哪些欄位真正有用。',phrase:'先做一次土法煉鋼，看看過程中卡在哪裡，那個卡點就是系統要解決的問題。'},
+];
+
 function getCEOCases(){try{return JSON.parse(localStorage.getItem('ceo_cases')||'[]')}catch(e){return[]}}
 function setCEOCases(items){localStorage.setItem('ceo_cases',JSON.stringify(items))}
+function getCEOQuizHistory(){try{return JSON.parse(localStorage.getItem('ceo_quiz_history')||'[]')}catch(e){return[]}}
+function setCEOQuizHistory(items){localStorage.setItem('ceo_quiz_history',JSON.stringify(items))}
+
+let _ceoCurrentQ='';
 
 function initCEO(){
   switchCEOTab('patterns');
@@ -3728,18 +3832,125 @@ function initCEO(){
 }
 
 function switchCEOTab(tab){
-  ['patterns','add','cases'].forEach(t=>{
+  ['patterns','quiz','add','cases'].forEach(t=>{
     document.getElementById('ceo-panel-'+t).classList.toggle('e-hidden',t!==tab);
     const btn=document.getElementById('ceo-tab-'+t);
     if(btn)btn.classList.toggle('active',t===tab);
   });
   if(tab==='cases')renderCEOCases();
+  if(tab==='quiz')initCEOQuiz();
 }
 
 function toggleCEOPattern(el){
   el.classList.toggle('open');
   const body=el.querySelector('.ceo-pat-body');
   body.style.display=el.classList.contains('open')?'block':'none';
+}
+
+function initCEOQuiz(){
+  const key=localStorage.getItem('pr_gemini_key_v1');
+  document.getElementById('ceo-quiz-no-key').classList.toggle('e-hidden',!!key);
+  document.getElementById('ceo-quiz-body').classList.toggle('e-hidden',!key);
+  _setQuizState('idle');
+  renderCEOQuizHistory();
+}
+
+async function generateCEOQuiz(){
+  _setQuizState('loading');
+  _ceoCurrentQ='';
+  const fwList=CEO_FRAMEWORKS.map(f=>`${f.id}. 【${f.title}】${f.desc}`).join('\n');
+  try{
+    const q=await _callGroqCEO([{role:'user',content:`你是 CEO 思維訓練師。根據以下 CEO 的 11 個思維框架，出一道情境題給吳靜華練習。
+
+吳靜華是臺灣吧（Taiwan Bar，臺灣歷史媒體品牌）的公關（PR），工作包含媒體溝通、活動策劃、品牌傳播、危機處理。
+
+11 個 CEO 框架：
+${fwList}
+
+出題規則：
+1. 描述一個吳靜華在臺灣吧可能真實遇到的工作情境（2-4 句）
+2. 結尾問「你會怎麼做？請說明你的思考方向。」
+3. 不要在題目中提示要用哪個框架
+4. 情境要具體、有點挑戰性
+
+只輸出題目本身，不要加標題或說明。`}]);
+    _ceoCurrentQ=q;
+    document.getElementById('ceo-quiz-q-text').textContent=q;
+    document.getElementById('ceo-quiz-ans').value='';
+    _setQuizState('question');
+  }catch(e){
+    _setQuizState('idle');
+    showToast('出題失敗，請確認 Groq Key 是否有效');
+  }
+}
+
+async function submitCEOAnswer(){
+  const ans=document.getElementById('ceo-quiz-ans').value.trim();
+  if(!ans){showToast('請先填寫你的回答');return;}
+  _setQuizState('fb-loading');
+  const fwList=CEO_FRAMEWORKS.map(f=>`${f.id}. 【${f.title}】${f.desc} 練習句：${f.phrase}`).join('\n');
+  try{
+    const fb=await _callGroqCEO([{role:'user',content:`你是 CEO 思維訓練師，請針對以下作答給回饋。
+
+【題目】
+${_ceoCurrentQ}
+
+【學員回答】
+${ans}
+
+【11 個 CEO 框架】
+${fwList}
+
+回饋格式（用繁體中文）：
+1. 先肯定學員做對的部分（具體指出）
+2. 說明 CEO 會用哪個框架（或哪幾個）看這個情況，說明原因
+3. 給 1-2 個 CEO 視角的補充觀點，具體一點
+4. 最後給一個可以套用的練習句
+
+語氣：像務實的前輩，直接說重點，不說廢話。`}]);
+    document.getElementById('ceo-quiz-fb-text').textContent=fb;
+    const hist=getCEOQuizHistory();
+    hist.unshift({date:fmtInputDate(taipeiNow()),q:_ceoCurrentQ,a:ans,fb});
+    if(hist.length>20)hist.splice(20);
+    setCEOQuizHistory(hist);
+    renderCEOQuizHistory();
+    _setQuizState('feedback');
+  }catch(e){
+    _setQuizState('question');
+    showToast('評分失敗，請稍後再試');
+  }
+}
+
+function _setQuizState(state){
+  ['idle','loading','question','fb-loading','feedback'].forEach(s=>{
+    document.getElementById('ceo-quiz-'+s).classList.toggle('e-hidden',s!==state);
+  });
+}
+
+function renderCEOQuizHistory(){
+  const hist=getCEOQuizHistory();
+  const histEl=document.getElementById('ceo-quiz-hist');
+  const listEl=document.getElementById('ceo-quiz-hist-list');
+  if(!hist.length){histEl.classList.add('e-hidden');return;}
+  histEl.classList.remove('e-hidden');
+  listEl.innerHTML=hist.slice(0,5).map(h=>`
+    <div class="ceo-quiz-hist-item">
+      <div class="ceo-quiz-hist-date">${esc(h.date)}</div>
+      <div style="font-weight:600">${esc(h.q.slice(0,55))}⋯</div>
+    </div>`).join('');
+}
+
+async function _callGroqCEO(messages){
+  const key=localStorage.getItem('pr_gemini_key_v1');
+  if(!key)throw new Error('no key');
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages,max_tokens:800,temperature:0.7})
+  });
+  if(!res.ok)throw new Error('api error');
+  const d=await res.json();
+  return d.choices[0].message.content;
 }
 
 function addCEOCase(){
@@ -3776,27 +3987,6 @@ function renderCEOCases(){
 
 function delCEOCase(i){
   const cases=getCEOCases();cases.splice(i,1);setCEOCases(cases);renderCEOCases();
-}
-
-function copyCEOPrompt(){
-  const cases=getCEOCases();
-  const casesText=cases.length
-    ?'\n\n【我累積的 CEO 案例】\n'+cases.slice(0,10).map(c=>`[${c.date}] ${c.quote}${c.ctx?' (情境：'+c.ctx+')':''}`).join('\n')
-    :'';
-  const prompt=`【CEO 思維庫背景】
-以下是我從例會觀察到的 CEO 六個核心思維模式：
-1. 現在 × 未來雙軌思考：看現況問題，同步在想 2-3 年後的樣子
-2. 利害關係人說服力轉換：任何決策最終要說明「對方為什麼要持續支持你」
-3. 拆層思考：把問題拆成 2-3 個不同層面，逐一回應
-4. 壓時間節點：討論完方向一定有具體時間（「六月底先有個數」）
-5. 機會嗅覺：看到外部趨勢，立刻連到「我們能做什麼」
-6. 資源意識下的分階段規劃：考量現有能量，做可行的分階段計畫${casesText}
-
-【我的問題】
-（在這裡貼上你想問的問題或情況描述）
-
-請用 CEO 的視角幫我分析，指出我可能沒想到的角度。`;
-  doCopy(prompt,'CEO 視角提示已複製！貼給 Claude');
 }
 </script>
 <!-- Budget Modal -->
