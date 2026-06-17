@@ -1138,7 +1138,33 @@
       </div>
     </div>
 
-    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">最後更新：2026-06-16（2O例會 + CEO 例會）</div>
+    <div class="ceo-cat-label">🤝 談判與合作</div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">🃏 先拿籌碼，再談條件</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>談判之前，先讓對方承認他們單方面改變了原本條件；這個虧欠感本身就是籌碼，要先把它確立，再往下談其他事情。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（親子學談判）：平台改了分潤條件 → CEO 說先別急著討論新條件，先讓他們承認凹了我們，「把這籌碼先拿下來再往下談」</p>
+        <p class="ceo-phrase">練習句：「在我們討論後面的條件之前，我想先確認一件事⋯⋯」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">✂️ 切割問題，先讓能動的跑</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>把複雜的合作切成兩個部分，先讓簡單的那個合約跑起來，複雜的細節等有更多資訊再談。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（親子學談判）：一次性產品 + 訂閱分潤很複雜 → 先把一次性合約簽出去（六月底就要賣），訂閱的算清楚再談</p>
+        <p class="ceo-phrase">練習句：「我們先把可以確認的部分簽掉，另一個等我們算清楚再來討論。」</p>
+      </div>
+    </div>
+    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
+      <div class="ceo-pat-title">📊 掌握雙方邊際成本差異</div>
+      <div class="ceo-pat-body" style="display:none">
+        <p>弄清楚隨著規模擴大，對方的成本結構如何變化，我方的又如何；誰的邊際成本遞增、誰的是固定，這個不對稱就是談判槓桿。</p>
+        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（親子學談判）：平台產品越多成本越高（邊際遞減），臺灣吧內容產製是固定成本 → 讓我們在分潤談判上有更強立場</p>
+        <p class="ceo-phrase">練習句：「這件事隨著規模擴大，你們的成本是增加的，但我們的是固定的——所以⋯⋯」</p>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">最後更新：2026-06-17（親子學合作談判回饋）</div>
   </div>
 
   <!-- 出考題 -->
@@ -3816,6 +3842,9 @@ const CEO_FRAMEWORKS=[
   {id:9,cat:'目標與執行',title:'目標 vs 策略嚴格區分',desc:'「建資料庫」是方法，「每月一支短影音」才是目標；目標必須是可測量的成果。',phrase:'這件事是我要做的方法，還是我要達到的結果？結果是什麼？'},
   {id:10,cat:'策略與視野',title:'兩條軌道並行，不互相等待',desc:'基礎建設和業務產出同步進行，不讓一方等另一方完成。',phrase:'這兩件事一定要有先後順序嗎？能不能同時推進？'},
   {id:11,cat:'資料與AI',title:'土炮過程是學習，不是浪費',desc:'手工整理資料的過程能讓你真正弄清楚需要哪些資料、如何下標籤、哪些欄位真正有用。',phrase:'先做一次土法煉鋼，看看過程中卡在哪裡，那個卡點就是系統要解決的問題。'},
+  {id:12,cat:'談判與合作',title:'先拿籌碼，再談條件',desc:'談判之前，先讓對方承認他們單方面改變了原本條件；這個虧欠感本身是籌碼，先確立再往下談其他事情。',phrase:'在我們討論後面的條件之前，我想先確認一件事⋯⋯'},
+  {id:13,cat:'談判與合作',title:'切割問題，先讓能動的跑',desc:'把複雜的合作切成兩個部分，先讓簡單的合約跑起來，複雜的細節等有更多資訊再談。',phrase:'我們先把可以確認的部分簽掉，另一個等我們算清楚再來討論。'},
+  {id:14,cat:'談判與合作',title:'掌握雙方邊際成本差異',desc:'弄清楚隨著規模擴大，對方的成本結構如何變化；誰的邊際成本遞增、誰的是固定，這個不對稱就是談判槓桿。',phrase:'這件事隨著規模擴大，你們的成本是增加的，但我們的是固定的——所以⋯⋯'},
 ];
 
 function getCEOCases(){try{return JSON.parse(localStorage.getItem('ceo_cases')||'[]')}catch(e){return[]}}
