@@ -8,43 +8,46 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="靜華 OS" />
-  <meta name="theme-color" content="#1E293B" />
+  <meta name="theme-color" content="#2D2A24" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
     :root {
-      --capture:#059669; --vocab:#7C3AED; --ledger:#0891B2;
-      --stock:#EA580C;   --plan:#2563EB;  --aar:#64748B;
-      --review:#64748B;  --monthly:#0EA5E9;
-      --health:#EF4444;  --english:#D97706; --pr:#1E3A8A; --ceo:#6D28D9;
-      --bg:#F8FAFC; --card:#FFFFFF; --text:#1E293B;
-      --muted:#64748B; --border:#E2E8F0; --radius:16px;
+      --capture:#4E7B52; --vocab:#7055A0; --ledger:#9A6B30;
+      --stock:#A85540;   --plan:#445E78;  --aar:#7A7066;
+      --review:#7A7066;  --monthly:#4A7090;
+      --health:#A84040;  --english:#9A6B30; --pr:#2E4A6E; --ceo:#604A8A;
+      --bg:#F8F5F0; --card:#FFFFFF; --text:#1C1C18;
+      --muted:#8A8680; --border:#E4DFD6; --radius:12px;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;
-      background:var(--bg);color:var(--text);min-height:100vh;padding:28px 16px 60px}
-    .wrap{max-width:480px;margin:0 auto}
+      background:var(--bg);color:var(--text);min-height:100vh;padding:28px 16px 60px;
+      overflow-x:hidden}
+    .wrap{max-width:480px;margin:0 auto;width:100%}
 
-    header{text-align:center;margin-bottom:28px}
-    header h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
-    header .sub{color:var(--muted);font-size:13px;margin-top:4px}
+    header{text-align:center;margin-bottom:32px}
+    header h1{font-size:24px;font-weight:600;letter-spacing:.2px;color:var(--text)}
+    header .sub{color:var(--muted);font-size:12px;margin-top:6px;letter-spacing:.4px}
 
-    .section-label{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-      color:var(--muted);margin:18px 0 8px}
+    .section-label{font-size:10px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;
+      color:var(--muted);margin:24px 0 10px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .full{grid-column:1/-1}
-    .card{background:var(--card);border-radius:var(--radius);padding:16px 12px;cursor:pointer;
-      border:2px solid var(--border);transition:all .18s;text-align:center;user-select:none}
-    .card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.09)}
-    .card:active{transform:translateY(0)}
-    .card .icon{font-size:28px;display:block;margin-bottom:6px}
-    .card .label{font-size:14px;font-weight:700}
-    .card .hint{font-size:11px;color:var(--muted);margin-top:2px}
-    .card-capture:hover{background:#ECFDF5;border-color:var(--capture)}
-    .card-vocab:hover  {background:#F5F3FF;border-color:var(--vocab)}
-    .card-ledger:hover {background:#ECFEFF;border-color:var(--ledger)}
-    .card-stock:hover  {background:#FFF7ED;border-color:var(--stock)}
-    .card-finance:hover{background:#ECFDF5;border-color:#059669}
-    .chip.sel-green{background:#D1FAE5;border-color:#10B981;color:#065F46}
-    .bank-card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px 14px;cursor:pointer;
+      border:1px solid var(--border);transition:all .2s;text-align:center;user-select:none;
+      box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    .card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08);border-color:#CCC7BC}
+    .card:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    .card .icon{font-size:26px;display:block;margin-bottom:8px}
+    .card .label{font-size:14px;font-weight:600;color:var(--text)}
+    .card .hint{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+    .card-capture:hover{border-color:var(--capture)}
+    .card-vocab:hover  {border-color:var(--vocab)}
+    .card-ledger:hover {border-color:var(--ledger)}
+    .card-stock:hover  {border-color:var(--stock)}
+    .card-finance:hover{border-color:var(--capture)}
+    .chip.sel-green{background:#E6EEE7;border-color:var(--capture);color:#2E5430}
+    .bank-card{background:white;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
     .bank-name{font-size:14px;font-weight:700}
     .finance-stat{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
     .fin-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -52,14 +55,14 @@
     .fin-income{color:#10B981;font-weight:700}
     .fin-expense{color:#EF4444;font-weight:700}
     .fin-net{font-size:18px;font-weight:800}
-    .fin-asset-card{background:linear-gradient(135deg,#1E40AF,#7C3AED);border-radius:16px;padding:18px;color:white;margin-bottom:10px}
-    .card-plan:hover   {background:#EFF6FF;border-color:var(--plan)}
-    .card-aar:hover    {background:#F8FAFC;border-color:var(--aar)}
-    .card-review:hover {background:#F8FAFC;border-color:var(--review)}
-    .card-monthly:hover{background:#F0F9FF;border-color:var(--monthly)}
-    .card-english:hover{background:#FFFBEB;border-color:var(--english)}
-    .card-pr:hover     {background:#EFF6FF;border-color:var(--pr)}
-    .card-ceo:hover    {background:#F5F3FF;border-color:var(--ceo)}
+    .fin-asset-card{background:linear-gradient(135deg,#2E4A6E,#604A8A);border-radius:12px;padding:18px;color:white;margin-bottom:10px}
+    .card-plan:hover   {border-color:var(--plan)}
+    .card-aar:hover    {border-color:var(--aar)}
+    .card-review:hover {border-color:var(--review)}
+    .card-monthly:hover{border-color:var(--monthly)}
+    .card-english:hover{border-color:var(--english)}
+    .card-pr:hover     {border-color:var(--pr)}
+    .card-ceo:hover    {border-color:var(--ceo)}
 
     /* Embed overlay */
     .embed-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
@@ -112,11 +115,11 @@
     .seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
     .chip{padding:6px 13px;border-radius:100px;border:1.5px solid var(--border);
       background:white;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
-    .chip.sel-green {background:#D1FAE5;border-color:var(--capture);color:#065F46}
-    .chip.sel-blue  {background:#DBEAFE;border-color:var(--plan);color:#1E40AF}
-    .chip.sel-cyan  {background:#CFFAFE;border-color:var(--ledger);color:#164E63}
-    .chip.sel-orange{background:#FED7AA;border-color:var(--stock);color:#7C2D12}
-    .chip.sel-purple{background:#EDE9FE;border-color:var(--vocab);color:#4C1D95}
+    .chip.sel-green {background:#E6EEE7;border-color:var(--capture);color:#2E5430}
+    .chip.sel-blue  {background:#DCE6EF;border-color:var(--plan);color:#2A4060}
+    .chip.sel-cyan  {background:#EEE4D4;border-color:var(--ledger);color:#6A4010}
+    .chip.sel-orange{background:#F0E0D4;border-color:var(--stock);color:#703020}
+    .chip.sel-purple{background:#EAE4F4;border-color:var(--vocab);color:#4A3070}
 
     /* Toast */
     .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
@@ -288,7 +291,7 @@
     .stab{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;
       text-align:center;font-size:13px;font-weight:600;cursor:pointer;
       background:white;color:var(--muted);transition:all .15s}
-    .stab.sel{background:#FED7AA;border-color:var(--stock);color:#7C2D12}
+    .stab.sel{background:#F0E0D4;border-color:var(--stock);color:#703020}
     .holding-card{background:white;border:1.5px solid var(--border);border-radius:12px;
       padding:13px;margin-bottom:10px}
     .holding-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
@@ -334,9 +337,9 @@
 
     /* Plan */
     .plan-day{margin-bottom:20px}
-    .plan-day-header{padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;
-      margin-bottom:6px;background:#DBEAFE;color:#1E40AF}
-    .plan-day-header.today{background:#BFDBFE;color:#1E3A8A;border:2px solid var(--plan)}
+    .plan-day-header{padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;
+      margin-bottom:6px;background:#DDE6F0;color:#2A4060}
+    .plan-day-header.today{background:#CBD8E8;color:#1E3652;border:2px solid var(--plan)}
     .plan-row{display:flex;gap:0;border-bottom:1px solid var(--border)}
     .plan-row:last-child{border-bottom:none}
     .plan-time{font-size:12px;color:var(--muted);font-family:'SF Mono',monospace;
@@ -406,19 +409,20 @@
     /* Ledger tabs */
     .ldg-tabs{display:flex;gap:8px;margin-bottom:16px}
     .ldg-tab-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;background:white;color:var(--muted);transition:all .15s}
-    .ldg-tab-btn.sel{background:#CFFAFE;border-color:#0891B2;color:#164E63}
+    .ldg-tab-btn.sel{background:#F0E8D4;border-color:var(--ledger);color:#6A4010}
     /* Ledger calendar */
-    .ldg-cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-    .ldg-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;padding:0 1px}
-    .ldg-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-    .ldg-cal-day{min-height:54px;border-radius:8px;padding:5px 3px;font-size:12px;cursor:pointer;border:1.5px solid transparent;background:#F8FAFC;text-align:center;transition:all .1s}
-    .ldg-cal-day:hover{border-color:#CBD5E1;background:white}
-    .ldg-cal-day.today{border-color:#0891B2;background:#CFFAFE}
-    .ldg-cal-day.selected{border-color:#0891B2;background:#A5F3FC}
+    .ldg-cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+    .ldg-cal-nav .outline-btn{width:auto;flex-shrink:0;padding:6px 12px;font-size:12px;margin-top:0}
+    .ldg-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10px;color:var(--muted);font-weight:600;margin-bottom:4px;padding:0}
+    .ldg-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;width:100%}
+    .ldg-cal-day{min-height:48px;border-radius:6px;padding:4px 2px;font-size:11px;cursor:pointer;border:1px solid transparent;background:#F5F2EC;text-align:center;transition:all .1s;overflow:hidden}
+    .ldg-cal-day:hover{border-color:#CCC7BC;background:white}
+    .ldg-cal-day.today{border-color:var(--ledger);background:#F5EDE0}
+    .ldg-cal-day.selected{border-color:var(--ledger);background:#EAD8B8}
     .ldg-cal-day.empty{background:transparent;cursor:default;border:none}
-    .ldg-day-num{font-weight:600;color:var(--text);font-size:13px}
-    .ldg-day-exp{font-size:9px;color:#EF4444;margin-top:2px;line-height:1.3}
-    .ldg-day-inc{font-size:9px;color:#10B981;line-height:1.3}
+    .ldg-day-num{font-weight:600;color:var(--text);font-size:12px}
+    .ldg-day-exp{font-size:8px;color:var(--health);margin-top:1px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ldg-day-inc{font-size:8px;color:var(--capture);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     /* Ledger report */
     .ldg-period-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
     .ldg-summary-cards{display:flex;gap:8px;margin-bottom:16px}
@@ -4115,6 +4119,13 @@ function delCEOCase(i){
     </div>
   </div>
 </div>
-<button id="back-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:24px;right:20px;width:44px;height:44px;border-radius:50%;background:#1E293B;color:white;border:none;font-size:20px;cursor:pointer;display:none;z-index:9998;box-shadow:0 4px 14px rgba(0,0,0,.25);align-items:center;justify-content:center;line-height:1">↑</button>
+<button id="back-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:24px;right:20px;width:44px;height:44px;border-radius:50%;background:#2D2A24;color:white;border:none;font-size:18px;cursor:pointer;display:none;z-index:9998;box-shadow:0 4px 14px rgba(0,0,0,.2);align-items:center;justify-content:center;line-height:1">↑</button>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/grace-os/sw.js').catch(()=>{});
+  });
+}
+</script>
 </body>
 </html>
