@@ -668,56 +668,8 @@
       </div>
       <div id="eng-manual-form"></div>
     </div>
-    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
-      <div class="section-label">匯入課程</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">貼上課程 JSON，單字和句子會自動加入學習池</div>
-      <textarea id="lesson-json-input" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;font-family:'SF Mono','Courier New',monospace;min-height:90px;resize:vertical;background:white;margin-bottom:8px" placeholder='{"courseTitle":"...","classDate":"...","vocabulary":[...]}'></textarea>
-      <button class="full-btn" style="background:var(--vocab)" onclick="importLessonJSON()">匯入課程 ✓</button>
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button class="outline-btn" style="margin-top:0;font-size:12px" onclick="fixCorruptCourses()">🔄 重新同步雲端課程</button>
-      </div>
-    </div>
   </div>
 
-  <!-- 內容 -->
-  <div id="eng-panel-list" class="e-hidden">
-    <div style="margin-bottom:14px">
-      <div class="today-sec-label" style="margin-top:0">
-        <button onclick="toggleLessonList()" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--text)">
-          <span>📖 我的課程</span>
-          <span id="lesson-list-arrow" style="font-size:11px;color:var(--muted)">▶</span>
-        </button>
-        <div style="display:flex;gap:6px">
-          <button class="nb-btn" style="font-size:11px;opacity:0.7" onclick="fixCorruptCourses()">🔄 重新同步</button>
-          <button class="nb-btn" onclick="toggleLessonImport()">+ 匯入課程</button>
-        </div>
-      </div>
-      <div id="lesson-import-box" class="lesson-import-box" style="display:none">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">貼上課程 JSON，單字和慣用語會自動加入內容庫</div>
-        <textarea id="lesson-json-input" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;font-family:'SF Mono','Courier New',monospace;min-height:100px;resize:vertical;background:white;margin-bottom:8px" placeholder='{"courseTitle":"...","classDate":"...","vocabulary":[...],"idioms":[]}'></textarea>
-        <button class="full-btn" style="background:var(--vocab)" onclick="importLessonJSON()">匯入課程 ✓</button>
-      </div>
-      <div id="lesson-list" style="display:none"></div>
-    </div>
-    <div style="border-top:1px solid var(--border);padding-top:10px">
-      <div class="section-label" style="margin-top:0">我的學習內容</div>
-      <div class="seg" id="eng-type-filter" style="margin:4px 0 6px">
-        <button class="chip sel-purple" data-f="all" onclick="setEngFilter('type','all')">全部</button>
-        <button class="chip" data-f="vocab" onclick="setEngFilter('type','vocab')">📝 單字</button>
-        <button class="chip" data-f="sentence" onclick="setEngFilter('type','sentence')">💬 句子</button>
-        <button class="chip" data-f="grammar" onclick="setEngFilter('type','grammar')">📐 文法</button>
-      </div>
-      <div class="seg" id="eng-src-filter" style="margin-bottom:10px">
-        <button class="chip sel-purple" data-f="all" onclick="setEngFilter('src','all')">所有來源</button>
-        <button class="chip" data-f="toeic" onclick="setEngFilter('src','toeic')">📊 TOEIC</button>
-        <button class="chip" data-f="lookup" onclick="setEngFilter('src','lookup')">🔍 查字典</button>
-        <button class="chip" data-f="lesson" onclick="setEngFilter('src','lesson')">📖 講義</button>
-        <button class="chip" data-f="teacher" onclick="setEngFilter('src','teacher')">👩‍🏫 老師補充</button>
-      </div>
-      <div id="eng-item-count" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
-      <div id="eng-list"></div>
-    </div>
-  </div>
 
   <!-- 練習 -->
   <div id="eng-panel-practice" class="e-hidden">
@@ -735,7 +687,7 @@
         <button class="chip" data-r="vocab" onclick="setPracRange('vocab')">單字</button>
         <button class="chip" data-r="sentence" onclick="setPracRange('sentence')">句子</button>
         <button class="chip" data-r="grammar" onclick="setPracRange('grammar')">文法</button>
-        <button class="chip" data-r="preview" onclick="setPracRange('preview')">📅 預習下堂課</button>
+
       </div>
       <div id="prac-pool-info" style="font-size:13px;color:var(--muted);margin-bottom:14px"></div>
       <button class="full-btn" style="background:var(--vocab)" onclick="startEngPractice()">開始練習</button>
@@ -1276,69 +1228,7 @@ async function syncCapturesFromCloud(){
   showToast(`已同步 ${toAdd.length} 筆雲端紀錄 ✓`);
 }
 
-async function syncCoursesFromCloud(){
-  if(!gasUrl())return;
-  const res=await getGAS({type:'eng_courses'});
-  if(!res?.ok||!res.data?.length)return;
-  const localKeys=new Set(getLessons().map(l=>`${l.title}|${l.date}`));
-  let added=0;
-  for(const course of res.data){
-    const title=course.courseTitle||course.title||'';
-    if(title==='__GOS_SETTINGS__')continue;
-    const date=course.classDate||course.date||'';
-    if(localKeys.has(`${title}|${date}`))continue;
-    _importCourseData(course); added++;
-  }
-  if(added>0){renderLessonList();renderEngList();showToast(`已同步 ${added} 堂課程 ✓`);}
-}
 
-async function fixCorruptCourses(){
-  // 刪除所有來自課程匯入的項目（重新同步前清空）
-  const items=getEngItems();
-  setEngItems(items.filter(i=>i.source!=='lesson'));
-  setLessons([]);
-  renderLessonList();
-  showToast('正在從雲端重新載入課程...');
-  await syncCoursesFromCloud();
-  // 立刻把乾淨的詞庫快照推回雲端，避免舊亂碼備份被同步回來
-  const cleanItems=getEngItems();
-  await postGAS({type:'eng_items_backup',token:'graceos2026read',ts:Date.now(),items:cleanItems});
-  showToast('課程已修復 ✓');
-}
-
-function _importCourseData(data){
-  const title=data.courseTitle||data.title||'未命名課程';
-  const date=(data.classDate||data.date||fmtYMD(taipeiNow())).replace(/-/g,'/');
-  const now=fmtYMD(taipeiNow());
-  const items=[];
-  [...(data.vocabulary||[]),(data.idioms||[])].flat().forEach(v=>{
-    const word=v.word||v.english||v.term||'';const zh=v.zh||v.chinese||v.meaning||v.translation||'';
-    if(!word||!zh)return;
-    items.push({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
-      enDef:v.definition||'',zhMeaning:zh,example:v.example||v.ex||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
-  });
-  (data.sentences||data.dialogues||[]).forEach(s=>{
-    const sent=s.sentence||s.english||s.text||'';const zh=s.zh||s.chinese||s.translation||'';
-    if(!sent||!zh)return;
-    items.push({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
-      translation:zh,notes:s.notes||s.context||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
-  });
-  (data.grammar||[]).forEach(g=>{
-    const rule=g.rule||g.title||'';if(!rule)return;
-    items.push({id:Date.now()+Math.random(),type:'grammar',rule,
-      explanation:g.explanation||g.desc||'',
-      examples:(g.examples||[]).map(e=>typeof e==='string'?e:e.en||'').filter(Boolean),
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
-  });
-  // Stagger: 15 items per day to avoid flooding the daily queue
-  items.forEach((item,i)=>{
-    item.srs={nextReview:srsAddDays(Math.floor(i/15)),interval:0,reps:0,lastRating:0,lastReview:''};
-    addEngItem(item);
-  });
-  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:items.length,topicSummary:data.topicSummary||'',discussion:data.discussion||[]});setLessons(lessons);
-}
 
 async function syncEngItemsFromCloud(){
   if(!gasUrl())return;
@@ -1662,17 +1552,16 @@ function dedupeEngItems(){
   if(clean.length<a.length)setEngItems(clean);
 }
 
-function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncCoursesFromCloud();syncEngItemsFromCloud();autoImportGraceLessons();}
+function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud();autoImportGraceLessons();}
 
 function switchEngTab(tab){
-  ['today','dict','list','practice'].forEach(t=>{
+  ['today','dict','practice'].forEach(t=>{
     document.getElementById('eng-panel-'+t).classList.toggle('e-hidden',t!==tab);
   });
   document.querySelectorAll('.eng-tab-btn').forEach((b,i)=>{
     b.classList.toggle('active',['today','dict','practice'][i]===tab);
   });
   if(tab==='today')initGraceOSSRSTab();
-  if(tab==='list'){renderEngList();renderLessonList()}
   if(tab==='practice')renderPracSetup();
 }
 
@@ -1806,20 +1695,13 @@ function renderEngList(){
   let items=getEngItems();
   if(engTypeFilter!=='all')items=items.filter(i=>i.type===engTypeFilter);
   if(engSrcFilter!=='all')items=items.filter(i=>i.source===engSrcFilter);
-  const today=getTodayStr();
-  items.sort((a,b)=>{
-    const da=a.lessonDate||'',db=b.lessonDate||'';
-    if(!da&&!db)return(b.date||'').localeCompare(a.date||'');
-    if(!da)return 1;if(!db)return -1;
-    const ap=da<=today,bp=db<=today;
-    if(ap!==bp)return ap?-1:1;
-    return ap?db.localeCompare(da):da.localeCompare(db);
-  });
+  items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const cnt=document.getElementById('eng-item-count');if(cnt)cnt.textContent=`共 ${items.length} 筆`;
   const list=document.getElementById('eng-list');
+  if(!list)return;
   if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄</div>';return}
   const TS={vocab:{l:'單字',bg:'#EDE9FE',c:'#4C1D95'},sentence:{l:'句子',bg:'#DBEAFE',c:'#1E40AF'},grammar:{l:'文法',bg:'#D1FAE5',c:'#065F46'}};
-  const SL={lookup:'🔍',lesson:'📖',teacher:'👩‍🏫',manual:'✍️',toeic:'📊'};
+  const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增'};
   list.innerHTML=items.map(item=>{
     const ts=TS[item.type]||TS.vocab;
     let main='',sub='';
@@ -1833,9 +1715,7 @@ function renderEngList(){
       main=`<span class="eng-word" style="font-size:14px">${esc(item.rule||'')}</span>`;
       sub=`${item.explanation?`<div class="eng-zh">${esc(item.explanation)}</div>`:''}`+((item.examples||[]).slice(0,1).map(e=>`<div class="eng-example">"${esc(e)}"<button class="eng-play" onclick="engSpeak('${e.replace(/'/g,"\\'")}')">🔊</button></div>`).join(''));
     }
-    const srcMeta=(item.source==='lesson'&&item.lessonTitle)
-      ?`${lessonStatusBadge(item.lessonDate)}&ensp;<span style="font-size:11px;color:var(--muted)">${esc(item.lessonTitle)}</span>`
-      :`<span style="font-size:11px;color:var(--muted)">${SL[item.source]||''} ${esc(item.date)}</span>`;
+    const srcMeta=`<span style="font-size:11px;color:var(--muted)">${SL[item.source]||''} ${esc(item.date||'')}</span>`;
     return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${srcMeta}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
   }).join('');
 }
@@ -1844,32 +1724,16 @@ function delEngItem(id){setEngItems(getEngItems().filter(i=>i.id!==id));renderEn
 /* ── 練習 ── */
 function setPracMode(m){pracMode=m;document.querySelectorAll('#prac-mode-seg .chip').forEach(b=>b.className='chip'+(b.dataset.m===m?' sel-purple':''));renderPracSetup()}
 function setPracRange(r){pracRange=r;document.querySelectorAll('#prac-range-seg .chip').forEach(b=>b.className='chip'+(b.dataset.r===r?' sel-purple':''));renderPracSetup()}
-function setPracLesson(l){pracLesson=l;document.querySelectorAll('#prac-lesson-seg .chip').forEach(b=>b.className='chip'+(b.dataset.l===l?' sel-purple':''));renderPracSetup()}
-function filterByLesson(pool,previewMode=false){
-  const today=getTodayStr();
-  if(previewMode)return pool.filter(i=>i.source==='lesson'&&i.lessonDate&&i.lessonDate>today);
-  return pool.filter(i=>i.source!=='lesson'||!i.lessonDate||i.lessonDate<=today);
-}
 function renderPracSetup(){
   let pool=getEngItems();
-  if(pracRange==='preview'){
-    pool=filterByLesson(pool,true);
-  }else{
-    if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
-    pool=filterByLesson(pool);
-  }
+  if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
   const el=document.getElementById('prac-pool-info');
-  if(el)el.textContent=pracRange==='preview'?`預習模式：下堂課 ${pool.length} 個項目`:`共 ${pool.length} 個項目可練習`;
+  if(el)el.textContent=`共 ${pool.length} 個項目可練習`;
 }
 function engShuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function startEngPractice(){
   let pool=getEngItems();
-  if(pracRange==='preview'){
-    pool=filterByLesson(pool,true);
-  }else{
-    if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
-    pool=filterByLesson(pool);
-  }
+  if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
   if(pracRange==='grammar'||pracRange==='all'){
     const toeicGrammarItems=engShuffle(TOEIC_GRAMMAR).slice(0,5).map((g,i)=>({id:'tg_'+i,...g,toeicQ:true,type:'grammar',source:'toeic'}));
     pool=[...pool,...toeicGrammarItems];
@@ -2213,159 +2077,8 @@ const TOEIC_WORDS=[
   {w:'be responsible for',zh:'負責；對……負責',pos:'phr',ex:'She is responsible for client relations.'},
 ];
 
-const LESSONS_KEY='eng_lessons_v1';
-function getLessons(){try{return JSON.parse(localStorage.getItem(LESSONS_KEY)||'[]')}catch{return[]}}
-function setLessons(a){localStorage.setItem(LESSONS_KEY,JSON.stringify(a))}
 
-function toggleLessonImport(){
-  const box=document.getElementById('lesson-import-box');
-  if(box)box.style.display=box.style.display==='none'?'block':'none';
-}
 
-function importLessonJSON(){
-  const raw=(document.getElementById('lesson-json-input')?.value||'').trim();
-  if(!raw){showToast('請貼上課程 JSON');return}
-  let data;try{data=JSON.parse(raw)}catch{showToast('JSON 格式有誤，請重新貼上');return}
-  const title=data.courseTitle||data.title||'未命名課程';
-  const date=(data.classDate||data.date||fmtYMD(taipeiNow())).replace(/-/g,'/');
-  const now=fmtYMD(taipeiNow());
-  const items=[];
-  [...(data.vocabulary||[]),...(data.idioms||[])].forEach(v=>{
-    const word=v.word||v.english||v.term||'';const zh=v.zh||v.chinese||v.meaning||v.translation||'';
-    if(!word||!zh)return;
-    items.push({id:Date.now()+Math.random(),type:'vocab',word,ipa:v.ipa||'',audioUrl:'',
-      enDef:v.definition||'',zhMeaning:zh,example:v.example||v.ex||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
-  });
-  (data.sentences||data.dialogues||[]).forEach(s=>{
-    const sent=s.sentence||s.english||s.text||'';const zh=s.zh||s.chinese||s.translation||'';
-    if(!sent||!zh)return;
-    items.push({id:Date.now()+Math.random(),type:'sentence',sentence:sent,
-      translation:zh,notes:s.notes||s.context||'',
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
-  });
-  (data.grammar||[]).forEach(g=>{
-    const rule=g.rule||g.title||'';if(!rule)return;
-    items.push({id:Date.now()+Math.random(),type:'grammar',rule,
-      explanation:g.explanation||g.desc||'',
-      examples:(g.examples||[]).map(e=>typeof e==='string'?e:e.en||'').filter(Boolean),
-      source:'lesson',date:now,lessonTitle:title,lessonDate:date});
-  });
-  // Stagger: 15 items per day to avoid flooding the daily queue
-  items.forEach((item,i)=>{
-    item.srs={nextReview:srsAddDays(Math.floor(i/15)),interval:0,reps:0,lastRating:0,lastReview:''};
-    addEngItem(item);
-  });
-  const lessons=getLessons();lessons.unshift({id:Date.now(),title,date,itemCount:items.length});setLessons(lessons);
-  document.getElementById('lesson-json-input').value='';
-  toggleLessonImport();renderLessonList();
-  showToast(`已匯入「${title}」，共 ${items.length} 個項目 ✓`);
-  postGAS({type:'eng_course',...data});
-  _scheduleEngBackup();
-}
-
-function lessonStatusBadge(dateStr){
-  const today=getTodayStr();
-  if(!dateStr||dateStr<=today)
-    return `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:#D1FAE5;color:#065F46">✅ 已上課</span>`;
-  const diff=Math.round((new Date(dateStr.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/(864e5));
-  const label=diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
-  return `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:#FEF3C7;color:#92400E">📅 ${label}</span>`;
-}
-function renderLessonList(){
-  const list=document.getElementById('lesson-list');if(!list)return;
-  const today=getTodayStr();
-  const seen=new Set();
-  const allLessons=[...getLessons()]
-    .filter(l=>{if((l.title||'')==='__GOS_SETTINGS__')return false;const k=(l.title||'')+'|'+(l.date||'');if(seen.has(k))return false;seen.add(k);return true;})
-    .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-  if(!allLessons.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">尚無課程，點「+ 匯入課程」開始</div>';return}
-  const cardHtml=l=>`<div class="lesson-card" style="flex-direction:column;align-items:flex-start">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%">
-      <div style="flex:1">
-        <div class="lesson-title">${esc(l.title)}</div>
-        <div class="lesson-meta">${esc(l.date)} · ${l.itemCount} 個學習項目</div>
-        <div style="margin-top:5px">${lessonStatusBadge(l.date)}</div>
-      </div>
-      <button class="del-btn" onclick="delLesson(${l.id})">✕</button>
-    </div>
-    <div style="display:flex;gap:6px;margin-top:8px">
-      ${l.listening&&l.listening.transcript
-        ? `<button style="background:#FFF7ED;border:1.5px solid #F59E0B;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;color:#92400E" onclick="showTranscript(${l.id})">🎧 播放逐字稿</button>`
-        : `<button style="background:none;border:1px solid #CBD5E1;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;color:#94A3B8" onclick="addTranscriptUI(${l.id})">＋ 加逐字稿</button>`
-      }
-    </div>
-  </div>`;
-  list.innerHTML=allLessons.map(cardHtml).join('');
-}
-function toggleLessonList(){
-  const list=document.getElementById('lesson-list');
-  const arrow=document.getElementById('lesson-list-arrow');
-  if(!list||!arrow)return;
-  const show=list.style.display==='none';
-  list.style.display=show?'block':'none';
-  arrow.textContent=show?'▼':'▶';
-}
-function delLesson(id){setLessons(getLessons().filter(l=>l.id!==id));renderLessonList();showToast('已刪除課程紀錄')}
-
-/* ── 逐字稿 modal ── */
-function showTranscript(id){
-  const lesson=getLessons().find(l=>l.id===id);
-  if(!lesson||!lesson.listening)return;
-  const t=lesson.listening;
-  let overlay=document.getElementById('transcript-overlay');
-  if(!overlay){
-    overlay=document.createElement('div');
-    overlay.id='transcript-overlay';
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9995;display:flex;align-items:flex-end';
-    overlay.innerHTML=`<div style="background:white;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:85vh;overflow-y:auto">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div id="tr-title" style="font-size:15px;font-weight:700;flex:1"></div>
-        <button onclick="document.getElementById('transcript-overlay').remove();speechSynthesis.cancel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94A3B8">✕</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button id="tr-slow-btn" style="flex:1;padding:8px;border:1.5px solid #F59E0B;border-radius:10px;background:#FFF7ED;color:#92400E;font-weight:700;font-size:13px;cursor:pointer" onclick="trSetSpeed(0.72)">🐢 慢速 0.7×</button>
-        <button id="tr-norm-btn" style="flex:1;padding:8px;border:1.5px solid #CBD5E1;border-radius:10px;background:white;color:#64748B;font-size:13px;cursor:pointer" onclick="trSetSpeed(0.88)">▶ 標準 0.9×</button>
-      </div>
-      <button id="tr-play-btn" style="width:100%;padding:12px;background:#F59E0B;border:none;border-radius:12px;color:white;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:14px" onclick="trTogglePlay()">🎧 播放全文</button>
-      <div id="tr-text" style="font-size:14px;line-height:2;color:#1E293B;white-space:pre-wrap"></div>
-    </div>`;
-    document.body.appendChild(overlay);
-  }
-  window._trText=t.transcript||'';window._trSpeed=0.72;
-  document.getElementById('tr-title').textContent=t.title||'逐字稿';
-  document.getElementById('tr-text').textContent=t.transcript||'';
-  overlay.style.display='flex';
-}
-
-function trSetSpeed(r){
-  window._trSpeed=r;
-  const s=r<0.8;
-  document.getElementById('tr-slow-btn').style.borderColor=s?'#F59E0B':'#CBD5E1';
-  document.getElementById('tr-slow-btn').style.fontWeight=s?'700':'400';
-  document.getElementById('tr-norm-btn').style.borderColor=s?'#CBD5E1':'#F59E0B';
-  document.getElementById('tr-norm-btn').style.fontWeight=s?'400':'700';
-}
-
-function trTogglePlay(){
-  const btn=document.getElementById('tr-play-btn');
-  if(speechSynthesis.speaking){speechSynthesis.cancel();btn.textContent='🎧 播放全文';btn.style.background='#F59E0B';return}
-  const u=new SpeechSynthesisUtterance(window._trText||'');
-  u.lang='en-US';u.rate=window._trSpeed||0.72;
-  u.onend=()=>{btn.textContent='🎧 播放全文';btn.style.background='#F59E0B'};
-  btn.textContent='⏹ 停止';btn.style.background='#EF4444';
-  speechSynthesis.speak(u);
-}
-
-function addTranscriptUI(id){
-  const title=prompt('逐字稿標題（影片或音檔名稱）：');if(title===null)return;
-  const transcript=prompt('貼上逐字稿全文：');if(transcript===null)return;
-  const lessons=getLessons();
-  const idx=lessons.findIndex(l=>l.id===id);
-  if(idx<0)return;
-  lessons[idx].listening={title:title.trim(),transcript:transcript.trim()};
-  setLessons(lessons);renderLessonList();showToast('✅ 逐字稿已儲存');
-}
 
 /* ── 通用工具（練習/查記/SRS 共用）── */
 function getTodayStr(){return fmtYMD(taipeiNow())}
