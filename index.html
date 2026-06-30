@@ -638,21 +638,15 @@
     <button class="eng-tab-btn" onclick="switchEngTab('practice')">🎯 練習</button>
   </div>
 
-  <!-- 今日任務 -->
+  <!-- 今日任務 — SRS 間隔複習 -->
   <div id="eng-panel-today">
-    <div id="today-preview-section"></div>
-    <div id="toeic-phase-bar"></div>
-    <div class="today-sec-label" style="margin-top:4px">
-      <span>📝 單字複習 &amp; TOEIC 新詞</span>
+    <div id="srs-grace-banner" style="background:linear-gradient(135deg,#5B21B6,#7C3AED);color:white;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px;user-select:none;transition:opacity .2s" onclick="startGraceOSSRS()">
+      <div style="font-size:32px;margin-bottom:6px">&#x1F501;</div>
+      <div style="font-size:18px;font-weight:800">今天該複習：<span id="srs-grace-count">0</span> 張卡片</div>
+      <div style="font-size:13px;opacity:.8;margin-top:5px">點擊開始間隔複習</div>
     </div>
-    <div id="today-vocab-list"></div>
-    <div id="toeic-daily-words"></div>
-    <div class="today-sec-label">💬 句子填空練習</div>
-    <div id="today-sentence-list"></div>
-    <div class="today-sec-label">✍️ 今日造句</div>
-    <div id="today-output"></div>
-    <div class="today-sec-label">📐 今日文法題</div>
-    <div id="today-grammar-q"></div>
+    <div id="srs-grace-card-area"></div>
+    <div id="srs-grace-done" style="display:none"></div>
   </div>
 
   <!-- 查記 -->
@@ -1667,7 +1661,7 @@ function dedupeEngItems(){
   if(clean.length<a.length)setEngItems(clean);
 }
 
-function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncCoursesFromCloud();syncEngItemsFromCloud();}
+function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncCoursesFromCloud();syncEngItemsFromCloud();autoImportGraceLessons();}
 
 function switchEngTab(tab){
   ['today','dict','list','practice'].forEach(t=>{
@@ -1676,7 +1670,7 @@ function switchEngTab(tab){
   document.querySelectorAll('.eng-tab-btn').forEach((b,i)=>{
     b.classList.toggle('active',['today','dict','practice'][i]===tab);
   });
-  if(tab==='today')initTodayTab();
+  if(tab==='today')initGraceOSSRSTab();
   if(tab==='list'){renderEngList();renderLessonList()}
   if(tab==='practice')renderPracSetup();
 }
@@ -2372,493 +2366,181 @@ function addTranscriptUI(id){
   setLessons(lessons);renderLessonList();showToast('✅ 逐字稿已儲存');
 }
 
-/* ── SRS 間隔複習引擎 ── */
-function srsAddDays(n){const d=new Date(taipeiNow());d.setDate(d.getDate()+n);return fmtYMD(d)}
-function getTodayStr(){return fmtYMD(taipeiNow())}
+/* ── GraceOS SRS v2 — 講義驅動間隔複習（key: grace_srs_cards_v2）── */
+const GRACE_SRS_KEY='grace_srs_cards_v2';
+const GRACE_SRS_IMP_KEY='grace_srs_imported_v2';
+let graceQueue=[],graceQIdx=0,graceQTotal=0;
 
-function srsRate(itemId,rating){
-  const items=getEngItems();const idx=items.findIndex(i=>i.id===itemId);if(idx<0)return;
-  const srs=items[idx].srs||{interval:0,reps:0};
-  let interval;
-  if(rating===1)interval=1;
-  else if(rating===2)interval=3;
-  else if(rating===3)interval=Math.max(7,Math.round((srs.interval||3)*1.8));
-  else interval=Math.max(14,Math.round((srs.interval||7)*2.5));
-  items[idx].srs={nextReview:srsAddDays(interval),interval,reps:(srs.reps||0)+1,lastRating:rating,lastReview:getTodayStr()};
-  setEngItems(items);
-}
+function loadGraceSRS(){try{return JSON.parse(localStorage.getItem(GRACE_SRS_KEY)||'{}')}catch{return{}}}
+function saveGraceSRS(s){localStorage.setItem(GRACE_SRS_KEY,JSON.stringify(s))}
 
-function getDueItems(){
-  const today=getTodayStr();
-  return getEngItems().filter(i=>{
-    if(!i.srs||i.srs.nextReview>today)return false;
-    if(i.source==='lesson'&&i.lessonDate&&i.lessonDate>today)return false;
-    return true;
+function importLessonToGraceSRS(lessonJson){
+  const s=loadGraceSRS();
+  const lid=lessonJson.classDate||lessonJson.courseTitle;
+  const today=fmtYMD(taipeiNow());
+  (lessonJson.vocabulary||[]).forEach((v,i)=>{
+    const id=`${lid}_vocab_${i}`;
+    if(!s[id])s[id]={id,lessonId:lid,type:'vocab',word:v.word,zh:v.zh,definition:v.definition||'',example:v.example||'',interval_days:1,next_review:today,ease:2.5,review_count:0,wrong_count:0};
   });
-}
-function getMasteredCount(){
-  return getEngItems().filter(i=>i.srs&&(i.srs.reps||0)>=3&&(i.srs.lastRating||0)>=3).length;
-}
-function getToeicNewWords(n){
-  const existing=new Set(getEngItems().filter(i=>i.source==='toeic').map(i=>(i.word||'').toLowerCase()));
-  return TOEIC_WORDS.filter(w=>!existing.has(w.w.toLowerCase())).slice(0,n);
-}
-function migrateLessonDates(){
-  const lessons=getLessons();let lc=false;
-  lessons.forEach(l=>{if(l.date&&l.date.includes('-')){l.date=l.date.replace(/-/g,'/');lc=true;}});
-  if(lc)setLessons(lessons);
-  const items=getEngItems();let ic=false;
-  items.forEach(i=>{if(i.lessonDate&&i.lessonDate.includes('-')){i.lessonDate=i.lessonDate.replace(/-/g,'/');ic=true;}});
-  if(ic)setEngItems(items);
-}
-function migrateSRS(){
-  const items=getEngItems();let changed=false;
-  items.forEach((item,i)=>{
-    if(!item.srs){item.srs={nextReview:srsAddDays(i%7),interval:0,reps:0,lastRating:0,lastReview:''};changed=true;}
+  (lessonJson.sentences||[]).forEach((v,i)=>{
+    const id=`${lid}_sent_${i}`;
+    if(!s[id])s[id]={id,lessonId:lid,type:'sentence',sentence:v.sentence,zh:v.zh,interval_days:1,next_review:today,ease:2.5,review_count:0,wrong_count:0};
   });
-  if(changed)setEngItems(items);
+  (lessonJson.grammar||[]).forEach((v,i)=>{
+    const id=`${lid}_gram_${i}`;
+    if(!s[id])s[id]={id,lessonId:lid,type:'grammar',rule:v.rule,explanation:v.explanation||'',examples:v.examples||[],interval_days:1,next_review:today,ease:2.5,review_count:0,wrong_count:0};
+  });
+  saveGraceSRS(s);
 }
 
-/* ── 今日任務 ── */
-const DAILY_REVIEW_CAP=20;
-let todayReviewItems=[],todayReviewIdx=0,todayShowingAnswer=false,todayReviewTotal=0;
-
-function initTodayTab(){
-  migrateLessonDates();
-  migrateSRS();
-  const allDue=getDueItems();
-  todayReviewTotal=allDue.length;
-  todayReviewItems=allDue.slice(0,DAILY_REVIEW_CAP);
-  // Push overflow items forward so they don't pile up every day
-  if(allDue.length>DAILY_REVIEW_CAP){
-    const overflow=allDue.slice(DAILY_REVIEW_CAP);
-    const engItems=getEngItems();
-    overflow.forEach((dueItem,idx)=>{
-      const i=engItems.findIndex(x=>x.id===dueItem.id);
-      if(i>=0){const daysOff=1+Math.floor(idx/DAILY_REVIEW_CAP);engItems[i].srs.nextReview=srsAddDays(daysOff);}
-    });
-    setEngItems(engItems);
+function reviewGraceCard(cardId,isCorrect){
+  const s=loadGraceSRS();const c=s[cardId];if(!c)return;
+  c.review_count++;
+  if(isCorrect){
+    c.ease=Math.min(c.ease+0.1,3.0);
+    c.interval_days=c.review_count===1?1:c.review_count===2?3:Math.round(c.interval_days*c.ease);
+  }else{
+    c.wrong_count++;c.ease=Math.max(c.ease-0.2,1.3);c.interval_days=1;
   }
-  todayReviewIdx=0;todayShowingAnswer=false;
-  renderTodayPreview();
-  renderToeicProgressBar();
-  renderTodayContent();
-  renderToeicDailyWords();
-  renderTodaySentenceTask();
-  renderTodayOutput();
-  renderTodayGrammarQ();
+  const next=new Date(taipeiNow());next.setDate(next.getDate()+c.interval_days);
+  c.next_review=fmtYMD(next);saveGraceSRS(s);
 }
 
-function renderTodayPreview(){
-  const el=document.getElementById('today-preview-section');if(!el)return;
-  const today=getTodayStr();
-  const nowHour=taipeiNow().getHours();
-  const upcoming=getLessons().filter(l=>{
-    if(!l.date)return false;
-    if(l.date>today)return true;
-    if(l.date===today)return nowHour<12; // 上課前（12點前）才顯示當天課程
-    return false;
-  }).sort((a,b)=>a.date<b.date?-1:1);
-  if(!upcoming.length){el.innerHTML='';return}
+function getDueGraceCards(){
+  const s=loadGraceSRS();const today=fmtYMD(taipeiNow());
+  return Object.values(s).filter(c=>c.next_review<=today);
+}
 
-  const section=(label,color,html)=>`
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;font-weight:800;color:${color};letter-spacing:.5px;margin-bottom:7px">${label}</div>
-      ${html}
+async function autoImportGraceLessons(){
+  let imp;try{imp=JSON.parse(localStorage.getItem(GRACE_SRS_IMP_KEY)||'[]')}catch{imp=[];}
+  let manifest;
+  try{const r=await fetch('./data/lessons/manifest.json');if(!r.ok)return;manifest=await r.json();}catch{return;}
+  const lessons=manifest.lessons||[];let changed=false;
+  for(const fname of lessons){
+    if(imp.includes(fname))continue;
+    try{
+      const r=await fetch(`./data/lessons/${fname}`);if(!r.ok)continue;
+      const j=await r.json();importLessonToGraceSRS(j);imp.push(fname);changed=true;
+    }catch{}
+  }
+  if(changed){localStorage.setItem(GRACE_SRS_IMP_KEY,JSON.stringify(imp));initGraceOSSRSTab();}
+}
+
+/* ── 今日任務 — SRS 複習 ── */
+function initGraceOSSRSTab(){
+  const due=getDueGraceCards();
+  graceQTotal=due.length;graceQueue=due;graceQIdx=0;
+  const el=document.getElementById('srs-grace-count');if(el)el.textContent=graceQTotal;
+  const banner=document.getElementById('srs-grace-banner');
+  if(banner){
+    if(graceQTotal>0){banner.style.opacity='1';banner.style.pointerEvents='auto';}
+    else{banner.style.opacity='0.45';banner.style.pointerEvents='none';}
+  }
+  const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
+  const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
+  if(banner)banner.style.display='';
+}
+
+function startGraceOSSRS(){
+  if(!graceQueue.length)return;
+  graceQIdx=0;
+  const banner=document.getElementById('srs-grace-banner');if(banner)banner.style.display='none';
+  renderGraceOSSRSCard();
+}
+
+function _srsProgBar(idx,total){
+  const pct=total>0?Math.round(idx/total*100):0;
+  return `<div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px">
+      <span>複習 ${idx+1} / ${total}</span>
+    </div>
+    <div style="background:#F1F5F9;border-radius:6px;height:6px;overflow:hidden"><div style="background:linear-gradient(90deg,#7C3AED,#A78BFA);height:100%;width:${pct}%;border-radius:6px;transition:width .3s"></div></div>
+  </div>`;
+}
+
+function renderGraceOSSRSCard(){
+  const area=document.getElementById('srs-grace-card-area');if(!area)return;
+  if(graceQIdx>=graceQueue.length){showGraceOSSRSSummary();return;}
+  const card=graceQueue[graceQIdx];
+  let front='';
+  if(card.type==='vocab'){
+    front=`<div style="text-align:center;padding:24px 0">
+      <div style="font-size:30px;font-weight:800;letter-spacing:.5px">${esc(card.word||'')}</div>
+      <button class="eng-play" style="margin-top:12px;font-size:22px" onclick="engSpeak('${(card.word||'').replace(/'/g,"\\\'")}')">🔊</button>
     </div>`;
-
-  const buildCard=(lesson,idx)=>{
-    const diff=Math.round((new Date(lesson.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/864e5);
-    const dayLabel=diff===0?'今天上課':diff===1?'明天上課':diff===2?'後天上課':`${diff} 天後上課`;
-    const items=getEngItems().filter(i=>i.lessonTitle===lesson.title&&i.lessonDate===lesson.date);
-    const seenV=new Set(),seenS=new Set(),seenG=new Set(),seenI=new Set();
-    const vocab=items.filter(i=>i.type==='vocab'&&!seenV.has(i.word)&&seenV.add(i.word));
-    const grammar=items.filter(i=>i.type==='grammar'&&!seenG.has(i.rule)&&seenG.add(i.rule));
-    const idioms=items.filter(i=>i.type==='idiom'&&!seenI.has(i.word)&&seenI.add(i.word));
-    const sentences=items.filter(i=>i.type==='sentence'&&!seenS.has(i.sentence)&&seenS.add(i.sentence));
-    const hasContent=vocab.length||grammar.length||idioms.length||sentences.length;
-
-    const vocabHtml=vocab.map(v=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
-        <span style="font-size:14px;font-weight:700;min-width:110px;color:#1E293B">${esc(v.word)}</span>
-        <span style="font-size:13px;color:#78350F;flex:1">${esc(v.zhMeaning||'')}</span>
-        <button class="eng-play" onclick="engSpeak('${v.word.replace(/'/g,"\\'")}')">🔊</button>
-      </div>`).join('');
-
-    const grammarHtml=grammar.map(g=>`
-      <div style="padding:8px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:6px;border-left:3px solid #F59E0B">
-        <div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:3px">${esc(g.rule||g.word||'')}</div>
-        ${g.explanation?`<div style="font-size:12px;color:#78350F;line-height:1.6">${esc(g.explanation)}</div>`:''}
-        ${g.example?`<div style="font-size:12px;color:#92400E;margin-top:4px;font-style:italic">${esc(g.example)}</div>`:''}
-      </div>`).join('');
-
-    const idiomsHtml=idioms.map(i=>`
-      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #FDE68A">
-        <span style="font-size:13px;font-weight:700;min-width:130px;color:#1E293B">${esc(i.word)}</span>
-        <span style="font-size:13px;color:#78350F">${esc(i.zhMeaning||'')}</span>
-      </div>`).join('');
-
-    const sentHtml=sentences.map(s=>`
-      <div style="padding:7px 10px;background:rgba(255,255,255,0.7);border-radius:8px;margin-bottom:5px">
-        <div style="font-size:13px;font-weight:600;color:#1E293B;line-height:1.6">${esc(s.word||s.sentence||'')}</div>
-        ${s.translation?`<div style="font-size:12px;color:#78350F;margin-top:2px">${esc(s.translation)}</div>`:''}
-      </div>`).join('');
-
-    const topicHtml=lesson.topicSummary?`
-      <div style="margin-bottom:14px;padding:12px 14px;background:rgba(255,255,255,0.85);border-radius:10px;border-left:4px solid #3B82F6">
-        <div style="font-size:11px;font-weight:800;color:#1D4ED8;letter-spacing:.5px;margin-bottom:6px">🎬 這堂課在講什麼</div>
-        <div style="font-size:13px;color:#1E293B;line-height:1.7">${esc(lesson.topicSummary)}</div>
-      </div>`:'';
-    const discussionHtml=(lesson.discussion||[]).length?`
-      <div style="margin-top:8px">
-        <div style="font-size:11px;font-weight:800;color:#7C3AED;letter-spacing:.5px;margin-bottom:7px">💬 課前可以想想</div>
-        ${(lesson.discussion||[]).map((q,i)=>`
-          <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #DDD6FE">
-            <span style="font-size:13px;color:#6D28D9;font-weight:700;min-width:18px">${i+1}.</span>
-            <span style="font-size:13px;color:#1E293B;line-height:1.6">${esc(q)}</span>
-          </div>`).join('')}
-      </div>`:'';
-    const bodyHtml=`
-      ${topicHtml}
-      ${!hasContent&&!lesson.topicSummary?'<div style="font-size:13px;color:#92400E;text-align:center;padding:8px">課程 JSON 匯入後，重點會自動出現這裡</div>':''}
-      ${vocab.length?section('📝 本課單字','#92400E',vocabHtml):''}
-      ${grammar.length?section('📐 文法重點','#92400E',grammarHtml):''}
-      ${idioms.length?section('💬 片語 & 慣用語','#92400E',idiomsHtml):''}
-      ${sentences.length?section('✏️ 重要句型','#92400E',sentHtml):''}
-      ${discussionHtml}
-      ${lesson.listening&&lesson.listening.transcript?`<div style="margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.5px;margin-bottom:7px">🎧 聽力逐字稿</div>
-        <button onclick="showTranscript(${lesson.id})" style="width:100%;padding:10px;background:#FFF7ED;border:1.5px solid #F59E0B;border-radius:10px;color:#92400E;font-weight:700;font-size:13px;cursor:pointer">🎧 播放 · ${esc(lesson.listening.title||'')}</button>
-      </div>`:''}
-      `;
-
-    if(idx===0){
-      return `<div style="background:#FFFBEB;border:2px solid #F59E0B;border-radius:16px;padding:16px;margin-bottom:12px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #FDE68A">
-          <span style="font-size:22px">📚</span>
-          <div style="flex:1">
-            <div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.5px">${dayLabel}・課前準備</div>
-            <div style="font-size:16px;font-weight:800;color:#1E293B">${esc(lesson.title)}</div>
-          </div>
-        </div>
-        ${bodyHtml}
-        <button onclick="switchEngTab('practice');setPracRange('preview')" style="width:100%;padding:12px;border:none;border-radius:12px;background:#F59E0B;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">📝 看完了，去練習這堂課的內容 →</button>
-      </div>`;
-    }
-    return `<div style="background:#FFFDF0;border:1.5px solid #FCD34D;border-radius:14px;margin-bottom:10px;overflow:hidden">
-      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer" onclick="togglePreviewCard(${idx})">
-        <span style="font-size:18px">📚</span>
-        <div style="flex:1">
-          <div style="font-size:10px;font-weight:700;color:#92400E;letter-spacing:.5px">${dayLabel}</div>
-          <div style="font-size:14px;font-weight:700;color:#1E293B">${esc(lesson.title)}</div>
-        </div>
-        <span id="preview-arrow-${idx}" style="font-size:12px;color:#92400E;transition:transform .2s">▼</span>
-      </div>
-      <div id="preview-content-${idx}" style="display:none;padding:0 16px 16px">
-        ${bodyHtml}
-      </div>
+  }else if(card.type==='sentence'){
+    front=`<div style="padding:18px 0">
+      <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
+      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\\'")}')">🔊</button>
     </div>`;
-  };
-
-  el.innerHTML=upcoming.map((l,i)=>buildCard(l,i)).join('');
-}
-
-function togglePreviewCard(idx){
-  const content=document.getElementById(`preview-content-${idx}`);
-  const arrow=document.getElementById(`preview-arrow-${idx}`);
-  if(!content)return;
-  const open=content.style.display==='none';
-  content.style.display=open?'block':'none';
-  if(arrow)arrow.style.transform=open?'rotate(180deg)':'';
-}
-
-function _sentBlankWord(item,all){
-  const lessonVocab=all.filter(v=>v.type==='vocab'&&v.lessonTitle===item.lessonTitle&&v.lessonDate===item.lessonDate);
-  for(const v of lessonVocab){
-    const re=new RegExp('\\b'+v.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
-    if(re.test(item.sentence||''))return v.word;
-  }
-  const words=(item.sentence||'').split(/\s+/).filter(w=>w.replace(/[^a-zA-Z]/g,'').length>4);
-  return words[Math.floor(Math.random()*words.length)]?.replace(/[.,!?;:'"]/g,'')||'';
-}
-
-function renderTodaySentenceTask(){
-  const sh=document.getElementById('today-sentence-list');if(!sh)return;
-  const today=getTodayStr();
-  const pool=getEngItems().filter(i=>i.type==='sentence'&&i.source==='lesson'&&(!i.lessonDate||i.lessonDate<=today));
-  if(!pool.length){sh.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0 4px">上完課後，課程的句子會出現在這裡</div>';return}
-  const picked=engShuffle(pool).slice(0,3);
-  const all=getEngItems();
-  const vocabPool=all.filter(v=>v.type==='vocab'&&v.word);
-  sh.innerHTML=picked.map((item,idx)=>{
-    const target=_sentBlankWord(item,all);
-    if(!target)return'';
-    const blanked=(item.sentence||'').replace(new RegExp('\\b'+target.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i'),'______');
-    const distractors=engShuffle(vocabPool.filter(v=>v.word.toLowerCase()!==target.toLowerCase())).slice(0,3).map(v=>v.word);
-    const opts=engShuffle([target,...distractors]);
-    return`<div class="today-sent-card">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">填入正確的字</div>
-      <div style="font-size:15px;font-weight:600;line-height:1.8;margin-bottom:4px">${esc(blanked)}</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${esc(item.translation||'')}</div>
-      <button class="prac-audio-btn" onclick="engSpeak('${(item.sentence||'').replace(/'/g,"\\'")}')">🔊 聆聽</button>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px" id="so-${idx}">
-        ${opts.map(o=>`<button class="prac-opt" onclick="checkSentOpt(${idx},this,'${o.replace(/'/g,"\\'")}','${target.replace(/'/g,"\\'")}','${(item.sentence||'').replace(/'/g,"\\'")}')">
-          ${esc(o)}
-        </button>`).join('')}
-      </div>
-      <div id="sfb-${idx}" style="display:none;margin-top:8px"></div>
+  }else{
+    front=`<div style="padding:18px 0">
+      <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:6px">📐 文法規則</div>
+      <div style="font-size:18px;font-weight:800">${esc(card.rule||'')}</div>
+      ${card.explanation?`<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">${esc(card.explanation)}</div>`:''}
     </div>`;
-  }).join('');
-}
-
-function checkSentOpt(idx,btn,selected,correct,fullSentence){
-  const isCorrect=selected.toLowerCase()===correct.toLowerCase();
-  document.querySelectorAll(`#so-${idx} .prac-opt`).forEach(b=>{
-    b.disabled=true;
-    const bv=b.textContent.trim().toLowerCase();
-    if(bv===correct.toLowerCase())b.classList.add('correct');
-    else if(b===btn&&!isCorrect)b.classList.add('wrong');
-  });
-  const fb=document.getElementById('sfb-'+idx);
-  fb.style.display='block';
-  fb.innerHTML=`<div style="font-size:13px;line-height:1.6;padding:10px;background:${isCorrect?'#ECFDF5':'#FEF2F2'};border-radius:10px;border:1.5px solid ${isCorrect?'#059669':'#EF4444'}">
-    ${isCorrect?'✅ 正確！':'❌ 答錯了'} <strong>${esc(correct)}</strong><br>
-    <span style="font-size:12px;color:#475569">${esc(fullSentence)}</span>
-  </div>`;
-}
-
-function renderToeicProgressBar(){
-  const bar=document.getElementById('toeic-phase-bar');if(!bar)return;
-  const mastered=getMasteredCount();const target=250;const pct=Math.min(100,Math.round(mastered/target*100));
-  bar.innerHTML=`<div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:13px;font-weight:700">📊 多益衝刺進度</span>
-      <span style="font-size:12px;color:var(--muted)">目標 550 → 750</span>
-    </div>
-    <div style="background:#F1F5F9;border-radius:10px;height:10px;overflow:hidden;margin-bottom:6px">
-      <div style="background:linear-gradient(90deg,#7C3AED,#A78BFA);height:100%;width:${pct}%;border-radius:10px;transition:width .4s"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
-      <span>已掌握 <strong style="color:var(--text)">${mastered}</strong> 個項目</span>
-      <span>目標 ${target} 個（${pct}%）</span>
-    </div>
-  </div>`;
-}
-
-function renderTodayOutput(){
-  const oh=document.getElementById('today-output');if(!oh)return;
-  const all=getEngItems();
-  const today=getTodayStr();
-  const candidates=[
-    ...todayReviewItems.filter(i=>i.type==='vocab'&&i.word),
-    ...all.filter(i=>i.type==='vocab'&&i.source==='toeic'&&i.date===today)
-  ];
-  if(!candidates.length){oh.innerHTML='';return}
-  const item=candidates[Math.floor(Math.random()*Math.min(candidates.length,5))];
-  oh.innerHTML=`<div class="today-task-card">
-    <div style="font-size:13px;color:var(--muted);margin-bottom:10px">用這個字造一個英文句子，然後大聲說出來！</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <div style="flex:1">
-        <div style="font-size:20px;font-weight:800">${esc(item.word||'')}</div>
-        <div style="font-size:13px;color:var(--muted)">${esc(item.zhMeaning||'')}</div>
-        ${item.example?`<div style="font-size:12px;font-style:italic;color:#64748B;margin-top:4px">"${esc(item.example)}"</div>`:''}
-      </div>
-      <button class="eng-play" style="font-size:22px" onclick="engPlay('${(item.audioUrl||'').replace(/'/g,"\\'")}','${(item.word||'').replace(/'/g,"\\'")}')">🔊</button>
-    </div>
-    <textarea id="output-ta" placeholder="Write your sentence here..." style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;min-height:64px;resize:none;background:white;margin-bottom:8px"></textarea>
-    <button class="full-btn" style="background:var(--english)" onclick="speakOutputSentence()">🔊 大聲說出來</button>
-  </div>`;
-}
-function speakOutputSentence(){
-  const v=(document.getElementById('output-ta')?.value||'').trim();
-  if(!v){showToast('先寫一個句子');return}
-  engSpeak(v);showToast('說得好！繼續練習 💪');
-}
-
-function renderTodayGrammarQ(){
-  const el=document.getElementById('today-grammar-q');if(!el)return;
-  const today=getTodayStr();
-  const seed=today.replace(/\//g,'')|0;
-  const q=TOEIC_GRAMMAR[seed%TOEIC_GRAMMAR.length];
-  el.innerHTML=`<div class="today-task-card" id="tgq-card">
-    <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:8px">TOEIC 文法 · ${esc(q.rule)}</div>
-    <div style="font-size:15px;font-weight:600;line-height:1.8;margin-bottom:12px">${esc(q.prompt)}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="tgq-opts">
-      ${q.opts.map((o,i)=>`<button class="prac-opt" onclick="checkTodayGrammarQ(this,${i},${q.ans},'${o.replace(/'/g,"\\'")}','${q.expl.replace(/'/g,"\\'")}','${q.opts[q.ans].replace(/'/g,"\\'")}')">
-        <span style="font-size:11px;color:var(--muted);margin-right:4px">${String.fromCharCode(65+i)}.</span>${esc(o)}
-      </button>`).join('')}
-    </div>
-    <div id="tgq-fb" style="display:none;margin-top:10px"></div>
-  </div>`;
-}
-function checkTodayGrammarQ(btn,chosen,correct,chosenText,expl,correctText){
-  document.querySelectorAll('#tgq-opts .prac-opt').forEach((b,i)=>{
-    b.disabled=true;
-    if(i===correct)b.classList.add('correct');
-    else if(b===btn&&chosen!==correct)b.classList.add('wrong');
-  });
-  const ok=chosen===correct;
-  const fb=document.getElementById('tgq-fb');
-  fb.style.display='block';
-  fb.innerHTML=`<div style="padding:10px 12px;background:${ok?'#ECFDF5':'#FEF2F2'};border-radius:10px;border:1.5px solid ${ok?'#059669':'#EF4444'};font-size:13px;line-height:1.7">
-    ${ok?'✅ 正確！':'❌ 答錯了 — 正確答案：<strong>'+esc(correctText)+'</strong>'}<br>
-    <span style="color:#475569">${esc(expl)}</span>
-  </div>`;
-}
-
-function renderTodayContent(){
-  const vh=document.getElementById('today-vocab-list');
-  const oh=document.getElementById('today-output');
-  if(oh)oh.innerHTML='';
-  if(todayReviewIdx<todayReviewItems.length){renderReviewCard(todayReviewItems[todayReviewIdx]);return}
-  const newWords=getToeicNewWords(5);const doneCount=todayReviewItems.length;
-  let html='';
-  if(doneCount>0){
-    const remaining=Math.max(0,todayReviewTotal-DAILY_REVIEW_CAP);
-    const remNote=remaining>0?`<div style="font-size:12px;color:var(--muted);margin-top:4px">還有 ${remaining} 個已排到後幾天，輕鬆繼續 📅</div>`:'<div style="font-size:12px;color:var(--muted)">記憶越來越穩固，繼續保持</div>';
-    html+=`<div style="text-align:center;padding:16px 0 8px"><div style="font-size:36px;margin-bottom:6px">🎉</div>
-      <div style="font-size:16px;font-weight:800;margin-bottom:3px">今日 ${doneCount} 張完成！</div>
-      ${remNote}</div>`;
-  }else if(!newWords.length){
-    html+=`<div style="text-align:center;padding:20px"><div style="font-size:36px;margin-bottom:8px">🌱</div>
-      <div style="font-size:15px;font-weight:700;margin-bottom:4px">今天沒有待複習項目</div>
-      <div style="font-size:12px;color:var(--muted)">繼續查字典、匯入課程來累積詞庫</div></div>`;
   }
-  if(newWords.length){
-    html+=`<div class="today-sec-label" style="margin-top:${doneCount?'4px':'0'}">
-      <span>📚 今日 TOEIC 新詞 × ${newWords.length}</span>
-      <button class="nb-btn" id="learn-toeic-btn" onclick="learnTodayToeic()">全部加入學習 ✓</button>
-    </div>
-    ${newWords.map(w=>`<div class="today-task-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div class="toeic-word-en">${esc(w.w)}&nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
-          <div class="toeic-word-zh">${esc(w.zh)}</div>
-          ${w.ex?`<div class="toeic-word-ex">"${esc(w.ex)}"</div>`:''}
-        </div>
-        <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button>
-      </div>
-    </div>`).join('')}`;
-  }else if(doneCount===0){
-    html+=`<div style="text-align:center;padding:12px;color:var(--muted);font-size:13px">全部 TOEIC 內建詞彙都已學習過！繼續從課程和查字典累積內容。</div>`;
-  }
-  if(vh)vh.innerHTML=html;
+  area.innerHTML=`${_srsProgBar(graceQIdx,graceQueue.length)}<div class="today-task-card">${front}
+    <button class="full-btn" style="background:#6D28D9;margin-top:4px" onclick="revealGraceOSSRSCard()">翻牌看答案</button>
+  </div>`;
 }
 
-function learnTodayToeic(){
-  const btn=document.getElementById('learn-toeic-btn');if(btn){btn.disabled=true;btn.textContent='加入中…'}
-  const newWords=getToeicNewWords(5);const now=getTodayStr();
-  newWords.forEach(w=>{
-    addEngItem({id:Date.now()+Math.random(),type:'vocab',word:w.w,ipa:'',audioUrl:'',
-      enDef:'',zhMeaning:w.zh,example:w.ex||'',partOfSpeech:w.pos,source:'toeic',date:now});
-  });
-  showToast(`${newWords.length} 個新詞已加入複習佇列 ✓`);
-  renderToeicProgressBar();renderToeicDailyWords();renderTodayContent();
-}
-
-function renderToeicDailyWords(){
-  const el=document.getElementById('toeic-daily-words');if(!el)return;
-  const newWords=getToeicNewWords(5);
-  if(!newWords.length){el.innerHTML='';return}
-  el.innerHTML=`
-    <div class="today-sec-label" style="margin-top:4px">
-      <span>📚 今日 TOEIC 新詞 × ${newWords.length}</span>
-      <button class="nb-btn" id="learn-toeic-btn" onclick="learnTodayToeic()">加入學習 ✓</button>
-    </div>
-    ${newWords.map(w=>`<div class="today-task-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div class="toeic-word-en">${esc(w.w)}&nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
-          <div class="toeic-word-zh">${esc(w.zh)}</div>
-          ${w.ex?`<div class="toeic-word-ex">"${esc(w.ex)}"</div>`:''}
-        </div>
-        <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button>
-      </div>
-    </div>`).join('')}`;
-}
-
-function getSourceLabel(src){
-  return({toeic:'📊 TOEIC',lookup:'🔍 查字典',lesson:'📖 課程',teacher:'👩‍🏫 老師補充',manual:'✍️ 自己記的'})[src]||src||'';
-}
-
-function renderReviewCard(item){
-  const vh=document.getElementById('today-vocab-list');if(!vh)return;
-  const total=todayReviewItems.length;
-  const lessonTag=(item.source==='lesson'&&item.lessonTitle)
-    ?`<div style="font-size:11px;color:#D97706;font-weight:600;margin-top:4px">📖 ${esc(item.lessonTitle)}${item.lessonDate?' · '+item.lessonDate:''}</div>`:''
-  const prog=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>複習 ${todayReviewIdx+1} / ${total}</span><span>${getSourceLabel(item.source)}</span></div>${lessonTag}</div>`;
+function revealGraceOSSRSCard(){
+  const area=document.getElementById('srs-grace-card-area');if(!area)return;
+  const card=graceQueue[graceQIdx];
   let front='',back='';
-  if(item.type==='vocab'){
-    front=`<div style="text-align:center;padding:20px 0">
-      <div style="font-size:28px;font-weight:800;letter-spacing:.5px">${esc(item.word||'')}</div>
-      ${item.ipa?`<div style="font-size:14px;color:var(--muted);margin-top:4px">${esc(item.ipa)}</div>`:''}
-      <button class="eng-play" style="margin-top:10px" onclick="engPlay('${(item.audioUrl||'').replace(/'/g,"\\'")}','${(item.word||'').replace(/'/g,"\\'")}')">🔊</button>
+  if(card.type==='vocab'){
+    front=`<div style="text-align:center;padding:16px 0 8px">
+      <div style="font-size:28px;font-weight:800">${esc(card.word||'')}</div>
+      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(card.word||'').replace(/'/g,"\\\'")}')">🔊</button>
     </div>`;
-    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
-      <div style="font-size:17px;font-weight:700">${esc(item.zhMeaning||'')}</div>
-      ${(item.partOfSpeech||item.enDef)?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${[item.partOfSpeech,item.enDef].filter(Boolean).join(' — ')}</div>`:''}
-      ${item.example?`<div style="font-size:13px;font-style:italic;color:#4B5563;margin-top:8px">"${esc(item.example)}"</div>`:''}
+    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
+      <div style="font-size:18px;font-weight:700;color:var(--vocab)">${esc(card.zh||'')}</div>
+      ${card.definition?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${esc(card.definition)}</div>`:''}
+      ${card.example?`<div style="font-size:13px;font-style:italic;color:#4B5563;margin-top:8px">"${esc(card.example)}" <button class="eng-play" onclick="engSpeak('${(card.example||'').replace(/'/g,"\\\'")}')">🔊</button></div>`:''}
     </div>`;
-  }else if(item.type==='sentence'){
-    front=`<div style="padding:16px 0">
-      <div style="font-size:15px;line-height:1.8;font-weight:600">${esc(item.sentence||'')}</div>
-      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(item.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
+  }else if(card.type==='sentence'){
+    front=`<div style="padding:14px 0 6px">
+      <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
+      <button class="eng-play" style="margin-top:4px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\\'")}')">🔊</button>
     </div>`;
-    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
-      <div style="font-size:15px;font-weight:700">${esc(item.translation||'')}</div>
-      ${item.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(item.notes)}</div>`:''}
+    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
+      <div style="font-size:16px;font-weight:700;color:var(--vocab)">${esc(card.zh||'')}</div>
     </div>`;
   }else{
-    const gramEx=(item.examples||[]).length?item.examples[Math.floor(Math.random()*(item.examples||[]).length)].replace(/_([^_]+)_/g,'$1'):'';
-    if(gramEx){
-      front=`<div style="padding:16px 0">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">看這個例句，它用了什麼文法或修辭技巧？</div>
-        <div style="font-size:15px;font-weight:600;line-height:1.8;font-style:italic;color:#1E293B">"${esc(gramEx)}"</div>
-        <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${gramEx.replace(/'/g,"\\'")}')">🔊</button>
-      </div>`;
-      back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
-        <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:4px">文法規則</div>
-        <div style="font-size:16px;font-weight:800;margin-bottom:6px">${esc(item.rule||'')}</div>
-        ${item.explanation?`<div style="font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:8px">${esc(item.explanation)}</div>`:''}
-        ${(item.examples||[]).slice(0,3).map(e=>`<div style="font-size:12px;font-style:italic;color:#4B5563;margin-bottom:4px">"${esc(e.replace(/_([^_]+)_/g,'$1'))}" <button class="eng-play" onclick="engSpeak('${e.replace(/_([^_]+)_/g,'$1').replace(/'/g,"\\'")}')">🔊</button></div>`).join('')}
-      </div>`;
-    }else{
-      front=`<div style="padding:16px 0">
-        <div style="font-size:12px;font-weight:700;color:#7C3AED;margin-bottom:6px">文法規則</div>
-        <div style="font-size:17px;font-weight:800">${esc(item.rule||'')}</div>
-        ${item.explanation?`<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">${esc(item.explanation)}</div>`:''}
-        <div style="font-size:12px;font-weight:600;color:#7C3AED;margin-top:12px">👉 翻面看說明</div>
-      </div>`;
-      back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:10px">
-        ${item.explanation?`<div style="font-size:14px;line-height:1.6">${esc(item.explanation)}</div>`:'<div style="font-size:13px;color:var(--muted)">試著自己造一個例句</div>'}
-      </div>`;
-    }
+    const exArr=card.examples||[];
+    front=`<div style="padding:14px 0 6px">
+      <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:5px">📐 文法規則</div>
+      <div style="font-size:18px;font-weight:800">${esc(card.rule||'')}</div>
+    </div>`;
+    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
+      ${card.explanation?`<div style="font-size:13px;line-height:1.7;margin-bottom:8px">${esc(card.explanation)}</div>`:''}
+      ${exArr.slice(0,2).map(e=>`<div style="font-size:12px;font-style:italic;color:#4B5563;margin-bottom:4px">"${esc(e.replace(/_([^_]+)_/g,'$1'))}" <button class="eng-play" onclick="engSpeak('${e.replace(/_([^_]+)_/g,'$1').replace(/'/g,"\\\'")}')">🔊</button></div>`).join('')}
+    </div>`;
   }
-  const ratingBtns=`<div style="margin-top:12px">
-    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:8px">你記得嗎？</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button onclick="reviewRate(1)" style="padding:11px 8px;border:2px solid #EF4444;border-radius:12px;background:white;color:#EF4444;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">❌ 不會<br><span style="font-size:10px;font-weight:400">明天再複習</span></button>
-      <button onclick="reviewRate(2)" style="padding:11px 8px;border:2px solid #F59E0B;border-radius:12px;background:white;color:#D97706;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">😅 模糊<br><span style="font-size:10px;font-weight:400">3 天後複習</span></button>
-      <button onclick="reviewRate(3)" style="padding:11px 8px;border:2px solid #10B981;border-radius:12px;background:white;color:#059669;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">✅ 會了<br><span style="font-size:10px;font-weight:400">約 1 週後</span></button>
-      <button onclick="reviewRate(4)" style="padding:11px 8px;border:2px solid #7C3AED;border-radius:12px;background:white;color:#7C3AED;font-weight:700;font-size:13px;cursor:pointer;line-height:1.5">🔥 很熟<br><span style="font-size:10px;font-weight:400">約 2 週後</span></button>
-    </div>
+  const btns=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+    <button onclick="graceOSSRSAnswer(false)" style="padding:12px 8px;border:2px solid #EF4444;border-radius:12px;background:white;color:#EF4444;font-weight:700;font-size:13px;cursor:pointer;line-height:1.4">❌ 不記得<br><span style="font-size:10px;font-weight:400">明天再複習</span></button>
+    <button onclick="graceOSSRSAnswer(true)" style="padding:12px 8px;border:2px solid #10B981;border-radius:12px;background:white;color:#059669;font-weight:700;font-size:13px;cursor:pointer;line-height:1.4">✅ 記得<br><span style="font-size:10px;font-weight:400">間隔拉長</span></button>
   </div>`;
-  if(!todayShowingAnswer){
-    vh.innerHTML=`${prog}<div class="today-task-card">${front}
-      <button class="full-btn" style="background:#6D28D9;margin-top:8px" onclick="revealReview()">翻面看答案</button>
-    </div>`;
-  }else{
-    vh.innerHTML=`${prog}<div class="today-task-card">${front}${back}</div>${ratingBtns}`;
-  }
+  area.innerHTML=`${_srsProgBar(graceQIdx,graceQueue.length)}<div class="today-task-card">${front}${back}</div>${btns}`;
 }
 
-function revealReview(){todayShowingAnswer=true;renderReviewCard(todayReviewItems[todayReviewIdx])}
-function reviewRate(rating){
-  srsRate(todayReviewItems[todayReviewIdx].id,rating);
-  todayReviewIdx++;todayShowingAnswer=false;
-  renderToeicProgressBar();renderTodayContent();
+function graceOSSRSAnswer(isCorrect){
+  reviewGraceCard(graceQueue[graceQIdx].id,isCorrect);
+  graceQIdx++;renderGraceOSSRSCard();
 }
-function saveTodayVocab(){}
+
+function showGraceOSSRSSummary(){
+  const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
+  const done=document.getElementById('srs-grace-done');if(!done)return;
+  done.style.display='block';
+  done.innerHTML=`<div style="text-align:center;padding:24px 0">
+    <div style="font-size:42px;margin-bottom:8px">🎉</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:4px">全部 ${graceQTotal} 張完成！</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">持續複習，記憶越來越穩固</div>
+    <button onclick="initGraceOSSRSTab()" class="full-btn" style="background:var(--vocab)">← 回到今日</button>
+  </div>`;
+}
 
 /* ════════════════════════════════
    記帳

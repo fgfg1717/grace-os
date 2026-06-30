@@ -1,0 +1,46 @@
+{
+  "courseTitle": "主修會話B2c第8堂 - Burger or Sandwich?",
+  "classDate": "2026/06/02",
+  "vocabulary": [
+    {"word": "topping", "zh": "（食物的）配料；頂部鋪料", "definition": "something added on top of food to give extra flavor", "example": "What toppings do you like on your hamburger?"},
+    {"word": "grilled", "zh": "炭烤的；鐵板烤的", "definition": "cooked on a grill using direct heat", "example": "Do you think hamburgers are better grilled or fried?"},
+    {"word": "bun", "zh": "漢堡麵包；圓形小麵包", "definition": "a small, round bread roll used for burgers or sandwiches", "example": "You cannot have a burger without a bun."},
+    {"word": "patty", "zh": "（肉）排；肉餅", "definition": "a round, flat piece of ground meat used in a burger", "example": "A Double-Double has two beef patties and two slices of cheese."},
+    {"word": "deli meat", "zh": "熟食肉品（薄切）", "definition": "pre-cooked or cured meat sold at a deli counter, often sliced thin", "example": "Could you put thinly-sliced deli meat in a bun and call it a burger?"},
+    {"word": "intriguing", "zh": "引人好奇的；令人著迷的", "definition": "very interesting and making you want to know more", "example": "Secret menu? That sounds intriguing."},
+    {"word": "advocate", "zh": "支持者；倡導者", "definition": "a person who publicly supports a particular cause or position", "example": "For the Burger Advocates — why do you believe the bun and patty sets burgers apart?"},
+    {"word": "justify", "zh": "為⋯辯護；說明⋯的合理性", "definition": "to show or prove that something is right or reasonable", "example": "How do you justify the inclusion of a burger as a type of sandwich?"},
+    {"word": "characteristics", "zh": "特徵；特點", "definition": "qualities or features that are typical of something", "example": "What characteristics define a burger that a traditional sandwich lacks?"},
+    {"word": "blur the line", "zh": "模糊界線；讓分界不清", "definition": "to make the distinction between two things unclear", "example": "Can you think of food items that blur the line between sandwiches and other categories?"},
+    {"word": "spread", "zh": "（三明治用的）醬料；塗抹醬", "definition": "a soft food mixture that can be spread on bread or buns", "example": "Animal Style fries come with melted cheese, grilled onions, and spread."},
+    {"word": "Neapolitan", "zh": "那不勒斯風格的（三色混合）", "definition": "combining three flavors — chocolate, vanilla, and strawberry", "example": "You can ask for a 'Neapolitan' shake, which is a mix of all three flavors."},
+    {"word": "adventurous", "zh": "愛冒險的；勇於嘗試新事物的", "definition": "willing to try new or unusual things", "example": "If you're feeling really adventurous, you can get your burger 'Protein Style.'"}
+  ],
+  "sentences": [
+    {"sentence": "A sandwich is anything that has two pieces of bread with something in between.", "zh": "三明治就是任何「兩片麵包夾著東西」的食物。"},
+    {"sentence": "By this definition, a hamburger fits perfectly!", "zh": "按照這個定義，漢堡完全符合！"},
+    {"sentence": "You cannot have a burger without a bun. 'Similar' does not mean 'is.'", "zh": "你不能沒有圓麵包就叫漢堡。「相似」不等於「就是」。"},
+    {"sentence": "I've been dying to try it. What's the best way to order?", "zh": "我一直超想試看看。點餐最好的方式是什麼？"},
+    {"sentence": "If you're feeling really adventurous, you can get your burger 'Protein Style,' which means it's wrapped in lettuce instead of a bun.", "zh": "如果你很想冒險嘗試，可以點「蛋白質風格」，就是用生菜葉包著，取代圓麵包。"}
+  ],
+  "grammar": [
+    {
+      "rule": "Defining relative clause: anything that / something that",
+      "explanation": "用 'anything that' 或 'something that' 來定義某類事物，說明「只要符合這個條件的都算」。",
+      "examples": [
+        "A sandwich is anything that has two pieces of bread with something in between.",
+        "There's a secret menu that locals love.",
+        "Can you think of food items that blur the line between categories?"
+      ]
+    },
+    {
+      "rule": "Which means... (解釋說明用法)",
+      "explanation": "口語中用 'which means...' 接在後面補充說明前面提到的事，相當於中文的「也就是說⋯」或「意思是⋯」。",
+      "examples": [
+        "Animal Style — that means the burger comes with grilled onions, extra sauce, and pickles.",
+        "'Protein Style,' which means it's wrapped in lettuce instead of a bun.",
+        "A 'Neapolitan' shake, which is a mix of all three flavors."
+      ]
+    }
+  ]
+}

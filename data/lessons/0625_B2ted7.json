@@ -1,0 +1,54 @@
+{
+  "courseTitle": "B2 TED TALKS第7堂 - New Year's Resolutions Dialogue",
+  "classDate": "2026/06/25",
+  "vocabulary": [
+    {"word": "reflection", "zh": "反思；沉思", "definition": "careful thought about past events or decisions", "example": "Did you have some nice reflections over New Year's?"},
+    {"word": "resolution", "zh": "決心；新年新希望", "definition": "a firm decision to do or stop doing something, often made at New Year", "example": "I made so many incredible New Year's resolutions."},
+    {"word": "posture", "zh": "姿勢；體態", "definition": "the position in which someone holds their body", "example": "My life changed when I fixed my posture last year."},
+    {"word": "miserable", "zh": "痛苦的；悲慘的", "definition": "very unhappy or uncomfortable", "example": "I'm going to delete the dating apps because they make me miserable."},
+    {"word": "boundary", "zh": "界線；邊界", "definition": "a limit that defines acceptable behavior or personal space", "example": "This year, I'm putting up boundaries with my boss."},
+    {"word": "contemplate", "zh": "深思；沉思；考慮", "definition": "to think deeply and carefully about something", "example": "Contemplate the relationship between attempting to change one's habits."},
+    {"word": "deep-rooted", "zh": "根深蒂固的；難以改變的", "definition": "firmly established and difficult to change or remove", "example": "Wrestling with a deep-rooted sense of some self-hatred."},
+    {"word": "naughty", "zh": "頑皮的；不聽話的；（輕微）不乖的", "definition": "behaving badly; slightly improper or mischievous", "example": "Not like last year — that was naughty!"},
+    {"word": "housemate", "zh": "室友；同住者", "definition": "a person who shares a house or apartment with others", "example": "We could do a housemate dinner with no phones."},
+    {"word": "savings", "zh": "存款；積蓄", "definition": "money that has been saved over time", "example": "I need to stop lying on the couch and eating into my savings."},
+    {"word": "a pop of colour", "zh": "一抹鮮豔色彩", "definition": "a small but noticeable touch of bright color", "example": "Life's too short — I'm gonna wear a pop of colour."},
+    {"word": "eat into one's savings", "zh": "消耗存款；坐吃山空", "definition": "to gradually use up money that has been saved", "example": "I need to stop lying on the couch and eating into my savings."},
+    {"word": "put up boundaries", "zh": "設立界線；劃清界線", "definition": "to establish firm limits on what others can demand from you", "example": "She has so many demands but this year, I'm putting up boundaries."},
+    {"word": "stick to", "zh": "堅持；遵守（計畫／決心）", "definition": "to continue doing something as planned without giving up", "example": "We're going to stick to these resolutions."},
+    {"word": "game changer", "zh": "改變局面的人／事", "definition": "something that fundamentally changes a situation or way of doing things", "example": "It's going to be a game changer."}
+  ],
+  "sentences": [
+    {"sentence": "Life's too short — I'm gonna wear a pop of colour.", "zh": "人生苦短，我要穿一抹鮮豔的色彩。"},
+    {"sentence": "My body needs to move so I should listen to that.", "zh": "我的身體需要動，所以我應該聽從身體的聲音。"},
+    {"sentence": "I need to stop lying on the couch and eating into my savings.", "zh": "我得停止整天躺在沙發上、坐吃山空了。"},
+    {"sentence": "It's going to be a game changer and we're going to stick to these resos.", "zh": "這將會是個大改變，而且我們要堅守這些新年決心。"}
+  ],
+  "grammar": [
+    {
+      "rule": "Gonna / Gotta / Wanna — 口語縮讀",
+      "explanation": "口語中常把 going to → gonna、got to → gotta、want to → wanna，讓對話更自然。書寫中不建議使用，但聽力和口語中非常普遍，要能聽懂。",
+      "examples": [
+        "I'm gonna wear a pop of colour. (= I'm going to wear...)",
+        "I gotta stop doing my baby voice. (= I've got to stop...)",
+        "We're gonna stick to these resos. (= We're going to stick...)"
+      ]
+    },
+    {
+      "rule": "Stop + V-ing vs. Stop + to V（停止做某事 vs. 停下來去做某事）",
+      "explanation": "stop + 動名詞（V-ing）= 停止某個正在進行的行為；stop + to V = 停下來，轉而去做另一件事。兩個意思完全不同！",
+      "examples": [
+        "I need to stop lying on the couch. (= 停止躺著這個習慣)",
+        "She stopped to think. (= 她停下來，開始思考)",
+        "I gotta stop doing my baby voice. (= 停止那個行為)"
+      ]
+    }
+  ],
+  "topicSummary": "這堂課是一段朋友之間的對話，討論各自的新年新希望——有人要戒掉讓自己痛苦的交友 App、有人要對老闆設立界線、有人要修正姿勢、有人要停止整天躺沙發⋯⋯幽默又超級生活化！課堂也會探討一個深層問題：為什麼我們每年立 flag 又每年失敗？改變習慣其實跟自我認同感有關。",
+  "discussion": [
+    "你最近有沒有想改變的壞習慣？你覺得難在哪裡？",
+    "你覺得新年新希望通常失敗的原因是什麼？",
+    "影片中的角色提到要「對老闆設立界線」——你覺得在生活或工作中設立界線，最難的部分是什麼？",
+    "你同意「改變習慣跟自我認同感有關」這個說法嗎？有沒有類似的親身經歷？"
+  ]
+}
