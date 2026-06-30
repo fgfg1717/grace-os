@@ -2421,15 +2421,21 @@ async function autoImportGraceLessons(){
   let imp;try{imp=JSON.parse(localStorage.getItem(GRACE_SRS_IMP_KEY)||'[]')}catch{imp=[];}
   let manifest;
   try{const r=await fetch('./data/lessons/manifest.json');if(!r.ok)return;manifest=await r.json();}catch{return;}
-  const lessons=manifest.lessons||[];let changed=false;
+  const lessons=manifest.lessons||[];
+  let cardsChanged=false,lmChanged=false;
+  const lm=loadGraceSRSLessons();
   for(const fname of lessons){
-    if(imp.includes(fname))continue;
     try{
       const r=await fetch(`./data/lessons/${fname}`);if(!r.ok)continue;
-      const j=await r.json();importLessonToGraceSRS(j);imp.push(fname);changed=true;
+      const j=await r.json();
+      const lid=j.classDate||j.courseTitle;
+      if(!lm[lid]){lm[lid]=j.courseTitle||lid;lmChanged=true;}
+      if(!imp.includes(fname)){importLessonToGraceSRS(j);imp.push(fname);cardsChanged=true;}
     }catch{}
   }
-  if(changed){localStorage.setItem(GRACE_SRS_IMP_KEY,JSON.stringify(imp));initGraceOSSRSTab();}
+  if(lmChanged)saveGraceSRSLessons(lm);
+  if(cardsChanged)localStorage.setItem(GRACE_SRS_IMP_KEY,JSON.stringify(imp));
+  initGraceOSSRSTab();
 }
 
 /* ── 今日任務 — SRS 複習 ── */
