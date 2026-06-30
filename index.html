@@ -2367,6 +2367,18 @@ function addTranscriptUI(id){
   setLessons(lessons);renderLessonList();showToast('✅ 逐字稿已儲存');
 }
 
+/* ── 通用工具（練習/查記/SRS 共用）── */
+function getTodayStr(){return fmtYMD(taipeiNow())}
+function _sentBlankWord(item,all){
+  const lessonVocab=all.filter(v=>v.type==='vocab'&&v.lessonTitle===item.lessonTitle&&v.lessonDate===item.lessonDate);
+  for(const v of lessonVocab){
+    const re=new RegExp('\\b'+v.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+    if(re.test(item.sentence||''))return v.word;
+  }
+  const words=(item.sentence||'').split(/\s+/).filter(w=>w.replace(/[^a-zA-Z]/g,'').length>4);
+  return words[Math.floor(Math.random()*words.length)]?.replace(/[.,!?;:'"]/g,'')||'';
+}
+
 /* ── GraceOS SRS v2 — 講義驅動間隔複習（key: grace_srs_cards_v2）── */
 const GRACE_SRS_KEY='grace_srs_cards_v2';
 const GRACE_SRS_IMP_KEY='grace_srs_imported_v2';
