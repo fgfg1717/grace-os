@@ -640,6 +640,7 @@
 
   <!-- 今日任務 — SRS 間隔複習 -->
   <div id="eng-panel-today">
+    <div id="srs-grace-filter" style="margin-bottom:12px"></div>
     <div id="srs-grace-banner" style="background:linear-gradient(135deg,#5B21B6,#7C3AED);color:white;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px;user-select:none;transition:opacity .2s" onclick="startGraceOSSRS()">
       <div style="font-size:32px;margin-bottom:6px">&#x1F501;</div>
       <div style="font-size:18px;font-weight:800">今天該複習：<span id="srs-grace-count">0</span> 張卡片</div>
@@ -2369,7 +2370,11 @@ function addTranscriptUI(id){
 /* ── GraceOS SRS v2 — 講義驅動間隔複習（key: grace_srs_cards_v2）── */
 const GRACE_SRS_KEY='grace_srs_cards_v2';
 const GRACE_SRS_IMP_KEY='grace_srs_imported_v2';
-let graceQueue=[],graceQIdx=0,graceQTotal=0;
+const GRACE_SRS_LESSONS_KEY='grace_srs_lessons_v2';
+let graceQueue=[],graceQIdx=0,graceQTotal=0,graceLessonFilter=null;
+
+function loadGraceSRSLessons(){try{return JSON.parse(localStorage.getItem(GRACE_SRS_LESSONS_KEY)||'{}')}catch{return{}}}
+function saveGraceSRSLessons(m){localStorage.setItem(GRACE_SRS_LESSONS_KEY,JSON.stringify(m))}
 
 function loadGraceSRS(){try{return JSON.parse(localStorage.getItem(GRACE_SRS_KEY)||'{}')}catch{return{}}}
 function saveGraceSRS(s){localStorage.setItem(GRACE_SRS_KEY,JSON.stringify(s))}
@@ -2391,6 +2396,7 @@ function importLessonToGraceSRS(lessonJson){
     if(!s[id])s[id]={id,lessonId:lid,type:'grammar',rule:v.rule,explanation:v.explanation||'',examples:v.examples||[],interval_days:1,next_review:today,ease:2.5,review_count:0,wrong_count:0};
   });
   saveGraceSRS(s);
+  const lm=loadGraceSRSLessons();lm[lid]=lessonJson.courseTitle||lid;saveGraceSRSLessons(lm);
 }
 
 function reviewGraceCard(cardId,isCorrect){
@@ -2427,8 +2433,45 @@ async function autoImportGraceLessons(){
 }
 
 /* ── 今日任務 — SRS 複習 ── */
+function renderGraceSRSFilter(){
+  const el=document.getElementById('srs-grace-filter');if(!el)return;
+  const lm=loadGraceSRSLessons();
+  const ids=Object.keys(lm);
+  if(!ids.length){el.innerHTML='';return;}
+  const chips=[{id:null,label:'全部'},...ids.map(id=>({id,label:lm[id]}))];
+  el.innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap">${
+    chips.map(c=>{
+      const sel=c.id===graceLessonFilter;
+      return `<button onclick="selectGraceLesson(${c.id===null?'null':`'${c.id}'`})"
+        style="padding:6px 12px;border-radius:20px;border:1.5px solid ${sel?'#6D28D9':'var(--border)'};
+        background:${sel?'#6D28D9':'white'};color:${sel?'white':'var(--text)'};
+        font-size:12px;font-weight:${sel?'700':'500'};cursor:pointer;white-space:nowrap;
+        font-family:inherit;line-height:1.4">${esc(c.label)}</button>`;
+    }).join('')
+  }</div>`;
+}
+
+function selectGraceLesson(lid){
+  graceLessonFilter=lid;
+  renderGraceSRSFilter();
+  const allDue=getDueGraceCards();
+  const due=lid?allDue.filter(c=>c.lessonId===lid):allDue;
+  graceQTotal=due.length;graceQueue=due;graceQIdx=0;
+  const el=document.getElementById('srs-grace-count');if(el)el.textContent=graceQTotal;
+  const banner=document.getElementById('srs-grace-banner');
+  if(banner){
+    if(graceQTotal>0){banner.style.opacity='1';banner.style.pointerEvents='auto';}
+    else{banner.style.opacity='0.45';banner.style.pointerEvents='none';}
+    banner.style.display='';
+  }
+  const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
+  const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
+}
+
 function initGraceOSSRSTab(){
-  const due=getDueGraceCards();
+  renderGraceSRSFilter();
+  const allDue=getDueGraceCards();
+  const due=graceLessonFilter?allDue.filter(c=>c.lessonId===graceLessonFilter):allDue;
   graceQTotal=due.length;graceQueue=due;graceQIdx=0;
   const el=document.getElementById('srs-grace-count');if(el)el.textContent=graceQTotal;
   const banner=document.getElementById('srs-grace-banner');
