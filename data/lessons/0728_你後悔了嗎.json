@@ -1,0 +1,105 @@
+{
+  "courseTitle": "你後悔了嗎? Buyer's Remorse",
+  "classDate": "2026-07-28",
+  "vocabulary": [
+    {
+      "word": "buyer's remorse",
+      "zh": "買家懊悔 / 購買後的後悔",
+      "definition": "A deep regret over a past decision, especially after making a purchase.",
+      "example": "I just bought this expensive coffee maker, and now I'm regretting it. Total buyer's remorse."
+    },
+    {
+      "word": "splurge",
+      "zh": "揮霍；亂花錢",
+      "definition": "To spend a lot of money on buying goods, especially expensive things.",
+      "example": "Next time, I'll think twice before splurging."
+    },
+    {
+      "word": "exacerbate",
+      "zh": "加重；使惡化",
+      "definition": "To make a problem, bad situation, or negative feeling worse.",
+      "example": "Financial implications often exacerbate buyer's remorse."
+    },
+    {
+      "word": "foster",
+      "zh": "培養；促進",
+      "definition": "To encourage the development or growth of ideas or feelings.",
+      "example": "Businesses that offer extended return policies foster customer loyalty."
+    },
+    {
+      "word": "frivolous",
+      "zh": "輕浮的；無聊的",
+      "definition": "Not having any serious purpose or value.",
+      "example": "Can a no-questions-asked return policy effectively reduce buyer's remorse, or does it encourage frivolous returns?"
+    },
+    {
+      "word": "undermine",
+      "zh": "削弱；破壞",
+      "definition": "To lessen the effectiveness, power, or ability of, especially gradually or insidiously.",
+      "example": "This behavior not only undermines the integrity of the return process but also inflates operational expenses."
+    },
+    {
+      "word": "inflate",
+      "zh": "增加；抬高",
+      "definition": "To increase excessively or improperly.",
+      "example": "This behavior not only undermines the integrity of the return process but also inflates operational expenses."
+    },
+    {
+      "word": "generous",
+      "zh": "慷慨的；寬宏大量的",
+      "definition": "Showing a readiness to give more of something than is strictly necessary or expected.",
+      "example": "I truly feel that no other retailer's return policy is as generous as Costco's."
+    },
+    {
+      "word": "exception",
+      "zh": "例外",
+      "definition": "A person or thing that is excluded from a general statement or does not follow a rule.",
+      "example": "Basically, with limited exceptions, you can bring back any item to Costco at any time for a refund."
+    },
+    {
+      "word": "non-refundable",
+      "zh": "不可退款的",
+      "definition": "Used to describe money that you pay that you cannot get back.",
+      "example": "Interestingly enough, Shop Cards -- Costco's version of a gift card -- are also non-refundable."
+    },
+    {
+      "word": "spoil",
+      "zh": "腐壞；變質",
+      "definition": "To become unfit for eating or use.",
+      "example": "Costco will absolutely take back anything where there's a clear quality issue, such as if an item has spoiled ahead of its printed expiration date."
+    },
+    {
+      "word": "implication",
+      "zh": "影響；牽連",
+      "definition": "The conclusion that can be drawn from something although it is not explicitly stated, or a likely consequence.",
+      "example": "Financial implications often exacerbate buyer's remorse."
+    }
+  ],
+  "sentences": [
+    {
+      "sentence": "I just bought this expensive coffee maker, and now I'm regretting it. Total buyer's remorse.",
+      "zh": "我剛買了這台昂貴的咖啡機，現在我後悔了。完全是買家的懊悔。"
+    },
+    {
+      "sentence": "Next time, I'll think twice before splurging.",
+      "zh": "下次在揮霍之前我會三思。"
+    },
+    {
+      "sentence": "Should businesses extend return policies to reduce buyer's remorse?",
+      "zh": "企業應該延長退貨政策以減少買家的懊悔嗎？"
+    },
+    {
+      "sentence": "Can a no-questions-asked return policy effectively reduce buyer's remorse, or does it encourage frivolous returns?",
+      "zh": "不問理由的退貨政策能有效減少買家的懊悔嗎？還是會助長無謂的退貨？"
+    },
+    {
+      "sentence": "Basically, with limited exceptions, you can bring back any item to Costco at any time for a refund.",
+      "zh": "基本上，除了少數例外，你可以隨時將任何商品退回好市多並獲得退款。"
+    },
+    {
+      "sentence": "If there's an item that doesn't meet your expectations or needs, you can take it back, no questions asked.",
+      "zh": "如果有商品不符合你的期望或需求，你可以退回它，我們不會問任何問題。"
+    }
+  ],
+  "grammar": []
+}

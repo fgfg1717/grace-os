@@ -1,0 +1,115 @@
+{
+  "courseTitle": "恐懼 Phobia",
+  "classDate": "2026-07-21",
+  "vocabulary": [
+    {
+      "word": "phobia",
+      "zh": "恐懼症",
+      "definition": "An anxiety disorder involving excessive and persistent fear of a situation or object.",
+      "example": "In the United States, approximately 19 million people have phobias."
+    },
+    {
+      "word": "excessive",
+      "zh": "過度的",
+      "definition": "More than is necessary, normal, or desirable.",
+      "example": "A phobia is an anxiety disorder involving excessive and persistent fear of a situation or object."
+    },
+    {
+      "word": "persistent",
+      "zh": "持續的；堅持不懈的",
+      "definition": "Continuing to exist or endure over a prolonged period.",
+      "example": "A phobia is an anxiety disorder involving excessive and persistent fear of a situation or object."
+    },
+    {
+      "word": "distress",
+      "zh": "極度痛苦；悲傷",
+      "definition": "Extreme anxiety, sorrow, or pain.",
+      "example": "The person will experience intense distress when faced with the source of their phobia."
+    },
+    {
+      "word": "preoccupied",
+      "zh": "全神貫注的；心事重重的",
+      "definition": "Engrossed in thought; distracted.",
+      "example": "Typical symptoms of phobias can include being preoccupied with the fear object."
+    },
+    {
+      "word": "acrophobia",
+      "zh": "懼高症",
+      "definition": "An extreme or irrational fear of heights.",
+      "example": "Acrophobia is a psychological condition when people have a fear of heights."
+    },
+    {
+      "word": "claustrophobia",
+      "zh": "幽閉恐懼症",
+      "definition": "An extreme or irrational fear of confined places.",
+      "example": "People with claustrophobia try to avoid confined spaces."
+    },
+    {
+      "word": "pallor",
+      "zh": "蒼白",
+      "definition": "An unhealthy pale appearance.",
+      "example": "The signs and symptoms observed in panic cases include sweating, nausea, and pallor."
+    },
+    {
+      "word": "derealization",
+      "zh": "失真感；現實解體",
+      "definition": "A feeling that one's surroundings are not real.",
+      "example": "Some patients may experience panic, nausea, and derealization when triggered."
+    },
+    {
+      "word": "tantrum",
+      "zh": "發脾氣",
+      "definition": "An uncontrolled outburst of anger and frustration.",
+      "example": "The signs and symptoms observed include fainting, freezing, and sometimes a tantrum."
+    },
+    {
+      "word": "introversion",
+      "zh": "內向",
+      "definition": "The quality of being shy and reticent.",
+      "example": "Introversion and Social Anxiety Are Two Different Things."
+    },
+    {
+      "word": "manifest",
+      "zh": "表現；顯現",
+      "definition": "Display or show by one's acts or appearance; demonstrate.",
+      "example": "How do these behaviors manifest in social situations?"
+    },
+    {
+      "word": "rehearse",
+      "zh": "排練；預演",
+      "definition": "Mentally prepare or practice a plan of action or speech.",
+      "example": "One of the ways to shake shyness is to rehearse what to say."
+    }
+  ],
+  "sentences": [
+    {
+      "sentence": "What comes to mind when you hear the word \"phobia\"?",
+      "zh": "當你聽到「恐懼症」這個詞時，你會想到什麼？"
+    },
+    {
+      "sentence": "Have you ever experienced a fear that you would consider intense or overwhelming?",
+      "zh": "你曾經經歷過你認為強烈或壓倒性的恐懼嗎？"
+    },
+    {
+      "sentence": "A phobia is an anxiety disorder involving excessive and persistent fear of a situation or object.",
+      "zh": "恐懼症是一種焦慮症，涉及對某種情況或物體過度和持續的恐懼。"
+    },
+    {
+      "sentence": "Please identify and explain the different types of phobias and disorders.",
+      "zh": "請識別並解釋不同類型的恐懼症和心理障礙。"
+    },
+    {
+      "sentence": "Introversion and Social Anxiety Are Two Different Things.",
+      "zh": "內向和社交焦慮是兩回事。"
+    },
+    {
+      "sentence": "Compare how introverts and people with social anxiety approach social interactions.",
+      "zh": "比較內向者和社交焦慮者如何處理社交互動。"
+    },
+    {
+      "sentence": "Often, the hardest part of talking to someone new is getting started.",
+      "zh": "通常，與新認識的人交談最困難的部分是開始。"
+    }
+  ],
+  "grammar": []
+}

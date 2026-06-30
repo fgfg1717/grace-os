@@ -1,0 +1,95 @@
+{
+  "courseTitle": "入門電梯簡報 Elevator Pitch",
+  "classDate": "2026-07-30",
+  "vocabulary": [
+    {
+      "word": "elevator pitch",
+      "zh": "電梯簡報；極短篇推銷",
+      "definition": "A brief and engaging summary of an idea, project, product, or yourself.",
+      "example": "An elevator pitch is a brief and engaging summary of an idea, project, product, or yourself, meant to be delivered in 30-60 seconds to spark interest."
+    },
+    {
+      "word": "confined",
+      "zh": "狹窄的；受限的",
+      "definition": "Restricted in area or volume; cramped.",
+      "example": "An Elevator Pitch is a sales pitch conducted inside an elevator to take advantage of the confined space."
+    },
+    {
+      "word": "integrate",
+      "zh": "整合；結合",
+      "definition": "To combine one thing with another so that they become a whole.",
+      "example": "TimeSaver integrates seamlessly with existing calendars and provides smart reminders to keep users on track."
+    },
+    {
+      "word": "seamlessly",
+      "zh": "無縫地",
+      "definition": "Smoothly and continuously, with no apparent gaps or spaces between one part and the next.",
+      "example": "TimeSaver integrates seamlessly with existing calendars and provides smart reminders to keep users on track."
+    },
+    {
+      "word": "carbon footprint",
+      "zh": "碳足跡",
+      "definition": "The amount of carbon dioxide and other carbon compounds emitted due to the consumption of fossil fuels by a particular person, group, etc.",
+      "example": "EcoTrack App helps reduce carbon footprint with eco-friendly suggestions."
+    },
+    {
+      "word": "hype up",
+      "zh": "過度宣傳；大肆炒作",
+      "definition": "To promote or publicize something extravagantly.",
+      "example": "Don't hype up the product or service too much by saying 'this amazing product will save your life'."
+    },
+    {
+      "word": "superlative",
+      "zh": "最高級的詞；誇張的言辭",
+      "definition": "An exaggerated or hyperbolical expression of praise.",
+      "example": "When presenting your pitch, do not use too many superlatives like 'best in the world'."
+    },
+    {
+      "word": "jargon",
+      "zh": "行話；專業術語",
+      "definition": "Special words or expressions that are used by a particular profession or group and are difficult for others to understand.",
+      "example": "Avoid using too many business jargon like 'value-added results' or 'cost-effective solutions'."
+    },
+    {
+      "word": "proposition",
+      "zh": "提議；提案",
+      "definition": "A suggested scheme or plan of action, especially in a business context.",
+      "example": "They outline potential expenses and revenue projections, presenting a proposition for collaboration or investment."
+    },
+    {
+      "word": "asset",
+      "zh": "資產；優勢",
+      "definition": "A useful or valuable thing, person, or quality.",
+      "example": "In a business pitch, entrepreneurs highlight their assets, like unique ideas or skills, to attract investors."
+    },
+    {
+      "word": "venture",
+      "zh": "冒險事業；企業",
+      "definition": "A risky or daring journey or undertaking, especially a business enterprise.",
+      "example": "By showcasing how their assets can generate profit and minimize expenses, they aim to persuade others to join their venture."
+    }
+  ],
+  "sentences": [
+    {
+      "sentence": "An elevator pitch is a brief and engaging summary of an idea, project, product, or yourself, meant to be delivered in 30-60 seconds to spark interest.",
+      "zh": "電梯簡報是關於想法、專案、產品或你自己的簡短而引人入勝的總結，旨在於 30-60 秒內發表以激發興趣。"
+    },
+    {
+      "sentence": "TimeSaver integrates seamlessly with existing calendars and provides smart reminders to keep users on track.",
+      "zh": "TimeSaver 與現有日曆無縫整合，並提供智能提醒以幫助用戶掌握進度。"
+    },
+    {
+      "sentence": "Remember to smile and maintain eye contact during your pitch!",
+      "zh": "記得在推銷簡報時保持微笑並保持眼神交流！"
+    },
+    {
+      "sentence": "Adjust your pitch to fit your audience and context.",
+      "zh": "根據您的受眾和情境調整您的推銷簡報。"
+    },
+    {
+      "sentence": "In a business pitch, entrepreneurs highlight their assets, like unique ideas or skills, to attract investors.",
+      "zh": "在商業推銷中，企業家會強調他們的資產（優勢），例如獨特的想法或技能，以吸引投資者。"
+    }
+  ],
+  "grammar": []
+}
