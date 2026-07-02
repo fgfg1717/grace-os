@@ -6,8 +6,8 @@
   "scope": "/grace-os/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1C1810",
-  "theme_color": "#2D2A24",
+  "background_color": "#6D28D9",
+  "theme_color": "#7C3AED",
   "icons": [
     {
       "src": "icon.svg",
