@@ -642,9 +642,8 @@
   <div id="eng-panel-today">
     <div id="srs-grace-filter" style="margin-bottom:12px"></div>
     <div id="srs-grace-banner" style="background:linear-gradient(135deg,#5B21B6,#7C3AED);color:white;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px;user-select:none;transition:opacity .2s" onclick="startGraceOSSRS()">
-      <div style="font-size:32px;margin-bottom:6px">&#x1F501;</div>
-      <div style="font-size:18px;font-weight:800">今天該複習：<span id="srs-grace-count">0</span> 張卡片</div>
-      <div style="font-size:13px;opacity:.8;margin-top:5px">點擊開始間隔複習</div>
+      <div style="font-size:32px;margin-bottom:6px">🔄</div>
+      <div style="font-size:18px;font-weight:800">載入中…</div>
     </div>
     <div id="srs-grace-card-area"></div>
     <div id="srs-grace-done" style="display:none"></div>
@@ -2096,7 +2095,12 @@ function _sentBlankWord(item,all){
 const GRACE_SRS_KEY='grace_srs_cards_v2';
 const GRACE_SRS_IMP_KEY='grace_srs_imported_v2';
 const GRACE_SRS_LESSONS_KEY='grace_srs_lessons_v2';
+const SRS_BATCH_KEY='grace_srs_batch_v1';
+const SRS_BATCH_SIZE=5;
 let graceQueue=[],graceQIdx=0,graceQTotal=0,graceLessonFilter=null;
+
+function loadSRSBatch(){try{return JSON.parse(localStorage.getItem(SRS_BATCH_KEY)||'null')}catch{return null}}
+function saveSRSBatch(b){localStorage.setItem(SRS_BATCH_KEY,JSON.stringify(b))}
 
 function loadGraceSRSLessons(){try{return JSON.parse(localStorage.getItem(GRACE_SRS_LESSONS_KEY)||'{}')}catch{return{}}}
 function saveGraceSRSLessons(m){localStorage.setItem(GRACE_SRS_LESSONS_KEY,JSON.stringify(m))}
@@ -2185,34 +2189,54 @@ function renderGraceSRSFilter(){
 function selectGraceLesson(lid){
   graceLessonFilter=lid;
   renderGraceSRSFilter();
-  const allDue=getDueGraceCards();
-  const due=lid?allDue.filter(c=>c.lessonId===lid):allDue;
-  graceQTotal=due.length;graceQueue=due;graceQIdx=0;
-  const el=document.getElementById('srs-grace-count');if(el)el.textContent=graceQTotal;
-  const banner=document.getElementById('srs-grace-banner');
-  if(banner){
-    if(graceQTotal>0){banner.style.opacity='1';banner.style.pointerEvents='auto';}
-    else{banner.style.opacity='0.45';banner.style.pointerEvents='none';}
-    banner.style.display='';
-  }
-  const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
-  const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
+  initGraceOSSRSTab();
 }
 
 function initGraceOSSRSTab(){
   renderGraceSRSFilter();
-  const allDue=getDueGraceCards();
-  const due=graceLessonFilter?allDue.filter(c=>c.lessonId===graceLessonFilter):allDue;
-  graceQTotal=due.length;graceQueue=due;graceQIdx=0;
-  const el=document.getElementById('srs-grace-count');if(el)el.textContent=graceQTotal;
+  const s=loadGraceSRS();
+  const today=fmtYMD(taipeiNow());
+  const lid=graceLessonFilter;
+  // 取今日到期卡片，固定排序確保每天順序一致
+  const allDueNow=Object.values(s)
+    .filter(c=>c.next_review<=today&&(!lid||c.lessonId===lid))
+    .sort((a,b)=>a.id<b.id?-1:1);
+  // 讀取或初始化今日 batch 狀態
+  let b=loadSRSBatch();
+  if(!b||b.date!==today||(b.lessonFilter||null)!==(lid||null)){
+    b={date:today,lessonFilter:lid||null,allDueIds:allDueNow.map(c=>c.id),progress:0};
+    saveSRSBatch(b);
+  }
+  const totalDue=b.allDueIds.length;
+  const remaining=totalDue-b.progress;
+  const batchIds=b.allDueIds.slice(b.progress,b.progress+SRS_BATCH_SIZE);
+  const batchCards=batchIds.map(id=>s[id]).filter(Boolean);
+  const batchSize=batchCards.length;
+  const batchNum=Math.floor(b.progress/SRS_BATCH_SIZE)+1;
+  const totalBatches=Math.ceil(totalDue/SRS_BATCH_SIZE)||1;
+  graceQTotal=totalDue;graceQueue=batchCards;graceQIdx=0;
   const banner=document.getElementById('srs-grace-banner');
   if(banner){
-    if(graceQTotal>0){banner.style.opacity='1';banner.style.pointerEvents='auto';}
-    else{banner.style.opacity='0.45';banner.style.pointerEvents='none';}
+    if(totalDue===0){
+      banner.innerHTML=`<div style="font-size:32px;margin-bottom:6px">🔄</div>
+        <div style="font-size:18px;font-weight:800">今天暫無需複習的卡片</div>
+        <div style="font-size:13px;opacity:.8;margin-top:5px">繼續累積，明天見！</div>`;
+      banner.style.opacity='0.45';banner.style.pointerEvents='none';
+    }else if(remaining<=0){
+      banner.innerHTML=`<div style="font-size:32px;margin-bottom:6px">✅</div>
+        <div style="font-size:18px;font-weight:800">今日 ${totalDue} 張全部完成！</div>
+        <div style="font-size:13px;opacity:.8;margin-top:5px">明天繼續加油</div>`;
+      banner.style.opacity='0.45';banner.style.pointerEvents='none';
+    }else{
+      banner.innerHTML=`<div style="font-size:32px;margin-bottom:6px">🔄</div>
+        <div style="font-size:18px;font-weight:800">今天共 ${totalDue} 張，這輪 ${batchSize} 張</div>
+        <div style="font-size:13px;opacity:.8;margin-top:5px">第 ${batchNum} / ${totalBatches} 輪 · 點擊開始</div>`;
+      banner.style.opacity='1';banner.style.pointerEvents='auto';
+    }
+    banner.style.display='';
   }
   const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
   const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
-  if(banner)banner.style.display='';
 }
 
 function startGraceOSSRS(){
@@ -2307,13 +2331,37 @@ function graceOSSRSAnswer(isCorrect){
 function showGraceOSSRSSummary(){
   const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
   const done=document.getElementById('srs-grace-done');if(!done)return;
+  // 更新 batch 進度
+  let b=loadSRSBatch();
+  const completedThisRound=graceQueue.length;
+  if(b){b.progress=Math.min((b.progress||0)+completedThisRound,b.allDueIds.length);saveSRSBatch(b);}
+  const totalDue=b?b.allDueIds.length:graceQTotal;
+  const remaining=b?totalDue-b.progress:0;
   done.style.display='block';
-  done.innerHTML=`<div style="text-align:center;padding:24px 0">
-    <div style="font-size:42px;margin-bottom:8px">🎉</div>
-    <div style="font-size:18px;font-weight:800;margin-bottom:4px">全部 ${graceQTotal} 張完成！</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">持續複習，記憶越來越穩固</div>
-    <button onclick="initGraceOSSRSTab()" class="full-btn" style="background:var(--vocab)">← 回到今日</button>
-  </div>`;
+  if(remaining<=0){
+    done.innerHTML=`<div style="text-align:center;padding:24px 0">
+      <div style="font-size:42px;margin-bottom:8px">🎉</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px">今日全部 ${totalDue} 張完成！</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">持續複習，記憶越來越穩固</div>
+      <button onclick="initGraceOSSRSTab()" class="full-btn" style="background:var(--vocab)">← 回到今日</button>
+    </div>`;
+  }else{
+    const nextBatchSize=Math.min(remaining,SRS_BATCH_SIZE);
+    done.innerHTML=`<div style="text-align:center;padding:24px 0">
+      <div style="font-size:42px;margin-bottom:8px">✅</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px">這輪 ${completedThisRound} 張完成！</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">還有 ${remaining} 張，之後繼續刷也可以</div>
+      <button onclick="continueNextBatch()" class="full-btn" style="background:var(--vocab);margin-bottom:10px">繼續下 ${nextBatchSize} 張 →</button>
+      <button onclick="initGraceOSSRSTab()" class="outline-btn">← 先休息，回到今日</button>
+    </div>`;
+  }
+}
+
+function continueNextBatch(){
+  initGraceOSSRSTab();
+  const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
+  const banner=document.getElementById('srs-grace-banner');if(banner)banner.style.display='none';
+  graceQIdx=0;renderGraceOSSRSCard();
 }
 
 /* ════════════════════════════════
