@@ -11,6 +11,7 @@ const VOCAB_TAB      = '英文單字庫';
 const LEDGER_TAB     = '記帳明細';
 const STOCK_TAB      = '股票紀錄';
 const SETTINGS_TAB   = 'App 設定';
+const INSIGHT_TAB    = '個人洞察庫';
 const MAIN_GID       = 974288665;
 const READ_TOKEN     = 'graceos2026read';
 
@@ -303,7 +304,8 @@ function doPost(e) {
 
     // ── 寫入復盤紀錄 ──
     if (type === 'review') {
-      const isWeekly = (data.review_type || '週') === '週';
+      const rt = String(data.review_type || '');
+      const isWeekly = rt === '週' || rt.toLowerCase() === 'week' || rt === 'w';
       const sheet = isWeekly ? getOrCreateWeekReviewSheet(ss) : getOrCreateMonthReviewSheet(ss);
       sheet.appendRow([
         fmt(new Date()),         // A: 寫入日期
@@ -316,6 +318,18 @@ function doPost(e) {
         data.life_pct    || '',  // H: 個人生活%
         data.misc_pct    || '',  // I: 瑣務%
         data.full_report || ''   // J: 完整報告
+      ]);
+      return out({ ok: true });
+    }
+
+    // ── 寫入個人洞察庫 ──
+    if (type === 'insight') {
+      const sheet = getOrCreateInsightSheet(ss);
+      sheet.appendRow([
+        fmt(new Date()),       // A: 寫入日期
+        data.period   || '',   // B: 來源週期（如 6/30-7/4）
+        data.insight  || '',   // C: 洞察（一句話）
+        data.tag      || '',   // D: 標籤（工作/人/自己）
       ]);
       return out({ ok: true });
     }
@@ -810,6 +824,21 @@ function getOrCreateEngItemsSheet(ss) {
     s = ss.insertSheet('英文詞庫快照');
     s.getRange(1,1,1,2).setValues([['時間戳','JSON資料']]);
     s.setFrozenRows(1);
+  }
+  return s;
+}
+
+function getOrCreateInsightSheet(ss) {
+  let s = ss.getSheetByName(INSIGHT_TAB);
+  if (!s) {
+    s = ss.insertSheet(INSIGHT_TAB);
+    s.appendRow(['寫入日期', '來源週期', '洞察', '標籤']);
+    s.setFrozenRows(1);
+    s.setColumnWidth(1, 100);
+    s.setColumnWidth(2, 110);
+    s.setColumnWidth(3, 420);
+    s.setColumnWidth(4, 80);
+    s.getRange(1, 1, 1, 4).setBackground('#D9EAD3').setFontWeight('bold');
   }
   return s;
 }
