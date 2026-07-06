@@ -481,6 +481,11 @@
       <div class="label">快速記錄</div>
       <div class="hint">靈感・財務・健康・工作・生活・語音 🎙️</div>
     </div>
+    <div class="card card-tasks full" onclick="show('tasks')">
+      <span class="icon">📝</span>
+      <div class="label">雜事清單</div>
+      <div class="hint" id="home-tasks-hint">載入中…</div>
+    </div>
   </div>
 
   <div class="section-label">財務管理</div>
@@ -527,11 +532,6 @@
 
   <div class="section-label">工作規劃</div>
   <div class="grid">
-    <div class="card card-tasks full" onclick="show('tasks')">
-      <span class="icon">📝</span>
-      <div class="label">雜事清單</div>
-      <div class="hint" id="home-tasks-hint">載入中…</div>
-    </div>
     <div class="card card-plan full" onclick="show('daily')">
       <span class="icon">🌅</span>
       <div class="label">今日策略</div>
