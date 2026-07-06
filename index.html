@@ -14,7 +14,7 @@
   <style>
     :root {
       --capture:#4E7B52; --vocab:#7055A0; --ledger:#9A6B30;
-      --stock:#A85540;   --plan:#445E78;  --aar:#7A7066;
+      --stock:#A85540;   --plan:#445E78;  --aar:#7A7066; --tasks:#10B981;
       --review:#7A7066;  --monthly:#4A7090;
       --health:#A84040;  --english:#9A6B30; --pr:#2E4A6E; --ceo:#604A8A;
       --bg:#F8F5F0; --card:#FFFFFF; --text:#1C1C18;
@@ -57,6 +57,7 @@
     .fin-expense{color:#EF4444;font-weight:700}
     .fin-net{font-size:18px;font-weight:800}
     .fin-asset-card{background:linear-gradient(135deg,#2E4A6E,#604A8A);border-radius:12px;padding:18px;color:white;margin-bottom:10px}
+    .card-tasks:hover  {border-color:var(--tasks)}
     .card-plan:hover   {border-color:var(--plan)}
     .card-aar:hover    {border-color:var(--aar)}
     .card-review:hover {border-color:var(--review)}
@@ -526,6 +527,11 @@
 
   <div class="section-label">工作規劃</div>
   <div class="grid">
+    <div class="card card-tasks full" onclick="show('tasks')">
+      <span class="icon">📝</span>
+      <div class="label">雜事清單</div>
+      <div class="hint" id="home-tasks-hint">載入中…</div>
+    </div>
     <div class="card card-plan full" onclick="show('daily')">
       <span class="icon">🌅</span>
       <div class="label">今日策略</div>
@@ -1294,6 +1300,8 @@ async function syncStocksFromCloud(){
   document.getElementById('today-label').textContent=fmtDate(now);
   document.getElementById('r-week').value=weekRange();
   document.getElementById('mo-month').value=fmtMonth(now);
+  updateTasksHint();
+  loadTasksFromCloud().then(()=>updateTasksHint());
 })();
 
 /* ════ Navigation ════ */
@@ -1311,6 +1319,7 @@ function show(type){
   else if(type==='plan'){}
   else if(type==='review'){loadNb(type);initReview();}
   else if(type==='ceo')initCEO();
+  else if(type==='tasks'){renderTasks();}
   else loadNb(type);
   window.scrollTo(0,0);
 }
@@ -3526,6 +3535,87 @@ function renderCEOCases(){
 function delCEOCase(i){
   const cases=getCEOCases();cases.splice(i,1);setCEOCases(cases);renderCEOCases();
 }
+
+/* ════ 雜事清單 ════ */
+const TASKS_KEY='tasks_v1';
+function loadTasks(){try{return JSON.parse(localStorage.getItem(TASKS_KEY)||'[]');}catch{return[];}}
+function saveTasks(tasks){localStorage.setItem(TASKS_KEY,JSON.stringify(tasks));updateTasksHint();syncTasksToCloud();}
+function addTask(){
+  const inp=document.getElementById('task-input');
+  const text=(inp.value||'').trim();
+  if(!text)return;
+  const tasks=loadTasks();
+  tasks.unshift({id:Date.now(),text,done:false,created:new Date().toISOString().slice(0,10)});
+  saveTasks(tasks);inp.value='';renderTasks();
+}
+function toggleTask(id){
+  const tasks=loadTasks();
+  const t=tasks.find(t=>t.id===id);
+  if(t){t.done=!t.done;t.doneAt=t.done?new Date().toISOString().slice(0,10):null;}
+  saveTasks(tasks);renderTasks();
+}
+function deleteTask(id){
+  if(!confirm('刪除這項？'))return;
+  saveTasks(loadTasks().filter(t=>t.id!==id));renderTasks();
+}
+function renderTasks(){
+  const tasks=loadTasks();
+  const el=document.getElementById('tasks-list');
+  if(!el)return;
+  if(!tasks.length){el.innerHTML='<div style="text-align:center;padding:32px;color:#94A3B8;font-size:14px">沒有待辦事項 🎉</div>';return;}
+  const today=new Date().toISOString().slice(0,10);
+  const pending=tasks.filter(t=>!t.done);
+  const done=tasks.filter(t=>t.done);
+  let html='';
+  pending.forEach(t=>{
+    const days=Math.floor((new Date(today)-new Date(t.created))/(864e5));
+    const overdue=days>=7;
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #F1F5F9">
+      <input type="checkbox" style="width:18px;height:18px;accent-color:#10B981;flex-shrink:0;cursor:pointer" onchange="toggleTask(${t.id})"/>
+      <span style="flex:1;font-size:14px;color:#1E293B">${esc(t.text)}</span>
+      ${overdue?`<span style="font-size:11px;background:#FEE2E2;color:#DC2626;border-radius:6px;padding:2px 7px;font-weight:700">${days}天</span>`:''}
+      <button onclick="deleteTask(${t.id})" style="border:none;background:none;color:#CBD5E1;font-size:16px;cursor:pointer;padding:0 4px;flex-shrink:0">✕</button>
+    </div>`;
+  });
+  if(done.length){
+    html+=`<div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:16px;margin-bottom:6px">已完成</div>`;
+    done.slice(0,5).forEach(t=>{
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F8FAFC;opacity:0.5">
+        <input type="checkbox" checked style="width:18px;height:18px;accent-color:#10B981;flex-shrink:0;cursor:pointer" onchange="toggleTask(${t.id})"/>
+        <span style="flex:1;font-size:13px;color:#64748B;text-decoration:line-through">${esc(t.text)}</span>
+        <button onclick="deleteTask(${t.id})" style="border:none;background:none;color:#CBD5E1;font-size:16px;cursor:pointer;padding:0 4px;flex-shrink:0">✕</button>
+      </div>`;
+    });
+    if(done.length>5)html+=`<div style="font-size:12px;color:#94A3B8;text-align:center;padding:8px">（僅顯示最近 5 筆）</div>`;
+  }
+  el.innerHTML=html;
+}
+function updateTasksHint(){
+  const pending=loadTasks().filter(t=>!t.done).length;
+  const el=document.getElementById('home-tasks-hint');
+  if(el)el.textContent=pending?`${pending} 件待完成`:'全部完成 🎉';
+}
+async function syncTasksToCloud(){
+  const url=gasUrl();if(!url)return;
+  try{
+    await fetch(url,{method:'POST',body:JSON.stringify({type:'app_settings',token:'graceos2026read',key:TASKS_KEY,data:loadTasks()}),headers:{'Content-Type':'application/json'}});
+  }catch{}
+}
+async function loadTasksFromCloud(){
+  const url=gasUrl();if(!url)return;
+  try{
+    const res=await fetch(`${url}?token=graceos2026read&type=app_settings`);
+    const json=await res.json();
+    if(json.ok&&json.data&&json.data[TASKS_KEY]){
+      const cloud=json.data[TASKS_KEY].data||[];
+      const local=loadTasks();
+      const localIds=new Set(local.map(t=>t.id));
+      const merged=[...local,...cloud.filter(t=>!localIds.has(t.id))];
+      merged.sort((a,b)=>b.id-a.id);
+      localStorage.setItem(TASKS_KEY,JSON.stringify(merged));
+    }
+  }catch{}
+}
 </script>
 <!-- Budget Modal -->
 <div class="budget-modal-overlay" id="budget-modal-overlay" onclick="if(event.target===this)closeBudgetModal()">
@@ -3624,6 +3714,24 @@ function delCEOCase(i){
     </div>
   </div>
 </div>
+<!-- 雜事清單 -->
+<div class="tpl" id="tpl-tasks">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">📝</span>
+    <div><h2>雜事清單</h2>
+      <span class="tag" style="background:#D1FAE5;color:#065F46;">瑣事 · 隨時記 · 隨時打勾</span>
+    </div>
+  </div>
+  <div class="section-card">
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input type="text" id="task-input" placeholder="輸入待辦事項…" style="flex:1;border:1.5px solid #E2E8F0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;background:#fff" onkeydown="if(event.key==='Enter')addTask()"/>
+      <button onclick="addTask()" style="background:#10B981;color:white;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">＋ 新增</button>
+    </div>
+    <div id="tasks-list"></div>
+  </div>
+</div>
+
 <button id="back-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:24px;right:20px;width:44px;height:44px;border-radius:50%;background:#2D2A24;color:white;border:none;font-size:18px;cursor:pointer;display:none;z-index:9998;box-shadow:0 4px 14px rgba(0,0,0,.2);align-items:center;justify-content:center;line-height:1">↑</button>
 <script>
 if('serviceWorker' in navigator){
