@@ -569,6 +569,15 @@
       <div class="hint">每月底 · 60 分鐘</div>
     </div>
   </div>
+
+  <div class="section-label">系統</div>
+  <div class="grid">
+    <div class="card card-aar full" onclick="show('settings')">
+      <span class="icon">⚙️</span>
+      <div class="label">設定</div>
+      <div class="hint">Google Sheets 同步・幕僚沙盤 API Key</div>
+    </div>
+  </div>
 </div>
 
 <!-- 快速記錄 -->
@@ -607,36 +616,42 @@
   </div>
   <div class="section-label" style="margin-top:4px">今天的紀錄</div>
   <div id="cap-list"></div>
-  <div class="cap-settings">
-    <button class="settings-toggle" onclick="toggleCapSettings()">⚙️ Google Sheets 同步設定</button>
-    <div id="cap-settings-body" class="settings-body" style="display:none;margin-top:10px">
-      <div class="field"><label>Apps Script 網址</label>
-        <input type="text" id="cap-gas-url" placeholder="https://script.google.com/macros/s/…/exec"/></div>
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="window.location.reload()">🔄 重新載入 App</button>
-      </div>
-      <div class="btn-row">
-        <button class="btn-primary" style="background:var(--text)" onclick="saveCapSettings()">儲存</button>
-        <button class="btn-secondary" onclick="retrySyncAll()">重試未同步</button>
-      </div>
-      <div class="btn-row" style="margin-top:4px">
-        <button class="btn-secondary" style="font-size:12px" onclick="forceResyncAll()">🔁 強制重新同步所有帳目</button>
-      </div>
+</div>
+
+<!-- ⚙️ 設定 -->
+<div class="tpl" id="tpl-settings">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">⚙️</span>
+    <div><h2>設定</h2>
+      <span class="tag" style="background:#F1F5F9;color:#475569;">同步・API Key</span>
     </div>
   </div>
-  <div class="cap-settings" style="margin-top:12px">
-    <button class="settings-toggle" onclick="toggleGroqSettings()">🎯 幕僚沙盤 API Key 設定</button>
-    <div id="groq-settings-body" class="settings-body" style="display:none;margin-top:10px">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">
-        幕僚沙盤使用 <strong>Groq</strong> AI 服務，需要 <code>gsk_</code> 開頭的免費 API Key。<br>
-        申請網址：<strong>console.groq.com</strong>
-      </div>
-      <div class="field"><label>Groq API Key</label>
-        <input type="password" id="groq-key-input" placeholder="gsk_..." autocomplete="off"
-          style="font-family:'SF Mono','Courier New',monospace"/></div>
-      <div id="groq-key-status" style="font-size:12px;margin-bottom:8px"></div>
-      <button class="btn-primary" style="background:#059669;width:100%" onclick="saveGroqKey()">儲存 API Key</button>
+  <div class="cap-form">
+    <div class="section-label" style="margin-top:0">📊 Google Sheets 同步</div>
+    <div class="field"><label>Apps Script 網址</label>
+      <input type="text" id="cap-gas-url" placeholder="https://script.google.com/macros/s/…/exec"/></div>
+    <div class="btn-row">
+      <button class="btn-primary" style="background:var(--text)" onclick="saveCapSettings()">儲存</button>
+      <button class="btn-secondary" onclick="retrySyncAll()">重試未同步</button>
     </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn-secondary" onclick="window.location.reload()">🔄 重新載入 App</button>
+      <button class="btn-secondary" onclick="forceResyncAll()">🔁 強制重新同步</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">「強制重新同步」會以 Google Sheets 的資料覆蓋手機上的記帳／記錄／股票（尚未上傳的不會被刪）。</div>
+  </div>
+  <div class="cap-form">
+    <div class="section-label" style="margin-top:0">🎯 幕僚沙盤／CEO 出考題 API Key</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+      使用 <strong>Groq</strong> AI 服務（免費），Key 以 <code>gsk_</code> 開頭。<br>
+      申請網址：<strong>console.groq.com</strong>
+    </div>
+    <div class="field"><label>Groq API Key</label>
+      <input type="password" id="groq-key-input" placeholder="gsk_..." autocomplete="off"
+        style="font-family:'SF Mono','Courier New',monospace"/></div>
+    <div id="groq-key-status" style="font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-primary" style="background:#059669;width:100%" onclick="saveGroqKey()">儲存 API Key</button>
   </div>
 </div>
 
@@ -958,16 +973,6 @@
       <span class="tag" style="background:#F1F5F9;color:#475569;">每週日 · 30 分鐘</span>
     </div>
   </div>
-  <div class="nb-box">
-    <div class="nb-header">
-      <span class="nb-label">📌 NotebookLM 建議</span>
-      <button class="nb-btn" id="nb-btn-review" onclick="toggleNb('review')">編輯</button>
-    </div>
-    <div class="nb-display" id="nb-disp-review" onclick="editNb('review')">
-      <span class="nb-empty">週覆盤後把 NotebookLM 建議貼進來</span>
-    </div>
-    <textarea class="nb-textarea" id="nb-ta-review" placeholder="貼上 NotebookLM 建議…"></textarea>
-  </div>
   <div class="field"><label>週期</label><input type="text" id="r-week"/></div>
   <div id="review-insights-section" style="margin-bottom:12px"></div>
   <div class="field"><label>這週其他補充（選填）</label>
@@ -985,23 +990,13 @@
       <span class="tag" style="background:#E0F2FE;color:#075985;">每月底 · 60 分鐘</span>
     </div>
   </div>
-  <div class="nb-box">
-    <div class="nb-header">
-      <span class="nb-label">📌 NotebookLM 建議</span>
-      <button class="nb-btn" id="nb-btn-monthly" onclick="toggleNb('monthly')">編輯</button>
-    </div>
-    <div class="nb-display" id="nb-disp-monthly" onclick="editNb('monthly')">
-      <span class="nb-empty">月回顧後把 NotebookLM 建議貼進來</span>
-    </div>
-    <textarea class="nb-textarea" id="nb-ta-monthly" placeholder="貼上 NotebookLM 建議…"></textarea>
-  </div>
   <div class="field"><label>月份</label><input type="text" id="mo-month"/></div>
   <div class="field"><label>🏢 事業成果</label><textarea id="mo-career" placeholder="這個月工作完成了什麼？"></textarea></div>
   <div class="field"><label>📈 個人成長</label><textarea id="mo-growth" placeholder="英文進度、學習、個人發展？"></textarea></div>
   <div class="field"><label>👨‍👩‍👧‍👦 家庭關係</label><textarea id="mo-family" placeholder="與孩子互動、家庭關係？"></textarea></div>
   <div class="field"><label>💪 身心健康</label><textarea id="mo-health" placeholder="健身、飲食、睡眠狀態？"></textarea></div>
   <div class="field"><label>下月最重要 1 件事</label><textarea id="mo-next" placeholder="如果只能專注一件事，是什麼？"></textarea></div>
-  <button class="full-btn" style="background:var(--monthly)" onclick="copyOnly('monthly')">複製內容 → NotebookLM</button>
+  <button class="full-btn" style="background:var(--monthly)" onclick="copyOnly('monthly')">複製內容 → Claude 分析</button>
 </div>
 
 <!-- CEO 思維庫 -->
@@ -1152,7 +1147,7 @@
   <!-- 出考題 -->
   <div id="ceo-panel-quiz" class="e-hidden">
     <div id="ceo-quiz-no-key" class="e-hidden">
-      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">需要 Groq API Key 才能出題。<br>請先到 <strong>⚡ 快速記錄</strong> → 頁面最下方「🎯 幕僚沙盤 API Key 設定」→ 輸入 Key，這裡會自動讀取。</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">需要 Groq API Key 才能出題。<br>請先到首頁 <strong>⚙️ 設定</strong> → 輸入 Groq API Key，這裡會自動讀取。</div>
     </div>
     <div id="ceo-quiz-body">
       <div id="ceo-quiz-idle">
@@ -1349,10 +1344,10 @@ function _showDOM(type){
   else if(type==='aar')initAAR();
   else if(type==='daily')initDailyStrategy();
   else if(type==='plan'){const pc=document.getElementById('plan-content');if(pc&&pc.querySelector('.plan-empty'))fetchPlan();}
-  else if(type==='review'){loadNb(type);initReview();}
+  else if(type==='review')initReview();
   else if(type==='ceo')initCEO();
-  else if(type==='tasks'){renderTasks();}
-  else loadNb(type);
+  else if(type==='tasks')renderTasks();
+  else if(type==='settings')initSettings();
   window.scrollTo(0,0);
 }
 function openEmbed(type){
@@ -1446,21 +1441,16 @@ function assemble(type){
 }
 function copyOnly(type){doCopy(assemble(type),'已複製！貼給 Claude 分析')}
 
-/* ════ NotebookLM box ════ */
-function loadNb(type){
-  const content=localStorage.getItem('nb-'+type)||'';
-  const disp=document.getElementById('nb-disp-'+type);
-  const ta=document.getElementById('nb-ta-'+type);
-  const btn=document.getElementById('nb-btn-'+type);
-  ta.style.display='none';disp.style.display='block';if(btn)btn.textContent='編輯';
-  ta.value=content;
-  if(content)disp.textContent=content;
-  else{const ph=type==='review'?'週覆盤後把 NotebookLM 建議貼進來':'月回顧後把 NotebookLM 建議貼進來';
-    disp.innerHTML=`<span class="nb-empty">${ph}</span>`}
+/* ════ 設定頁 ════ */
+function initSettings(){
+  const gas=document.getElementById('cap-gas-url');
+  if(gas)gas.value=gasUrl();
+  const existing=localStorage.getItem('pr_gemini_key_v1')||'';
+  const inp=document.getElementById('groq-key-input');
+  if(inp)inp.value='';
+  const st=document.getElementById('groq-key-status');
+  if(st){st.textContent=existing?'✅ 目前狀態：已設定':'⚠️ 目前狀態：尚未設定';st.style.color=existing?'#059669':'#F59E0B'}
 }
-function editNb(type){document.getElementById('nb-disp-'+type).style.display='none';const ta=document.getElementById('nb-ta-'+type);ta.style.display='block';ta.focus();const btn=document.getElementById('nb-btn-'+type);if(btn)btn.textContent='儲存'}
-function saveNb(type){localStorage.setItem('nb-'+type,document.getElementById('nb-ta-'+type).value.trim());loadNb(type)}
-function toggleNb(type){const ta=document.getElementById('nb-ta-'+type);ta.style.display==='none'||ta.style.display===''?editNb(type):saveNb(type)}
 
 /* ════════════════════════════════
    快速記錄
@@ -1556,21 +1546,7 @@ function delCapture(id){
   setCaptures(all.filter(x=>x.id!==id));loadCaptureList();
   if(c.synced)postGAS({type:'delete_capture',date:c.date,category:c.category,time:c.time||'',summary:c.summary});
 }
-function toggleCapSettings(){const b=document.getElementById('cap-settings-body');b.style.display=b.style.display==='none'?'block':'none'}
 function saveCapSettings(){localStorage.setItem('gas-url',document.getElementById('cap-gas-url').value.trim());showToast('設定已儲存')}
-function toggleGroqSettings(){
-  const b=document.getElementById('groq-settings-body');
-  const show=b.style.display==='none';
-  b.style.display=show?'block':'none';
-  if(show){
-    const existing=localStorage.getItem('pr_gemini_key_v1')||'';
-    const inp=document.getElementById('groq-key-input');
-    if(inp)inp.value=existing?'（已設定，重新輸入可更新）':'';
-    const st=document.getElementById('groq-key-status');
-    if(st)st.textContent=existing?'✅ 目前狀態：已設定':'⚠️ 目前狀態：尚未設定';
-    if(st)st.style.color=existing?'#059669':'#F59E0B';
-  }
-}
 function saveGroqKey(){
   const v=document.getElementById('groq-key-input').value.trim();
   if(!v||v.startsWith('（')){showToast('請輸入 API Key');return}
@@ -3290,7 +3266,7 @@ function copyAARFmt(mode){
   const prompt=mode==='week'
     ?`\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點、1 個防呆行動\n2. 各類別各佔多少比例\n3. 有沒有哪個流程可以優化`
     :`\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句績效描述句。`;
-  doCopy(`【AAR 紀錄 ${from} – ${to}】\n\n${body}${prompt}`,`已複製 ${aarData.length} 筆！貼到 NotebookLM`)
+  doCopy(`【AAR 紀錄 ${from} – ${to}】\n\n${body}${prompt}`,`已複製 ${aarData.length} 筆！貼給 Claude 分析`)
 }
 
 /* ════════════════════════════════
