@@ -1237,6 +1237,15 @@ async function getGAS(params){
 
   catch(e){return null}
 }
+/* 通用 key-value 雲端同步（走 GAS app_settings，手機/電腦共用） */
+function pushKV(key,data){
+  if(!gasUrl())return;
+  postGAS({type:'app_settings',token:'graceos2026read',key,data});
+}
+async function getCloudKV(){
+  const res=await getGAS({type:'app_settings'});
+  return res?.ok?(res.data||{}):null;
+}
 
 /* ════ 跨裝置雲端同步 ════ */
 async function syncCapturesFromCloud(){
@@ -1605,7 +1614,7 @@ function dedupeEngItems(){
   if(clean.length<a.length)setEngItems(clean);
 }
 
-function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud();autoImportGraceLessons();}
+function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud();autoImportGraceLessons().then(()=>syncGraceSRSFromCloud());}
 
 function switchEngTab(tab){
   const tabs=['today','dict','list','practice'];
@@ -2199,6 +2208,51 @@ function reviewGraceCard(cardId,isCorrect){
   }
   const next=new Date(taipeiNow());next.setDate(next.getDate()+c.interval_days);
   c.next_review=fmtYMD(next);saveGraceSRS(s);
+  scheduleSRSPush();
+}
+
+/* ── SRS 複習進度跨裝置同步 ──
+   只同步輕量狀態（間隔/下次複習/次數），卡片內容由課程檔在各裝置自動建立 */
+let _srsPushTimer=null;
+function _srsStateSlim(){
+  const s=loadGraceSRS();const out={};
+  Object.values(s).forEach(c=>{out[c.id]={i:c.interval_days,n:c.next_review,e:c.ease,r:c.review_count||0,w:c.wrong_count||0}});
+  return out;
+}
+function scheduleSRSPush(){
+  if(!gasUrl())return;
+  if(_srsPushTimer)clearTimeout(_srsPushTimer);
+  _srsPushTimer=setTimeout(()=>{pushKV('grace_srs_state_v1',_srsStateSlim())},5000);
+}
+async function syncGraceSRSFromCloud(){
+  const kv=await getCloudKV();if(!kv)return;
+  const entry=kv['grace_srs_state_v1'];
+  if(!entry?.data||typeof entry.data!=='object')return;
+  const s=loadGraceSRS();let changed=false;
+  Object.entries(entry.data).forEach(([id,cs])=>{
+    const c=s[id];if(!c||!cs)return;
+    const localProg=(c.review_count||0)+(c.wrong_count||0);
+    const cloudProg=(cs.r||0)+(cs.w||0);
+    // 雲端進度較多，或次數相同但複習日較新 → 採用雲端狀態
+    if(cloudProg>localProg||(cloudProg===localProg&&(cs.n||'')>(c.next_review||''))){
+      c.interval_days=cs.i;c.next_review=cs.n;c.ease=cs.e;
+      c.review_count=cs.r;c.wrong_count=cs.w;changed=true;
+    }
+  });
+  if(!changed)return;
+  saveGraceSRS(s);
+  // 已建立的今日批次補進新到期的卡片
+  const b=loadSRSBatch();
+  if(b&&b.date===fmtYMD(taipeiNow())){
+    const today=b.date;
+    const known=new Set(b.allDueIds);
+    Object.values(s).filter(c=>c.next_review<=today&&(!b.lessonFilter||c.lessonId===b.lessonFilter))
+      .forEach(c=>{if(!known.has(c.id))b.allDueIds.push(c.id)});
+    saveSRSBatch(b);
+  }
+  initGraceOSSRSTab();
+  showToast('複習進度已同步 ✓');
+  scheduleSRSPush();
 }
 
 function getDueGraceCards(){
@@ -3294,6 +3348,16 @@ async function initDailyStrategy(){
     document.getElementById('daily-block').value='';
   }
 
+  // 跨裝置：雲端有更新的今日策略就帶下來
+  getCloudKV().then(kv=>{
+    const e=kv&&kv[DAILY_KEY];if(!e?.data)return;
+    const cloud=e.data;const local=getDailyStrategy();
+    if(cloud.date===today&&cloud.top1&&(cloud._ts||0)>(local._ts||0)){
+      setDailyStrategy(cloud);showDailySaved(cloud);updateHomeDailyHint(cloud.top1);
+      showToast('今日策略已從另一台裝置同步 ✓');
+    }
+  });
+
   // 從 Sheets 抓今天的計畫
   const planEl=document.getElementById('daily-plan-section');
   if(!planEl)return;
@@ -3327,8 +3391,9 @@ function saveDailyStrategy(){
   const block=(document.getElementById('daily-block').value||'').trim();
   if(!top1){showToast('請填寫今天最重要的一件事');return}
   const today=fmtYMD(taipeiNow());
-  const data={date:today,top1,must,block};
+  const data={date:today,top1,must,block,_ts:Date.now()};
   setDailyStrategy(data);
+  pushKV(DAILY_KEY,data);
   showDailySaved(data);
   showToast('今日策略已儲存 ✓');
   updateHomeDailyHint(top1);
@@ -3536,9 +3601,32 @@ const CEO_FRAMEWORKS=[
 ];
 
 function getCEOCases(){try{return JSON.parse(localStorage.getItem('ceo_cases')||'[]')}catch(e){return[]}}
-function setCEOCases(items){localStorage.setItem('ceo_cases',JSON.stringify(items))}
+function setCEOCases(items){
+  localStorage.setItem('ceo_cases',JSON.stringify(items));
+  localStorage.setItem('ceo_cases_ts',String(Date.now()));
+  pushKV('ceo_cases',items);
+}
 function getCEOQuizHistory(){try{return JSON.parse(localStorage.getItem('ceo_quiz_history')||'[]')}catch(e){return[]}}
-function setCEOQuizHistory(items){localStorage.setItem('ceo_quiz_history',JSON.stringify(items))}
+function setCEOQuizHistory(items){
+  localStorage.setItem('ceo_quiz_history',JSON.stringify(items));
+  localStorage.setItem('ceo_quiz_history_ts',String(Date.now()));
+  pushKV('ceo_quiz_history',items);
+}
+async function syncCEOFromCloud(){
+  const kv=await getCloudKV();if(!kv)return;
+  let changed=false;
+  [['ceo_cases','ceo_cases_ts'],['ceo_quiz_history','ceo_quiz_history_ts']].forEach(([key,tsKey])=>{
+    const e=kv[key];
+    if(!e?.data||!Array.isArray(e.data))return;
+    const localTs=Number(localStorage.getItem(tsKey)||0);
+    if((e.ts||0)>localTs){
+      localStorage.setItem(key,JSON.stringify(e.data));
+      localStorage.setItem(tsKey,String(e.ts));
+      changed=true;
+    }
+  });
+  if(changed){renderCEOCases();renderCEOQuizHistory();showToast('CEO 思維庫已同步 ✓');}
+}
 
 let _ceoCurrentQ='';
 
@@ -3546,6 +3634,7 @@ function initCEO(){
   switchCEOTab('patterns');
   const d=document.getElementById('ceo-case-date');
   if(d)d.value=fmtInputDate(taipeiNow());
+  syncCEOFromCloud();
 }
 
 function switchCEOTab(tab){
@@ -3766,10 +3855,8 @@ function updateTasksHint(){
   if(el)el.textContent=pending?`${pending} 件待完成`:'全部完成 🎉';
 }
 async function syncTasksToCloud(){
-  const url=gasUrl();if(!url)return;
-  try{
-    await fetch(url,{method:'POST',body:JSON.stringify({type:'app_settings',token:'graceos2026read',key:TASKS_KEY,data:loadTasks()}),headers:{'Content-Type':'application/json'}});
-  }catch{}
+  // 用 no-cors 簡單請求（原本的 application/json 會被瀏覽器 CORS 預檢擋下，上傳一直失敗）
+  pushKV(TASKS_KEY,loadTasks());
 }
 async function loadTasksFromCloud(){
   const url=gasUrl();if(!url)return;
