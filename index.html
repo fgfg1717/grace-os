@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>靜華 OS</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon.svg" />
@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="靜華 OS" />
   <meta name="theme-color" content="#7C3AED" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
     :root {
       --capture:#4E7B52; --vocab:#7055A0; --ledger:#9A6B30;
@@ -125,8 +124,9 @@
 
     /* Toast */
     .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
-      background:#1E293B;color:white;padding:12px 24px;border-radius:100px;
-      font-size:14px;font-weight:600;transition:transform .28s;z-index:99;white-space:nowrap}
+      background:#1E293B;color:white;padding:12px 24px;border-radius:20px;
+      font-size:14px;font-weight:600;transition:transform .28s;z-index:99;
+      max-width:calc(100vw - 32px);text-align:center;line-height:1.5}
     .toast.show{transform:translateX(-50%) translateY(0)}
 
     /* NotebookLM box */
@@ -428,14 +428,26 @@
     /* Ledger report */
     .ldg-period-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
     .ldg-summary-cards{display:flex;gap:8px;margin-bottom:16px}
-    .ldg-sum-card{flex:1;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+    .ldg-sum-card{flex:1;min-width:0;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center}
     .ldg-sum-label{font-size:11px;color:var(--muted);margin-bottom:4px}
-    .ldg-sum-val{font-size:15px;font-weight:700}
+    .ldg-sum-val{font-size:clamp(12px,3.8vw,15px);font-weight:700;overflow-wrap:anywhere}
     .ldg-cat-section{margin-bottom:18px}
     .ldg-cat-section-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px}
     .ldg-cat-row{margin-bottom:10px}
-    .ldg-cat-label{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:4px}
+    .ldg-cat-label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;margin-bottom:4px}
+    .ldg-cat-name{display:flex;align-items:center;gap:5px;min-width:0;overflow-wrap:anywhere}
+    .ldg-cat-arrow{font-size:9px;color:var(--muted);flex-shrink:0;transition:transform .15s}
+    .ldg-cat-row.open .ldg-cat-arrow{transform:rotate(90deg)}
+    .ldg-cat-count{font-size:11px;color:var(--muted);font-weight:400;white-space:nowrap}
+    .ldg-cat-amt{white-space:nowrap;flex-shrink:0}
     .ldg-cat-pct{font-size:11px;color:var(--muted)}
+    .ldg-cat-detail{background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:2px 10px;margin-top:8px}
+    .ldg-detail-row{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px dashed var(--border);cursor:pointer;font-size:13px}
+    .ldg-detail-row:last-of-type{border-bottom:none}
+    .ldg-detail-date{color:var(--muted);font-family:'SF Mono',monospace;font-size:11px;flex-shrink:0}
+    .ldg-detail-note{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.5}
+    .ldg-detail-amt{font-weight:700;white-space:nowrap}
+    .ldg-detail-hint{font-size:10px;color:var(--muted);text-align:center;padding:5px 0 7px}
     .ldg-cat-bar-bg{height:7px;background:#F1F5F9;border-radius:4px;overflow:hidden}
     .ldg-cat-bar-fill{height:100%;border-radius:4px;transition:width .3s}
     /* Ledger edit modal */
@@ -763,12 +775,12 @@
 
   <!-- 報表 panel -->
   <div id="ldg-panel-report" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="ldg-period-row" style="margin-bottom:0;flex:1">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <div class="ldg-period-row" style="margin-bottom:0;flex:1;min-width:0">
         <button class="ldg-tab-btn sel" data-lp="salary" onclick="setLedgerPeriod('salary')">薪月（5 日起）</button>
         <button class="ldg-tab-btn" data-lp="month" onclick="setLedgerPeriod('month')">自然月</button>
       </div>
-      <button class="outline-btn" style="padding:6px 12px;font-size:12px;white-space:nowrap;margin-left:8px" onclick="openBudgetModal()">🎯 設定預算</button>
+      <button class="outline-btn" style="padding:6px 12px;font-size:12px;white-space:nowrap;margin-top:0;width:auto" onclick="openBudgetModal()">🎯 設定預算</button>
     </div>
     <div id="ldg-budget-display"></div>
     <div id="ldg-report"></div>
@@ -1277,7 +1289,7 @@ async function syncLedgersFromCloud(){
       category:l.main_cat+(l.sub_cat?` · ${l.sub_cat}`:''),amount:l.amount,notes:l.notes}));
   if(!toAdd.length)return;
   setLedgers([...toAdd,...local].sort((a,b)=>b.date.localeCompare(a.date)));
-  loadLedgerList();if(showMonthlySummary)renderMonthlySummary();
+  loadLedgerList();
   showToast(`已同步 ${toAdd.length} 筆記帳 ✓`);
 }
 
@@ -1486,7 +1498,12 @@ function loadCaptureList(){
   list.innerHTML=items.map(c=>{const st=CAT_STYLE[c.category]||{bg:'#F1F5F9',color:'#475569'};
     return`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:${st.bg};color:${st.color}">${esc(c.category)}</span>${c.time?`<span class="rec-time">${esc(c.time)}</span>`:''} ${c.is_attack?'<span style="color:#EF4444;font-size:12px;font-weight:700">⚔️</span>':''}</div><div class="rec-right">${c.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="del-btn" onclick="delCapture(${c.id})">✕</button></div></div><div class="rec-body">${esc(c.summary)}</div></div>`}).join('')
 }
-function delCapture(id){setCaptures(getCaptures().filter(c=>c.id!==id));loadCaptureList()}
+function delCapture(id){
+  const all=getCaptures();const c=all.find(x=>x.id===id);if(!c)return;
+  if(!confirm('確定刪除這筆紀錄？'))return;
+  setCaptures(all.filter(x=>x.id!==id));loadCaptureList();
+  if(c.synced)postGAS({type:'delete_capture',date:c.date,category:c.category,time:c.time||'',summary:c.summary});
+}
 function toggleCapSettings(){const b=document.getElementById('cap-settings-body');b.style.display=b.style.display==='none'?'block':'none'}
 function saveCapSettings(){localStorage.setItem('gas-url',document.getElementById('cap-gas-url').value.trim());showToast('設定已儲存')}
 function toggleGroqSettings(){
@@ -2514,7 +2531,7 @@ async function submitLedger(){
 function checkBudgetAfterRecord(mainCat){
   if(ledgerType!=='支出')return;
   const b=getLedgerBudget();if(!b.total&&!b.cats)return;
-  const{from,to}=getLedgerPeriodRange();
+  const{from,to}=getLedgerPeriodRange(0);
   const expItems=getLedgers().filter(l=>l.date>=from&&l.date<=to&&l.type==='支出');
   const totalSpent=expItems.reduce((s,l)=>s+l.amount,0);
   if(b.total>0){
@@ -2568,9 +2585,12 @@ function loadLedgerList(){
 function delLedger(id){
   const all=getLedgers();
   const l=all.find(l=>l.id===id);
+  if(!l)return;
+  if(!confirm(`確定刪除這筆${l.type}？\n${l.mainCat}${l.notes?'・'+l.notes:''}　NT$ ${l.amount.toLocaleString()}`))return;
   setLedgers(all.filter(l=>l.id!==id));
   loadLedgerList();
   const calGrid=document.getElementById('ldg-cal-grid');if(calGrid&&calGrid.children.length)renderLedgerCal();
+  const rep=document.getElementById('ldg-panel-report');if(rep&&rep.style.display==='block')renderLedgerReport();
   if(l&&l.synced){
     postGAS({type:'delete_ledger',date:l.date,ledger_type:l.type,main_cat:l.mainCat,sub_cat:l.subCat||'',amount:l.amount,notes:l.notes||''});
     showToast('已刪除並同步至雲端 ✓');
@@ -2627,24 +2647,46 @@ function ledgerCalGoDate(ds){
 }
 
 /* ── 報表 ─────────────────────────── */
+let ledgerPeriodOffset=0;          // 0=本期，1=上一期…
+let ldgReportOpenCats=new Set();   // 展開中的分類
 function setLedgerPeriod(p){
-  ledgerPeriod=p;
+  ledgerPeriod=p;ledgerPeriodOffset=0;ldgReportOpenCats.clear();
   document.querySelectorAll('[data-lp]').forEach(b=>b.className='ldg-tab-btn'+(b.dataset.lp===p?' sel':''));
   renderLedgerReport();
 }
-function getLedgerPeriodRange(){
+function moveLedgerPeriod(dir){
+  ledgerPeriodOffset=Math.max(0,ledgerPeriodOffset+dir);
+  ldgReportOpenCats.clear();
+  renderLedgerReport();
+}
+function toggleReportCat(enc){
+  const k=decodeURIComponent(enc);
+  if(ldgReportOpenCats.has(k))ldgReportOpenCats.delete(k);else ldgReportOpenCats.add(k);
+  renderLedgerReport();
+}
+function _catKeyAttr(k){return encodeURIComponent(k).replace(/'/g,'%27')}
+function getLedgerPeriodRange(offset){
+  if(offset===undefined)offset=ledgerPeriodOffset;
   const now=taipeiNow();const y=now.getFullYear();const m=now.getMonth()+1;const d=now.getDate();
   const salaryDay=5;
+  const pad=n=>String(n).padStart(2,'0');
   if(ledgerPeriod==='salary'){
-    let fromY=y,fromM=m,toY=y,toM=m;
-    if(d>=salaryDay){fromY=y;fromM=m;}else{fromM=m-1;if(fromM<1){fromM=12;fromY=y-1;}}
-    const from=`${fromY}/${String(fromM).padStart(2,'0')}/${String(salaryDay).padStart(2,'0')}`;
-    const to=`${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
-    return{from,to,label:`${fromY}/${fromM}/${salaryDay} — ${y}/${m}/${d}（薪月）`};
+    // 本期起始月：今天 >= 5 日就是本月，否則是上個月；再往前推 offset 期
+    let base=new Date(y,m-1,1);
+    if(d<salaryDay)base=new Date(y,m-2,1);
+    base=new Date(base.getFullYear(),base.getMonth()-offset,1);
+    const fy=base.getFullYear(),fm=base.getMonth()+1;
+    const next=new Date(fy,fm,1);const ny=next.getFullYear(),nm=next.getMonth()+1;
+    const from=`${fy}/${pad(fm)}/${pad(salaryDay)}`;
+    const to=offset===0?`${y}/${pad(m)}/${pad(d)}`:`${ny}/${pad(nm)}/${pad(salaryDay-1)}`;
+    return{from,to,label:`${fy}/${fm}/${salaryDay} — ${to.replace(/\/0?(\d+)\/0?(\d+)$/,'/$1/$2')}（薪月）`};
   }else{
-    const from=`${y}/${String(m).padStart(2,'0')}/01`;
-    const to=`${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
-    return{from,to,label:`${y} 年 ${m} 月`};
+    const base=new Date(y,m-1-offset,1);
+    const fy=base.getFullYear(),fm=base.getMonth()+1;
+    const lastDay=new Date(fy,fm,0).getDate();
+    const from=`${fy}/${pad(fm)}/01`;
+    const to=offset===0?`${y}/${pad(m)}/${pad(d)}`:`${fy}/${pad(fm)}/${pad(lastDay)}`;
+    return{from,to,label:`${fy} 年 ${fm} 月`};
   }
 }
 function renderLedgerReport(){
@@ -2657,14 +2699,26 @@ function renderLedgerReport(){
   const totalExp=expItems.reduce((s,l)=>s+l.amount,0);
   const totalInc=incItems.reduce((s,l)=>s+l.amount,0);
   const net=totalInc-totalExp;
-  // Category breakdown
+  // Category breakdown（含每筆明細）
   const byCat={};
-  expItems.forEach(l=>{const k=l.mainCat+(l.subCat?` · ${l.subCat}`:'');if(!byCat[k])byCat[k]=0;byCat[k]+=l.amount});
+  expItems.forEach(l=>{const k=l.mainCat+(l.subCat?` · ${l.subCat}`:'');if(!byCat[k])byCat[k]={sum:0,items:[]};byCat[k].sum+=l.amount;byCat[k].items.push(l)});
   const catColors=['#0891B2','#7C3AED','#D97706','#059669','#DC2626','#9333EA','#0D9488'];
-  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
-  const byMainInc={};incItems.forEach(l=>{if(!byMainInc[l.mainCat])byMainInc[l.mainCat]=0;byMainInc[l.mainCat]+=l.amount});
+  const cats=Object.entries(byCat).sort((a,b)=>b[1].sum-a[1].sum);
+  const byMainInc={};incItems.forEach(l=>{if(!byMainInc[l.mainCat])byMainInc[l.mainCat]={sum:0,items:[]};byMainInc[l.mainCat].sum+=l.amount;byMainInc[l.mainCat].items.push(l)});
+  const detailHtml=items=>`<div class="ldg-cat-detail">
+      ${items.slice().sort((a,b)=>b.amount-a.amount).map(l=>`<div class="ldg-detail-row" onclick="editLedger(${l.id})">
+        <span class="ldg-detail-date">${esc(l.date.slice(5))}</span>
+        <span class="ldg-detail-note">${l.notes?esc(l.notes):'<span style="color:#94A3B8;font-style:italic">（沒寫備註）</span>'}</span>
+        <span class="ldg-detail-amt">NT$ ${l.amount.toLocaleString()}</span>
+      </div>`).join('')}
+      <div class="ldg-detail-hint">金額由大到小排列 · 點任一筆可修改</div>
+    </div>`;
   el.innerHTML=`
-    <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px">${label}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+      <button class="ldg-period-btn" onclick="moveLedgerPeriod(1)" title="上一期">‹</button>
+      <span style="font-size:13px;font-weight:600;color:var(--muted)">${esc(label)}</span>
+      <button class="ldg-period-btn" onclick="moveLedgerPeriod(-1)" ${ledgerPeriodOffset===0?'disabled style="opacity:.3;cursor:default"':''} title="下一期">›</button>
+    </div>
     <div class="ldg-summary-cards">
       <div class="ldg-sum-card">
         <div class="ldg-sum-label">支出</div>
@@ -2680,17 +2734,27 @@ function renderLedgerReport(){
       </div>
     </div>
     ${cats.length?`<div class="ldg-cat-section">
-      <div class="ldg-cat-section-title">支出明細</div>
-      ${cats.map(([k,v],i)=>{const pct=totalExp?Math.round(v/totalExp*100):0;return`<div class="ldg-cat-row">
-        <div class="ldg-cat-label"><span>${k}</span><span><strong>NT$ ${v.toLocaleString()}</strong> <span class="ldg-cat-pct">${pct}%</span></span></div>
+      <div class="ldg-cat-section-title">分類支出（點分類看買了什麼）</div>
+      ${cats.map(([k,o],i)=>{const pct=totalExp?Math.round(o.sum/totalExp*100):0;const open=ldgReportOpenCats.has(k);
+      return`<div class="ldg-cat-row${open?' open':''}">
+        <div class="ldg-cat-label" style="cursor:pointer" onclick="toggleReportCat('${_catKeyAttr(k)}')">
+          <span class="ldg-cat-name"><span class="ldg-cat-arrow">▶</span>${esc(k)} <span class="ldg-cat-count">${o.items.length} 筆</span></span>
+          <span class="ldg-cat-amt"><strong>NT$ ${o.sum.toLocaleString()}</strong> <span class="ldg-cat-pct">${pct}%</span></span>
+        </div>
         <div class="ldg-cat-bar-bg"><div class="ldg-cat-bar-fill" style="width:${pct}%;background:${catColors[i%catColors.length]}"></div></div>
+        ${open?detailHtml(o.items):''}
       </div>`}).join('')}
     </div>`:'<div class="empty-msg">這段期間沒有支出紀錄</div>'}
     ${Object.keys(byMainInc).length?`<div class="ldg-cat-section">
-      <div class="ldg-cat-section-title">收入明細</div>
-      ${Object.entries(byMainInc).map(([k,v])=>`<div class="ldg-cat-row">
-        <div class="ldg-cat-label"><span>${k}</span><span style="color:#10B981;font-weight:700">NT$ ${v.toLocaleString()}</span></div>
-      </div>`).join('')}
+      <div class="ldg-cat-section-title">收入明細（點分類展開）</div>
+      ${Object.entries(byMainInc).map(([k,o])=>{const open=ldgReportOpenCats.has('inc:'+k);
+      return`<div class="ldg-cat-row${open?' open':''}">
+        <div class="ldg-cat-label" style="cursor:pointer" onclick="toggleReportCat('${_catKeyAttr('inc:'+k)}')">
+          <span class="ldg-cat-name"><span class="ldg-cat-arrow">▶</span>${esc(k)} <span class="ldg-cat-count">${o.items.length} 筆</span></span>
+          <span class="ldg-cat-amt" style="color:#10B981;font-weight:700">NT$ ${o.sum.toLocaleString()}</span>
+        </div>
+        ${open?detailHtml(o.items):''}
+      </div>`}).join('')}
     </div>`:''}
   `;
 }
@@ -2782,6 +2846,7 @@ function saveBudget(){
 }
 function renderBudgetDisplay(){
   const el=document.getElementById('ldg-budget-display');if(!el)return;
+  if(ledgerPeriodOffset>0){el.innerHTML='';return}// 回看過去期間時不顯示預算條，避免混淆
   const b=getLedgerBudget();
   const hasTotal=b.total>0;const catLimits=b.cats||{};
   const hasCatLimits=Object.values(catLimits).some(v=>v>0);
@@ -2818,7 +2883,7 @@ function renderBudgetDisplay(){
       const catObj=getLedgerCats().find(c=>c.name===cat)||{emoji:'🏷️'};
       return`<div style="margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span style="font-weight:600">${catObj.emoji} ${cat}</span>
+          <span style="font-weight:600">${catObj.emoji} ${esc(cat)}</span>
           <span style="color:${over?'#EF4444':warn?'#F59E0B':'var(--muted)'}">
             ${over?'⚠️ ':warn?'🔶 ':''}NT$ ${spent.toLocaleString()} ／ ${limit.toLocaleString()}
           </span>
@@ -2891,6 +2956,7 @@ function saveLedgerEdit(){
   l.subCat=ldgEditState.subCat;
   l.category=l.mainCat+(l.subCat?` · ${l.subCat}`:'');
   setLedgers(items);closeLedgerEdit();loadLedgerList();showToast('已更新記帳紀錄 ✓');
+  const rep=document.getElementById('ldg-panel-report');if(rep&&rep.style.display==='block')renderLedgerReport();
   if(wasSynced){
     postGAS({type:'update_ledger',original,updated:{date:l.date,ledger_type:l.type,main_cat:l.mainCat,sub_cat:l.subCat||'',amount:l.amount,notes:l.notes||''}});
     showToast('已更新並同步至雲端 ✓');
@@ -3017,7 +3083,15 @@ function loadStockHistory(){
   if(!items.length){list.innerHTML='<div class="empty-msg">沒有交易紀錄</div>';return}
   list.innerHTML=items.map(s=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:${s.action==='買入'||s.action==='定期定額'?'#D1FAE5':'#FEE2E2'};color:${s.action==='買入'||s.action==='定期定額'?'#065F46':'#991B1B'}">${esc(s.action)}</span><span class="rec-badge" style="background:#F1F5F9;color:#475569">${esc(s.account)}</span><span class="rec-badge" style="background:#FED7AA;color:#7C2D12">${esc(s.market)}</span><span class="rec-time">${esc(s.date)}</span></div><div class="rec-right">${s.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="edit-btn" onclick="editStock(${s.id})">✏️</button><button class="del-btn" onclick="delStock(${s.id})">✕</button></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="rec-body"><strong>${esc(s.code)}</strong> ${esc(s.name||'')} × ${s.qty} 股 @ ${s.price}${s.fee?` <span style="font-size:11px;color:var(--muted)">手續費 ${s.fee}</span>`:''}</span><span class="stock-rec-amount">NT$ ${s.total.toLocaleString()}</span></div>${s.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(s.notes)}</div>`:''}</div>`).join('')
 }
-function delStock(id){setStocks(getStocks().filter(s=>s.id!==id));loadStockHoldings();loadStockHistory()}
+function delStock(id){
+  const all=getStocks();const s=all.find(x=>x.id===id);if(!s)return;
+  if(!confirm(`確定刪除這筆交易？\n${s.code} ${s.action} ${s.qty} 股 @ ${s.price}`))return;
+  setStocks(all.filter(x=>x.id!==id));loadStockHoldings();loadStockHistory();
+  if(s.synced){
+    postGAS({type:'delete_stock',date:s.date,account:s.account,action:s.action,code:s.code,qty:s.qty,price:s.price});
+    showToast('已刪除並同步至雲端 ✓');
+  }else{showToast('已刪除')}
+}
 
 let editStockState={action:'買入',account:'個人'};
 function editStock(id){
@@ -3042,6 +3116,8 @@ function saveStockEdit(){
   const id=parseInt(document.getElementById('edit-stock-id').value);
   const items=getStocks();const idx=items.findIndex(s=>s.id===id);if(idx===-1)return;
   const s=items[idx];
+  const original={date:s.date,account:s.account,action:s.action,code:s.code,qty:s.qty,price:s.price};
+  const wasSynced=s.synced;
   s.date=document.getElementById('edit-stock-date').value.replace(/-/g,'/');
   s.code=document.getElementById('edit-stock-code').value.trim().toUpperCase();
   s.name=document.getElementById('edit-stock-name').value.trim();
@@ -3053,6 +3129,10 @@ function saveStockEdit(){
   s.action=editStockState.action;
   s.account=editStockState.account;
   setStocks(items);closeStockEdit();loadStockHoldings();loadStockHistory();showToast('交易紀錄已更新 ✓');
+  if(wasSynced){
+    postGAS({type:'update_stock',original,updated:{date:s.date,account:s.account,market:s.market,action:s.action,code:s.code,name:s.name||'',qty:s.qty,price:s.price,total:s.total,notes:s.notes||''}});
+    showToast('已更新並同步至雲端 ✓');
+  }
 }
 
 /* ════════════════════════════════
@@ -3220,10 +3300,10 @@ function renderFinanceMonthly(){
   el.innerHTML=`<div class="finance-stat">
     <div class="ms-title">📅 ${monthLabel} 收支概覽</div>
     <div class="fin-stat-row"><span style="font-weight:700">💚 本月收入</span><span class="fin-income fin-net">NT$ ${totalInc.toLocaleString()}</span></div>
-    ${Object.entries(byInc).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${k}</span><span class="fin-income">+ NT$ ${v.toLocaleString()}</span></div>`).join('')}
+    ${Object.entries(byInc).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${esc(k)}</span><span class="fin-income">+ NT$ ${v.toLocaleString()}</span></div>`).join('')}
     ${!totalInc?'<div class="fin-stat-row"><span style="color:var(--muted);font-size:13px">尚無收入記錄</span><span style="font-size:12px;color:#94A3B8">→ 去「記帳」記收入</span></div>':''}
     <div class="fin-stat-row" style="margin-top:4px"><span style="font-weight:700">❤️ 本月支出</span><span class="fin-expense fin-net">NT$ ${totalExp.toLocaleString()}</span></div>
-    ${Object.entries(byExp).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${k}</span><span class="fin-expense">- NT$ ${v.toLocaleString()}</span></div>`).join('')}
+    ${Object.entries(byExp).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${esc(k)}</span><span class="fin-expense">- NT$ ${v.toLocaleString()}</span></div>`).join('')}
     ${!totalExp?'<div class="fin-stat-row"><span style="color:var(--muted);font-size:13px">尚無支出記錄</span><span></span></div>':''}
     <div class="fin-stat-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px">
       <span style="font-weight:800;font-size:15px">💰 本月結餘</span>
@@ -3545,13 +3625,13 @@ function addTask(){
   const text=(inp.value||'').trim();
   if(!text)return;
   const tasks=loadTasks();
-  tasks.unshift({id:Date.now(),text,done:false,created:new Date().toISOString().slice(0,10)});
+  tasks.unshift({id:Date.now(),text,done:false,created:fmtInputDate(taipeiNow())});
   saveTasks(tasks);inp.value='';renderTasks();
 }
 function toggleTask(id){
   const tasks=loadTasks();
   const t=tasks.find(t=>t.id===id);
-  if(t){t.done=!t.done;t.doneAt=t.done?new Date().toISOString().slice(0,10):null;}
+  if(t){t.done=!t.done;t.doneAt=t.done?fmtInputDate(taipeiNow()):null;}
   saveTasks(tasks);renderTasks();
 }
 function deleteTask(id){
@@ -3563,7 +3643,7 @@ function renderTasks(){
   const el=document.getElementById('tasks-list');
   if(!el)return;
   if(!tasks.length){el.innerHTML='<div style="text-align:center;padding:32px;color:#94A3B8;font-size:14px">沒有待辦事項 🎉</div>';return;}
-  const today=new Date().toISOString().slice(0,10);
+  const today=fmtInputDate(taipeiNow());
   const pending=tasks.filter(t=>!t.done);
   const done=tasks.filter(t=>t.done);
   let html='';

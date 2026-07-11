@@ -109,7 +109,7 @@ function doGet(e) {
 
   // ── 跨裝置同步：讀取 App 設定（預算/分類/銀行/股票現價）──
   if (params.type === 'app_settings') {
-    const sheet = getOrCreateSettingsSheet(ss);
+    const sheet = getOrCreateSettingsSheet(SpreadsheetApp.openById(SPREADSHEET_ID));
     if (sheet.getLastRow() <= 1) return out({ ok: true, data: {} });
     const rows = sheet.getDataRange().getValues().slice(1);
     const settings = {};
@@ -221,6 +221,71 @@ function doPost(e) {
           sheet.getRange(i + 2, 1, 1, 6).setValues([[
             upd.date, upd.ledger_type, upd.main_cat, upd.sub_cat || '', Number(upd.amount), upd.notes || ''
           ]]);
+          return out({ ok: true });
+        }
+      }
+      return out({ ok: false, error: 'row not found' });
+    }
+
+    // ── 刪除股票紀錄 ──
+    if (type === 'delete_stock') {
+      const sheet = getOrCreateStockSheet(ss);
+      const lastRow = sheet.getLastRow();
+      if (lastRow <= 1) return out({ ok: false, error: 'no data' });
+      const rows = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (cellToDateStr(r[0]) === data.date &&
+            String(r[1]) === data.account &&
+            String(r[3]) === data.action &&
+            String(r[4]) === data.code &&
+            Number(r[6]) === Number(data.qty) &&
+            Number(r[7]) === Number(data.price)) {
+          sheet.deleteRow(i + 2);
+          return out({ ok: true });
+        }
+      }
+      return out({ ok: false, error: 'row not found' });
+    }
+
+    // ── 更新股票紀錄 ──
+    if (type === 'update_stock') {
+      const sheet = getOrCreateStockSheet(ss);
+      const lastRow = sheet.getLastRow();
+      if (lastRow <= 1) return out({ ok: false, error: 'no data' });
+      const rows = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
+      const orig = data.original;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (cellToDateStr(r[0]) === orig.date &&
+            String(r[1]) === orig.account &&
+            String(r[3]) === orig.action &&
+            String(r[4]) === orig.code &&
+            Number(r[6]) === Number(orig.qty) &&
+            Number(r[7]) === Number(orig.price)) {
+          const u = data.updated;
+          sheet.getRange(i + 2, 1, 1, 10).setValues([[
+            u.date, u.account, u.market || '', u.action, u.code, u.name || '',
+            Number(u.qty), Number(u.price), Number(u.total), u.notes || ''
+          ]]);
+          return out({ ok: true });
+        }
+      }
+      return out({ ok: false, error: 'row not found' });
+    }
+
+    // ── 刪除快速記錄（手機快取）──
+    if (type === 'delete_capture') {
+      const cache = getOrCreateCacheSheet(ss);
+      const lastRow = cache.getLastRow();
+      if (lastRow <= 1) return out({ ok: false, error: 'no data' });
+      const rows = cache.getRange(2, 1, lastRow - 1, 6).getValues();
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (cellToDateStr(r[4]) === data.date &&
+            String(r[1]) === data.category &&
+            String(r[3]) === data.summary) {
+          cache.deleteRow(i + 2);
           return out({ ok: true });
         }
       }
