@@ -653,6 +653,7 @@
   <div class="eng-tabs">
     <button class="eng-tab-btn active" onclick="switchEngTab('today')">📅 今日</button>
     <button class="eng-tab-btn" onclick="switchEngTab('dict')">🔍 查記</button>
+    <button class="eng-tab-btn" onclick="switchEngTab('list')">📖 詞庫</button>
     <button class="eng-tab-btn" onclick="switchEngTab('practice')">🎯 練習</button>
   </div>
 
@@ -687,6 +688,18 @@
     </div>
   </div>
 
+
+  <!-- 詞庫（查字典/手動新增/TOEIC 存的內容都在這裡） -->
+  <div id="eng-panel-list" class="e-hidden">
+    <div class="vocab-filter" id="eng-type-filter">
+      <button class="chip sel-purple" data-f="all" onclick="setEngFilter('type','all')">全部</button>
+      <button class="chip" data-f="vocab" onclick="setEngFilter('type','vocab')">單字</button>
+      <button class="chip" data-f="sentence" onclick="setEngFilter('type','sentence')">句子</button>
+      <button class="chip" data-f="grammar" onclick="setEngFilter('type','grammar')">文法</button>
+    </div>
+    <div id="eng-item-count" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
+    <div id="eng-list"></div>
+  </div>
 
   <!-- 練習 -->
   <div id="eng-panel-practice" class="e-hidden">
@@ -1139,7 +1152,7 @@
   <!-- 出考題 -->
   <div id="ceo-panel-quiz" class="e-hidden">
     <div id="ceo-quiz-no-key" class="e-hidden">
-      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">需要 Groq API Key 才能出題。<br>請先到 <strong>🎯 幕僚沙盤</strong> → 右上角設定 → 輸入 Key，這裡會自動讀取。</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">需要 Groq API Key 才能出題。<br>請先到 <strong>⚡ 快速記錄</strong> → 頁面最下方「🎯 幕僚沙盤 API Key 設定」→ 輸入 Key，這裡會自動讀取。</div>
     </div>
     <div id="ceo-quiz-body">
       <div id="ceo-quiz-idle">
@@ -1312,12 +1325,19 @@ async function syncStocksFromCloud(){
   document.getElementById('today-label').textContent=fmtDate(now);
   document.getElementById('r-week').value=weekRange();
   document.getElementById('mo-month').value=fmtMonth(now);
+  try{history.replaceState(null,'')}catch(e){}
   updateTasksHint();
+  updateHomeFinanceHint();
   loadTasksFromCloud().then(()=>updateTasksHint());
 })();
 
 /* ════ Navigation ════ */
+/* 手機返回鍵支援：進頁面時 pushState，按返回鍵回首頁而不是關掉 App */
 function show(type){
+  _showDOM(type);
+  history.pushState({page:type},'');
+}
+function _showDOM(type){
   document.getElementById('home').classList.add('hidden');
   document.querySelectorAll('.tpl').forEach(el=>el.classList.remove('active'));
   document.getElementById('tpl-'+type).classList.add('active');
@@ -1328,7 +1348,7 @@ function show(type){
   else if(type==='finance')initFinance();
   else if(type==='aar')initAAR();
   else if(type==='daily')initDailyStrategy();
-  else if(type==='plan'){}
+  else if(type==='plan'){const pc=document.getElementById('plan-content');if(pc&&pc.querySelector('.plan-empty'))fetchPlan();}
   else if(type==='review'){loadNb(type);initReview();}
   else if(type==='ceo')initCEO();
   else if(type==='tasks'){renderTasks();}
@@ -1336,6 +1356,10 @@ function show(type){
   window.scrollTo(0,0);
 }
 function openEmbed(type){
+  _openEmbedDOM(type);
+  history.pushState({embed:type},'');
+}
+function _openEmbedDOM(type){
   const apps={
     english:{url:'https://fgfg1717.github.io/english-review-app/',title:'英文練習 App'},
     pr:     {url:'https://fgfg1717.github.io/pr-practice-app/',   title:'幕僚沙盤'}
@@ -1346,13 +1370,39 @@ function openEmbed(type){
   document.getElementById('embed-overlay').classList.add('open');
 }
 function closeEmbed(){
+  if(history.state&&history.state.embed)history.back();
+  else _closeEmbedDOM();
+}
+function _closeEmbedDOM(){
   document.getElementById('embed-overlay').classList.remove('open');
   document.getElementById('embed-frame').src='';
 }
 function goHome(){
+  if(history.state&&(history.state.page||history.state.embed))history.back();
+  else _goHomeDOM();
+}
+function _goHomeDOM(){
   document.getElementById('home').classList.remove('hidden');
   document.querySelectorAll('.tpl').forEach(el=>el.classList.remove('active'));
+  updateHomeFinanceHint();updateTasksHint();
   window.scrollTo(0,0);
+}
+window.addEventListener('popstate',e=>{
+  const emb=document.getElementById('embed-overlay');
+  if(emb&&emb.classList.contains('open'))_closeEmbedDOM();
+  if(e.state&&e.state.page)_showDOM(e.state.page);
+  else if(e.state&&e.state.embed)_openEmbedDOM(e.state.embed);
+  else _goHomeDOM();
+});
+function updateHomeFinanceHint(){
+  const el=document.getElementById('home-finance-hint');if(!el)return;
+  const now=taipeiNow();const ym=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
+  const all=getLedgers().filter(l=>l.date.startsWith(ym));
+  if(!all.length){el.textContent='本月收支・銀行存款・股票資產';return}
+  const exp=all.filter(l=>l.type==='支出').reduce((s,l)=>s+l.amount,0);
+  const inc=all.filter(l=>l.type==='收入').reduce((s,l)=>s+l.amount,0);
+  const net=inc-exp;
+  el.textContent=`本月支出 NT$ ${exp.toLocaleString()}・結餘 ${net>=0?'+':'−'}NT$ ${Math.abs(net).toLocaleString()}`;
 }
 
 /* ════ Review copy ════ */
@@ -1473,8 +1523,9 @@ async function forceResyncAll(){
   showToast('同步中…請稍候');
   const[l,c,s]=await Promise.all([getGAS({type:'ledgers'}),getGAS({type:'captures'}),getGAS({type:'stocks'})]);
   if(l?.ok&&l.data){
+    const localUnsynced=getLedgers().filter(x=>!x.synced);
     const mapped=l.data.map(r=>({id:Date.now()+Math.random(),synced:true,date:r.date,type:r.ledger_type,mainCat:r.main_cat,subCat:r.sub_cat||'',category:r.main_cat+(r.sub_cat?` · ${r.sub_cat}`:''),amount:r.amount,notes:r.notes||''}));
-    setLedgers(mapped.sort((a,b)=>b.date.localeCompare(a.date)));
+    setLedgers([...mapped,...localUnsynced].sort((a,b)=>b.date.localeCompare(a.date)));
   }
   if(c?.ok&&c.data){
     const local=getCaptures().filter(x=>!x.synced);
@@ -1485,8 +1536,9 @@ async function forceResyncAll(){
     loadCaptureList();
   }
   if(s?.ok&&s.data){
+    const localUnsynced=getStocks().filter(x=>!x.synced);
     const mapped=s.data.map(r=>({id:Date.now()+Math.random(),synced:true,...r}));
-    setStocks(mapped);
+    setStocks([...mapped,...localUnsynced].sort((a,b)=>(b.date||'').localeCompare(a.date||'')));
   }
   await syncAppSettingsFromCloud();
   showToast('全部重新同步完成 ✓');
@@ -1580,13 +1632,16 @@ function dedupeEngItems(){
 function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud();autoImportGraceLessons();}
 
 function switchEngTab(tab){
-  ['today','dict','practice'].forEach(t=>{
-    document.getElementById('eng-panel-'+t).classList.toggle('e-hidden',t!==tab);
+  const tabs=['today','dict','list','practice'];
+  tabs.forEach(t=>{
+    const p=document.getElementById('eng-panel-'+t);
+    if(p)p.classList.toggle('e-hidden',t!==tab);
   });
-  document.querySelectorAll('.eng-tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active',['today','dict','practice'][i]===tab);
+  document.querySelectorAll('#tpl-vocab .eng-tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',tabs[i]===tab);
   });
   if(tab==='today')initGraceOSSRSTab();
+  if(tab==='list')renderEngList();
   if(tab==='practice')renderPracSetup();
 }
 
@@ -1726,7 +1781,7 @@ function renderEngList(){
   if(!list)return;
   if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄</div>';return}
   const TS={vocab:{l:'單字',bg:'#EDE9FE',c:'#4C1D95'},sentence:{l:'句子',bg:'#DBEAFE',c:'#1E40AF'},grammar:{l:'文法',bg:'#D1FAE5',c:'#065F46'}};
-  const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增'};
+  const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增',toeic:'📘 TOEIC'};
   list.innerHTML=items.map(item=>{
     const ts=TS[item.type]||TS.vocab;
     let main='',sub='';
@@ -1744,7 +1799,10 @@ function renderEngList(){
     return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${srcMeta}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
   }).join('');
 }
-function delEngItem(id){setEngItems(getEngItems().filter(i=>i.id!==id));renderEngList()}
+function delEngItem(id){
+  if(!confirm('確定從詞庫刪除這一筆？'))return;
+  setEngItems(getEngItems().filter(i=>i.id!==id));renderEngList();_scheduleEngBackup();
+}
 
 /* ── 練習 ── */
 function setPracMode(m){pracMode=m;document.querySelectorAll('#prac-mode-seg .chip').forEach(b=>b.className='chip'+(b.dataset.m===m?' sel-purple':''));renderPracSetup()}
@@ -2261,8 +2319,39 @@ function initGraceOSSRSTab(){
     }
     banner.style.display='';
   }
-  const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
+  const area=document.getElementById('srs-grace-card-area');
+  if(area)area.innerHTML=(totalDue===0||remaining<=0)?renderTOEICDaily():'';
   const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
+}
+
+/* ── 今日 TOEIC 新詞（複習卡刷完後顯示，每天換 5 個）── */
+function todayTOEICWords(){
+  const now=taipeiNow();
+  const start=new Date(now.getFullYear(),0,0);
+  const doy=Math.floor((now-start)/864e5);
+  const out=[];
+  for(let i=0;i<5;i++)out.push(TOEIC_WORDS[(doy*5+i)%TOEIC_WORDS.length]);
+  return out;
+}
+function renderTOEICDaily(){
+  const words=todayTOEICWords();
+  const have=new Set(getEngItems().filter(i=>i.type==='vocab').map(i=>(i.word||'').toLowerCase()));
+  return `<div class="today-sec-label" style="margin-top:4px">📘 今日 TOEIC 新詞 · 每天換 5 個</div>
+  <div class="today-task-card">${words.map((w,i)=>`<div class="toeic-word-row">
+    <div class="toeic-word-en">${esc(w.w)} <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button> <span style="font-size:10px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
+    <div class="toeic-word-zh">${esc(w.zh)}</div>
+    <div class="toeic-word-ex">"${esc(w.ex)}"</div>
+    ${have.has(w.w.toLowerCase())
+      ?'<div style="font-size:11px;color:#059669;font-weight:600;margin-top:4px">✓ 已在詞庫</div>'
+      :`<button class="outline-btn" style="margin-top:6px;padding:7px;font-size:12px" onclick="addTOEICWord(${i})">＋ 加入詞庫（之後會出現在練習）</button>`}
+  </div>`).join('')}</div>`;
+}
+function addTOEICWord(i){
+  const w=todayTOEICWords()[i];if(!w)return;
+  addEngItem({id:Date.now(),type:'vocab',word:w.w,zhMeaning:w.zh,example:w.ex,source:'toeic',ipa:'',audioUrl:'',enDef:'',date:fmtYMD(taipeiNow())});
+  showToast(`「${w.w}」已加入詞庫 ✓`);
+  const area=document.getElementById('srs-grace-card-area');
+  if(area&&area.innerHTML)area.innerHTML=renderTOEICDaily();
 }
 
 function startGraceOSSRS(){
@@ -2450,8 +2539,19 @@ function initLedger(){
   document.getElementById('ledger-date').value=fmtInputDate(now);
   ledgerCalYear=now.getFullYear();ledgerCalMonth=now.getMonth();
   setLedgerType('支出');loadLedgerList();
-  syncLedgersFromCloud();
+  retryUnsyncedLedgers().then(()=>syncLedgersFromCloud());
   syncAppSettingsFromCloud();
+}
+async function retryUnsyncedLedgers(){
+  if(!gasUrl())return;
+  const items=getLedgers();const pending=items.filter(l=>!l.synced);
+  if(!pending.length)return;
+  let done=0;
+  for(const l of pending){
+    const ok=await postGAS({type:'ledger',date:l.date,ledger_type:l.type,main_cat:l.mainCat,sub_cat:l.subCat||'',category:l.category||l.mainCat,amount:l.amount,notes:l.notes||''});
+    if(ok){const idx=items.findIndex(x=>x.id===l.id);if(idx!==-1){items[idx].synced=true;done++}}
+  }
+  if(done){setLedgers(items);loadLedgerList();showToast(`已補同步 ${done} 筆記帳 ✓`)}
 }
 
 /* ── Category Picker ─────────────── */
@@ -2995,8 +3095,19 @@ function initStock(){
   const now=taipeiNow();document.getElementById('stock-date').value=fmtInputDate(now);
   setStockField('account','個人');setStockField('market','台股');setStockField('action','買入');
   loadStockHoldings();loadStockHistory();
-  syncStocksFromCloud();
+  retryUnsyncedStocks().then(()=>syncStocksFromCloud());
   syncAppSettingsFromCloud();
+}
+async function retryUnsyncedStocks(){
+  if(!gasUrl())return;
+  const items=getStocks();const pending=items.filter(s=>!s.synced);
+  if(!pending.length)return;
+  let done=0;
+  for(const s of pending){
+    const ok=await postGAS({type:'stock',date:s.date,account:s.account,market:s.market,action:s.action,code:s.code,name:s.name||'',qty:s.qty,price:s.price,total:s.total,notes:s.notes||''});
+    if(ok){const idx=items.findIndex(x=>x.id===s.id);if(idx!==-1){items[idx].synced=true;done++}}
+  }
+  if(done){setStocks(items);loadStockHistory();showToast(`已補同步 ${done} 筆交易 ✓`)}
 }
 async function submitStock(){
   const date=document.getElementById('stock-date').value.replace(/-/g,'/');
@@ -3093,10 +3204,10 @@ function delStock(id){
   }else{showToast('已刪除')}
 }
 
-let editStockState={action:'買入',account:'個人'};
+let editStockState={action:'買入',account:'個人',market:'台股'};
 function editStock(id){
   const s=getStocks().find(s=>s.id===id);if(!s)return;
-  editStockState={action:s.action,account:s.account};
+  editStockState={action:s.action,account:s.account,market:s.market||'台股'};
   document.getElementById('edit-stock-id').value=id;
   document.getElementById('edit-stock-date').value=s.date.replace(/\//g,'-');
   document.getElementById('edit-stock-code').value=s.code;
@@ -3109,6 +3220,8 @@ function editStock(id){
   const accounts=['個人','家庭'];
   document.getElementById('edit-action-chips').innerHTML=actions.map(a=>`<button class="chip${editStockState.action===a?' sel-orange':''}" onclick="editStockState.action='${a}';document.querySelectorAll('#edit-action-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
   document.getElementById('edit-account-chips').innerHTML=accounts.map(a=>`<button class="chip${editStockState.account===a?' sel-orange':''}" onclick="editStockState.account='${a}';document.querySelectorAll('#edit-account-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
+  const markets=['台股','美股'];
+  document.getElementById('edit-market-chips').innerHTML=markets.map(a=>`<button class="chip${editStockState.market===a?' sel-orange':''}" onclick="editStockState.market='${a}';document.querySelectorAll('#edit-market-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
   document.getElementById('stock-edit-overlay').classList.add('open');
 }
 function closeStockEdit(){document.getElementById('stock-edit-overlay').classList.remove('open')}
@@ -3128,6 +3241,7 @@ function saveStockEdit(){
   s.total=s.qty*s.price;
   s.action=editStockState.action;
   s.account=editStockState.account;
+  s.market=editStockState.market;
   setStocks(items);closeStockEdit();loadStockHoldings();loadStockHistory();showToast('交易紀錄已更新 ✓');
   if(wasSynced){
     postGAS({type:'update_stock',original,updated:{date:s.date,account:s.account,market:s.market,action:s.action,code:s.code,name:s.name||'',qty:s.qty,price:s.price,total:s.total,notes:s.notes||''}});
@@ -3787,6 +3901,10 @@ async function loadTasksFromCloud(){
     <div style="margin-top:10px">
       <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">帳戶</div>
       <div class="btn-row" id="edit-account-chips"></div>
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">市場</div>
+      <div class="btn-row" id="edit-market-chips"></div>
     </div>
     <div class="sheet-actions">
       <button class="full-btn" style="background:var(--muted)" onclick="closeStockEdit()">取消</button>
