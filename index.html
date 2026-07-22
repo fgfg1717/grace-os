@@ -3004,26 +3004,6 @@ function renderBudgetDisplay(){
       </div>
     </div>`;
   }
-  if(hasCatLimits){
-    const byCat={};expItems.forEach(l=>{if(!byCat[l.mainCat])byCat[l.mainCat]=0;byCat[l.mainCat]+=l.amount});
-    const rows=Object.entries(catLimits).filter(([,v])=>v>0).map(([cat,limit])=>{
-      const spent=byCat[cat]||0;const pct=Math.min(Math.round(spent/limit*100),100);
-      const over=spent>limit;const warn=spent>=limit*0.8;
-      const cls=over?'budget-over':warn?'budget-warn':'budget-ok';
-      const catObj=getLedgerCats().find(c=>c.name===cat)||{emoji:'🏷️'};
-      return`<div style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span style="font-weight:600">${catObj.emoji} ${esc(cat)}</span>
-          <span style="color:${over?'#EF4444':warn?'#F59E0B':'var(--muted)'}">
-            ${over?'⚠️ ':warn?'🔶 ':''}NT$ ${spent.toLocaleString()} ／ ${limit.toLocaleString()}
-          </span>
-        </div>
-        <div class="budget-bar-bg"><div class="budget-bar-fill ${cls}" style="width:${pct}%"></div></div>
-      </div>`;
-    }).join('');
-    if(rows)html+=`<div style="background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:12px">分類警戒線</div>${rows}</div>`;
-  }
   el.innerHTML=html;
 }
 
