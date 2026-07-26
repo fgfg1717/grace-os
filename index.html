@@ -3004,6 +3004,28 @@ function renderBudgetDisplay(){
       </div>
     </div>`;
   }
+  if(hasCatLimits){
+    html+=Object.entries(catLimits).filter(([,v])=>v>0).map(([cat,limit])=>{
+      const spent=expItems.filter(l=>l.mainCat===cat).reduce((s,l)=>s+l.amount,0);
+      const pct=Math.min(Math.round(spent/limit*100),100);
+      const over=spent>limit;const warn=spent>=limit*0.8;
+      const cls=over?'budget-over':warn?'budget-warn':'budget-ok';
+      const remaining=limit-spent;
+      return`<div style="background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700">${esc(cat)} 預算</span>
+          <span style="font-size:13px;font-weight:700;color:${over?'#EF4444':warn?'#F59E0B':'#10B981'}">
+            ${over?'⚠️ 已超支 NT$ '+Math.abs(remaining).toLocaleString():'剩 NT$ '+remaining.toLocaleString()}
+          </span>
+        </div>
+        <div class="budget-bar-bg"><div class="budget-bar-fill ${cls}" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">
+          <span>已用 NT$ ${spent.toLocaleString()}</span>
+          <span>${pct}% ／ NT$ ${limit.toLocaleString()}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
   el.innerHTML=html;
 }
 
