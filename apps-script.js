@@ -12,6 +12,8 @@ const LEDGER_TAB     = '記帳明細';
 const STOCK_TAB      = '股票紀錄';
 const SETTINGS_TAB   = 'App 設定';
 const INSIGHT_TAB    = '個人洞察庫';
+const BIZCARD_TAB    = '名片主檔';
+const BIZCARD_FOLDER = 'GraceOS名片照片';
 const MAIN_GID       = 974288665;
 const READ_TOKEN     = 'graceos2026read';
 
@@ -104,6 +106,29 @@ function doGet(e) {
       total:   Number(r[8]) || 0,
       notes:   String(r[9] || ''),
     })).filter(r => r.date && r.code);
+    return out({ ok: true, data });
+  }
+
+  // ── 跨裝置同步：讀取名片主檔 ──
+  if (params.type === 'business_cards') {
+    const sheet = getOrCreateBizCardSheet(SpreadsheetApp.openById(SPREADSHEET_ID));
+    if (sheet.getLastRow() <= 1) return out({ ok: true, data: [] });
+    const data = sheet.getDataRange().getValues().slice(1).map(r => ({
+      number:    String(r[0] || ''),
+      source:    String(r[1] || ''),
+      method:    String(r[2] || ''),
+      name:      String(r[3] || ''),
+      company:   String(r[4] || ''),
+      title:     String(r[5] || ''),
+      phone:     String(r[6] || ''),
+      email:     String(r[7] || ''),
+      gotDate:   cellToDateStr(r[8]),
+      meetPlace: String(r[9]  || ''),
+      notes2:    String(r[10] || ''),
+      status:    String(r[11] || '有效'),
+      photoUrl:  String(r[12] || ''),
+      notes:     String(r[13] || ''),
+    })).filter(r => r.number);
     return out({ ok: true, data });
   }
 
@@ -358,6 +383,88 @@ function doPost(e) {
       return out({ ok: true });
     }
 
+    // ── 新增名片（後端配發下一個編號）──
+    if (type === 'business_card_add') {
+      const lock = LockService.getScriptLock();
+      lock.waitLock(10000);
+      try {
+        const sheet = getOrCreateBizCardSheet(ss);
+        const number = getNextBizCardNumber(sheet);
+        sheet.appendRow([
+          number,
+          data.source    || '本人',   // B: 來源
+          data.method    || '名片',   // C: 取得方式
+          data.name      || '',       // D: 姓名
+          data.company   || '',       // E: 公司
+          data.title     || '',       // F: 職稱
+          data.phone     || '',       // G: 電話
+          data.email     || '',       // H: Email
+          data.gotDate   || fmt(new Date()), // I: 拿到日期
+          data.meetPlace || '',       // J: 見面地點
+          data.notes2    || '',       // K: 聊了什麼／下一步
+          data.status    || '有效',   // L: 狀態
+          data.photoUrl  || '',       // M: 照片連結
+          data.notes     || '',       // N: 備註
+        ]);
+        return out({ ok: true, number: number });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
+    // ── 更新名片（依編號更新任一欄位，含改狀態為離職/失聯）──
+    if (type === 'business_card_update') {
+      const sheet = getOrCreateBizCardSheet(ss);
+      const lastRow = sheet.getLastRow();
+      if (lastRow <= 1) return out({ ok: false, error: 'no data' });
+      const numberCol = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      const idx = numberCol.findIndex(r => String(r[0]) === String(data.number));
+      if (idx === -1) return out({ ok: false, error: 'card not found' });
+      const rowNum = idx + 2;
+      const cur = sheet.getRange(rowNum, 1, 1, 14).getValues()[0];
+      const u = data.updates || {};
+      const pick = (val, fallback) => (val !== undefined && val !== null) ? val : fallback;
+      const merged = [
+        cur[0], // 編號不可修改
+        pick(u.source,    cur[1]),
+        pick(u.method,    cur[2]),
+        pick(u.name,      cur[3]),
+        pick(u.company,   cur[4]),
+        pick(u.title,     cur[5]),
+        pick(u.phone,     cur[6]),
+        pick(u.email,     cur[7]),
+        pick(u.gotDate,   cur[8]),
+        pick(u.meetPlace, cur[9]),
+        pick(u.notes2,    cur[10]),
+        pick(u.status,    cur[11]),
+        pick(u.photoUrl,  cur[12]),
+        pick(u.notes,     cur[13]),
+      ];
+      sheet.getRange(rowNum, 1, 1, 14).setValues([merged]);
+      return out({ ok: true });
+    }
+
+    // ── 上傳名片照片到 Google Drive，回傳可檢視的分享連結 ──
+    if (type === 'business_card_upload_photo') {
+      try {
+        const raw = String(data.image || '');
+        const m = raw.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
+        const mimeType = m ? m[1] : 'image/jpeg';
+        const base64Body = m ? m[2] : raw;
+        if (!base64Body) return out({ ok: false, error: 'missing image' });
+        const bytes = Utilities.base64Decode(base64Body);
+        const ext = mimeType.indexOf('png') >= 0 ? 'png' : 'jpg';
+        const filename = 'namecard_' + fmt(new Date()).replace(/\//g, '') + '_' + Date.now() + '.' + ext;
+        const blob = Utilities.newBlob(bytes, mimeType, filename);
+        const folder = getOrCreateBizCardFolder();
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        return out({ ok: true, url: file.getUrl() });
+      } catch (err) {
+        return out({ ok: false, error: err.message });
+      }
+    }
+
     // ── 以下需要 token 驗證 ──
     if (data.token !== READ_TOKEN) return out({ error: 'unauthorized' });
 
@@ -450,6 +557,9 @@ function buildFreshTemplate(main, today) {
   // 反思欄（第二問在 D4，約在 D1 下方 3 列）
   r(4,4).setValue('我從過程中學習或觀察到什麼事情？');
 
+  // 第三問在 D6：倒推法找存在感（2026/07/31 新增）
+  r(6,4).setValue('今天哪一件事如果沒做，後果會不一樣？');
+
   // AAR header
   r(12,2).setValue('AAR');
   r(13,1).setValue('進攻');
@@ -531,6 +641,7 @@ function setupTodayTemplate() {
     // 更新反思標籤（D1）並補第二問（D4）
     main.getRange(1, 4).setValue('選一件讓我有感覺、有啟發的事情');
     if (colHeaderOffset >= 5) main.getRange(4, 4).setValue('我從過程中學習或觀察到什麼事情？');
+    if (colHeaderOffset >= 7) main.getRange(6, 4).setValue('今天哪一件事如果沒做，後果會不一樣？');
     if (colHeaderOffset >= 2) main.getRange(colHeaderOffset, 2).setValue('AAR');
   }
 
@@ -697,6 +808,38 @@ function getOrCreateCacheSheet(ss) {
     s.setColumnWidth(6, 60);
   }
   return s;
+}
+
+function getOrCreateBizCardSheet(ss) {
+  let s = ss.getSheetByName(BIZCARD_TAB);
+  if (!s) {
+    s = ss.insertSheet(BIZCARD_TAB);
+    s.appendRow(['編號', '來源', '取得方式', '姓名', '公司', '職稱', '電話', 'Email',
+                 '拿到日期', '見面地點', '聊了什麼／下一步', '狀態', '照片連結', '備註']);
+    s.setFrozenRows(1);
+    s.setColumnWidths(1, 14, 100);
+    s.setColumnWidth(11, 260);
+    s.setColumnWidth(13, 220);
+    s.setColumnWidth(14, 200);
+  }
+  return s;
+}
+
+// 依「編號」欄找目前最大編號 +1，格式化成 4 位數字串（"0001"）
+function getNextBizCardNumber(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return '0001';
+  const nums = sheet.getRange(2, 1, lastRow - 1, 1).getValues()
+    .map(r => parseInt(String(r[0]), 10))
+    .filter(n => !isNaN(n));
+  const max = nums.length ? Math.max.apply(null, nums) : 0;
+  return String(max + 1).padStart(4, '0');
+}
+
+function getOrCreateBizCardFolder() {
+  const it = DriveApp.getFoldersByName(BIZCARD_FOLDER);
+  if (it.hasNext()) return it.next();
+  return DriveApp.createFolder(BIZCARD_FOLDER);
 }
 
 // ── 寫入格式化週計畫 ─────────────────────────────────────────────
@@ -1211,11 +1354,13 @@ function onOpen() {
     .addItem('診斷手機快取', 'diagnoseCache')
     .addItem('初始化記帳明細分頁', 'initLedgerSheet')
     .addItem('初始化股票紀錄分頁', 'initStockSheet')
+    .addItem('初始化名片主檔分頁', 'initBizCardSheet')
     .addToUi();
 }
 
 function initLedgerSheet() { getOrCreateLedgerSheet(SpreadsheetApp.openById(SPREADSHEET_ID)); safeAlert('記帳明細分頁已就緒 ✓'); }
 function initStockSheet()  { getOrCreateStockSheet(SpreadsheetApp.openById(SPREADSHEET_ID));  safeAlert('股票紀錄分頁已就緒 ✓');  }
+function initBizCardSheet(){ getOrCreateBizCardSheet(SpreadsheetApp.openById(SPREADSHEET_ID)); safeAlert('名片主檔分頁已就緒 ✓'); }
 
 function setupDailyMerge() {
   ScriptApp.getProjectTriggers().forEach(t => {

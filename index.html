@@ -16,6 +16,7 @@
       --stock:#A85540;   --plan:#445E78;  --aar:#7A7066; --tasks:#10B981;
       --review:#7A7066;  --monthly:#4A7090;
       --health:#A84040;  --english:#9A6B30; --pr:#2E4A6E; --ceo:#604A8A;
+      --bizcard:#2F6F5E;
       --bg:#F8F5F0; --card:#FFFFFF; --text:#1C1C18;
       --muted:#8A8680; --border:#E4DFD6; --radius:12px;
     }
@@ -64,6 +65,7 @@
     .card-english:hover{border-color:var(--english)}
     .card-pr:hover     {border-color:var(--pr)}
     .card-ceo:hover    {border-color:var(--ceo)}
+    .card-bizcard:hover{border-color:var(--bizcard)}
 
     /* Embed overlay */
     .embed-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
@@ -542,6 +544,15 @@
     </div>
   </div>
 
+  <div class="section-label">聯絡人</div>
+  <div class="grid">
+    <div class="card card-bizcard full" onclick="show('bizcard')">
+      <span class="icon">📇</span>
+      <div class="label">名片管理</div>
+      <div class="hint">拍照辨識・手動輸入・自動編號</div>
+    </div>
+  </div>
+
   <div class="section-label">工作規劃</div>
   <div class="grid">
     <div class="card card-plan full" onclick="show('daily')">
@@ -652,6 +663,18 @@
         style="font-family:'SF Mono','Courier New',monospace"/></div>
     <div id="groq-key-status" style="font-size:12px;margin-bottom:8px"></div>
     <button class="btn-primary" style="background:#059669;width:100%" onclick="saveGroqKey()">儲存 API Key</button>
+  </div>
+  <div class="cap-form">
+    <div class="section-label" style="margin-top:0">📇 名片辨識 API Key</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+      使用 <strong>Anthropic</strong> AI 服務，拍照建檔名片時用來自動讀出姓名/公司/職稱等欄位。<br>
+      這台裝置才需要填一次，不會同步到其他裝置。
+    </div>
+    <div class="field"><label>Anthropic API Key</label>
+      <input type="password" id="anthropic-key-input" placeholder="sk-ant-..." autocomplete="off"
+        style="font-family:'SF Mono','Courier New',monospace"/></div>
+    <div id="anthropic-key-status" style="font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-primary" style="background:var(--bizcard);width:100%" onclick="saveAnthropicKey()">儲存 API Key</button>
   </div>
 </div>
 
@@ -1237,6 +1260,15 @@ async function getGAS(params){
 
   catch(e){return null}
 }
+/* 需要讀取伺服器回應內容的 POST（例如名片自動編號、上傳照片後拿連結）。
+   postGAS() 用 no-cors 送出但讀不到回應本文，這裡用一般模式送出並直接解析 JSON。 */
+async function postGASReadJSON(payload){
+  const url=gasUrl();if(!url)return null;
+  try{
+    const r=await fetch(url,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
+    return await r.json();
+  }catch(e){return null}
+}
 /* 通用 key-value 雲端同步（走 GAS app_settings，手機/電腦共用） */
 function pushKV(key,data){
   if(!gasUrl())return;
@@ -1356,6 +1388,7 @@ function _showDOM(type){
   else if(type==='review')initReview();
   else if(type==='ceo')initCEO();
   else if(type==='tasks')renderTasks();
+  else if(type==='bizcard')initBizCard();
   else if(type==='settings')initSettings();
   window.scrollTo(0,0);
 }
@@ -1459,6 +1492,11 @@ function initSettings(){
   if(inp)inp.value='';
   const st=document.getElementById('groq-key-status');
   if(st){st.textContent=existing?'✅ 目前狀態：已設定':'⚠️ 目前狀態：尚未設定';st.style.color=existing?'#059669':'#F59E0B'}
+  const existingAnthropic=localStorage.getItem('anthropic_api_key_v1')||'';
+  const aInp=document.getElementById('anthropic-key-input');
+  if(aInp)aInp.value='';
+  const aSt=document.getElementById('anthropic-key-status');
+  if(aSt){aSt.textContent=existingAnthropic?'✅ 目前狀態：已設定':'⚠️ 目前狀態：尚未設定';aSt.style.color=existingAnthropic?'#059669':'#F59E0B'}
 }
 
 /* ════════════════════════════════
@@ -1564,6 +1602,15 @@ function saveGroqKey(){
   const st=document.getElementById('groq-key-status');
   if(st){st.textContent='✅ 已儲存';st.style.color='#059669'}
   showToast('✅ Groq API Key 已儲存，幕僚沙盤即可使用');
+}
+function saveAnthropicKey(){
+  const v=document.getElementById('anthropic-key-input').value.trim();
+  if(!v){showToast('請輸入 API Key');return}
+  if(!v.startsWith('sk-ant-')){showToast('格式錯誤，應以 sk-ant- 開頭');return}
+  localStorage.setItem('anthropic_api_key_v1',v);
+  const st=document.getElementById('anthropic-key-status');
+  if(st){st.textContent='✅ 已儲存';st.style.color='#059669'}
+  showToast('✅ Anthropic API Key 已儲存，名片拍照辨識即可使用');
 }
 
 /* ════ 語音辨識 ════ */
@@ -3875,6 +3922,310 @@ async function loadTasksFromCloud(){
     }
   }catch{}
 }
+
+/* ════════════════════════════════
+   📇 名片管理
+   ════════════════════════════════
+   設計原則：編號一律由 GAS 後端配發（前端不可自己猜），所以這個模組不做
+   離線優先本地快取，每次進入頁面／存檔後都直接向 GAS 重新拉一次清單。 */
+let _bizCards=[];
+let _bizCardField={source:'本人',method:'名片',status:'有效'};
+let _bizCardEditing=null;      // 編輯中的名片編號，null = 新增
+let _bizCardPhotoBase64='';    // 本次表單待上傳的壓縮後照片（dataURL），未變更則為空字串
+
+function initBizCard(){
+  loadBizCardList();
+}
+
+async function loadBizCardList(){
+  const listEl=document.getElementById('bizcard-list');
+  if(listEl)listEl.innerHTML='<div class="empty-msg">載入中…</div>';
+  if(!gasUrl()){
+    if(listEl)listEl.innerHTML='<div class="empty-msg">尚未設定 Google Sheets 同步網址（設定頁）</div>';
+    return;
+  }
+  const res=await getGAS({type:'business_cards'});
+  _bizCards=(res&&res.ok&&Array.isArray(res.data))?res.data:[];
+  renderBizCardList();
+}
+
+function renderBizCardList(){
+  const listEl=document.getElementById('bizcard-list');
+  if(!listEl)return;
+  const q=(document.getElementById('bizcard-search')?.value||'').trim();
+  const srcF=document.getElementById('bizcard-filter-source')?.value||'';
+  const stF=document.getElementById('bizcard-filter-status')?.value||'';
+  let items=_bizCards.slice().sort((a,b)=>a.number.localeCompare(b.number));
+  if(q)items=items.filter(c=>(c.name||'').includes(q)||(c.company||'').includes(q));
+  if(srcF)items=items.filter(c=>c.source===srcF);
+  if(stF)items=items.filter(c=>c.status===stF);
+  if(!items.length){listEl.innerHTML='<div class="empty-msg">沒有符合條件的名片紀錄</div>';return}
+  listEl.innerHTML=items.map(c=>`
+    <div class="rec-item" style="cursor:pointer" onclick="openBizCardEdit('${esc(c.number)}')">
+      <div class="rec-top">
+        <div class="rec-meta">
+          <span class="rec-badge" style="background:#F1F5F9;color:#475569">#${esc(c.number)}</span>
+          <span class="rec-badge" style="background:${c.source==='本人'?'#D1FAE5':'#DBEAFE'};color:${c.source==='本人'?'#065F46':'#1E40AF'}">${esc(c.source)}</span>
+          ${c.status&&c.status!=='有效'?`<span class="rec-badge" style="background:#FEE2E2;color:#991B1B">${esc(c.status)}</span>`:''}
+        </div>
+        <div class="rec-right"><span style="font-size:11px;color:var(--muted)">${esc(c.gotDate||'')}</span></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="rec-body">${esc(c.name)||'（未填姓名）'}${c.company?'・'+esc(c.company):''}${c.title?'・'+esc(c.title):''}</span>
+      </div>
+    </div>`).join('');
+}
+
+function resetBizCardForm(){
+  _bizCardField={source:'本人',method:'名片',status:'有效'};
+  ['bizcard-name','bizcard-company','bizcard-title','bizcard-phone','bizcard-email','bizcard-meetplace','bizcard-notes2','bizcard-notes']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  const prev=document.getElementById('bizcard-photo-preview');if(prev){prev.style.display='none';prev.src=''}
+  const link=document.getElementById('bizcard-photo-link');if(link){link.style.display='none';link.href='#'}
+  applyBizCardFieldButtons();
+  updateBizCardSourceVisibility();
+}
+
+function setBizCardField(key,val){
+  _bizCardField[key]=val;
+  applyBizCardFieldButtons();
+  if(key==='source')updateBizCardSourceVisibility();
+}
+function applyBizCardFieldButtons(){
+  ['source','method','status'].forEach(key=>{
+    document.querySelectorAll(`[data-biz${key}]`).forEach(b=>{
+      b.className='chip'+(b.getAttribute('data-biz'+key)===_bizCardField[key]?' sel-green':'');
+    });
+  });
+}
+function updateBizCardSourceVisibility(){
+  const isExec=_bizCardField.source==='執行長';
+  const meet=document.getElementById('bizcard-meetplace-field');
+  const notes2=document.getElementById('bizcard-notes2-field');
+  if(meet)meet.style.display=isExec?'none':'block';
+  if(notes2)notes2.style.display=isExec?'none':'block';
+}
+
+function openBizCardFormOverlay(){document.getElementById('bizcard-form-overlay').classList.add('open')}
+function closeBizCardFormOverlay(){document.getElementById('bizcard-form-overlay').classList.remove('open')}
+
+/* mode: 'manual' 或 'photo'（拍照辨識完成後也會呼叫這個來開表單） */
+function openBizCardAdd(mode){
+  _bizCardEditing=null;
+  if(mode!=='photo')_bizCardPhotoBase64='';
+  resetBizCardForm();
+  document.getElementById('bizcard-form-number').textContent='（存檔後自動產生）';
+  setBizCardField('source','本人');
+  setBizCardField('method',mode==='photo'?'名片':'Email');
+  setBizCardField('status','有效');
+  document.getElementById('bizcard-date').value=fmtInputDate(taipeiNow());
+  openBizCardFormOverlay();
+}
+
+function openBizCardEdit(number){
+  const c=_bizCards.find(x=>x.number===number);
+  if(!c)return;
+  _bizCardEditing=number;
+  _bizCardPhotoBase64='';
+  resetBizCardForm();
+  document.getElementById('bizcard-form-number').textContent='#'+c.number;
+  setBizCardField('source',c.source||'本人');
+  setBizCardField('method',c.method||'其他');
+  setBizCardField('status',c.status||'有效');
+  document.getElementById('bizcard-name').value=c.name||'';
+  document.getElementById('bizcard-company').value=c.company||'';
+  document.getElementById('bizcard-title').value=c.title||'';
+  document.getElementById('bizcard-phone').value=c.phone||'';
+  document.getElementById('bizcard-email').value=c.email||'';
+  document.getElementById('bizcard-date').value=c.gotDate?c.gotDate.replace(/\//g,'-'):fmtInputDate(taipeiNow());
+  document.getElementById('bizcard-meetplace').value=c.meetPlace||'';
+  document.getElementById('bizcard-notes2').value=c.notes2||'';
+  document.getElementById('bizcard-notes').value=c.notes||'';
+  const prev=document.getElementById('bizcard-photo-preview');
+  const link=document.getElementById('bizcard-photo-link');
+  if(c.photoUrl){
+    prev.src=c.photoUrl;prev.style.display='block';
+    link.href=c.photoUrl;link.style.display='inline-block';
+  }
+  updateBizCardSourceVisibility();
+  openBizCardFormOverlay();
+}
+
+function triggerBizCardPhotoCapture(){
+  document.getElementById('bizcard-photo-input').click();
+}
+
+/* 讀取檔案 → 用 canvas 壓縮到長邊最多 maxSize，回傳 JPEG dataURL */
+function compressImageFile(file,maxSize){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('讀取檔案失敗'));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('圖片解析失敗'));
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxSize||h>maxSize){
+          if(w>=h){h=Math.round(h*maxSize/w);w=maxSize}
+          else{w=Math.round(w*maxSize/h);h=maxSize}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.82));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleBizCardPhoto(evt){
+  const file=evt.target.files&&evt.target.files[0];
+  evt.target.value=''; // 清空，允許連續拍同一張測試
+  if(!file)return;
+  showToast('處理照片中…');
+  let dataUrl;
+  try{
+    dataUrl=await compressImageFile(file,1280);
+  }catch(e){
+    showToast('照片讀取失敗，請重拍或改用手動輸入');
+    return;
+  }
+  _bizCardPhotoBase64=dataUrl;
+  openBizCardAdd('photo');
+  const prev=document.getElementById('bizcard-photo-preview');
+  if(prev){prev.src=dataUrl;prev.style.display='block'}
+
+  const key=localStorage.getItem('anthropic_api_key_v1');
+  if(!key){
+    showToast('尚未設定 Anthropic API Key，請先到「⚙️ 設定」填入 — 這張先手動輸入資料');
+    return;
+  }
+  showToast('AI 辨識中…');
+  try{
+    const info=await recognizeBizCardWithAI(dataUrl);
+    if(info){
+      document.getElementById('bizcard-name').value=info.name||'';
+      document.getElementById('bizcard-company').value=info.company||'';
+      document.getElementById('bizcard-title').value=info.title||'';
+      document.getElementById('bizcard-phone').value=info.phone||'';
+      document.getElementById('bizcard-email').value=info.email||'';
+      showToast('辨識完成，請確認資料 ✓');
+    }
+  }catch(e){
+    showToast('辨識失敗，請手動確認/輸入資料');
+  }
+}
+
+/* 呼叫 Anthropic API 辨識名片欄位，回傳 {name,company,title,phone,email} */
+async function recognizeBizCardWithAI(dataUrl){
+  const key=localStorage.getItem('anthropic_api_key_v1');
+  if(!key)return null;
+  const m=dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
+  if(!m)throw new Error('圖片格式錯誤');
+  const mediaType=m[1],base64Data=m[2];
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-sonnet-5',
+      max_tokens:1024,
+      messages:[{
+        role:'user',
+        content:[
+          {type:'image',source:{type:'base64',media_type:mediaType,data:base64Data}},
+          {type:'text',text:'這是一張名片照片，幫我讀出姓名、公司、職稱、電話、Email，用 JSON 格式回答，欄位讀不到就留空字串，不要編造。'}
+        ]
+      }],
+      output_config:{
+        format:{
+          type:'json_schema',
+          schema:{
+            type:'object',
+            properties:{
+              name:{type:'string'},
+              company:{type:'string'},
+              title:{type:'string'},
+              phone:{type:'string'},
+              email:{type:'string'}
+            },
+            required:['name','company','title','phone','email'],
+            additionalProperties:false
+          }
+        }
+      }
+    })
+  });
+  if(!res.ok){
+    let msg='';try{msg=(await res.json()).error?.message||''}catch(e){}
+    throw new Error('Anthropic API 錯誤 '+res.status+' '+msg);
+  }
+  const d=await res.json();
+  const block=(d.content||[]).find(b=>b.type==='text');
+  if(!block)throw new Error('沒有收到辨識結果');
+  return JSON.parse(block.text);
+}
+
+async function submitBizCard(){
+  if(!gasUrl()){showToast('請先到設定頁填入 Google Sheets 同步網址');return}
+  const name=document.getElementById('bizcard-name').value.trim();
+  if(!name){showToast('請至少填寫姓名');return}
+  const isExec=_bizCardField.source==='執行長';
+  const fields={
+    source:    _bizCardField.source,
+    method:    _bizCardField.method,
+    name,
+    company:   document.getElementById('bizcard-company').value.trim(),
+    title:     document.getElementById('bizcard-title').value.trim(),
+    phone:     document.getElementById('bizcard-phone').value.trim(),
+    email:     document.getElementById('bizcard-email').value.trim(),
+    gotDate:   (document.getElementById('bizcard-date').value||'').replace(/-/g,'/'),
+    meetPlace: isExec?'':document.getElementById('bizcard-meetplace').value.trim(),
+    notes2:    isExec?'':document.getElementById('bizcard-notes2').value.trim(),
+    status:    _bizCardField.status,
+    notes:     document.getElementById('bizcard-notes').value.trim(),
+  };
+  showToast('儲存中…');
+
+  // 既有照片連結（編輯時沿用），若這次表單有新拍的照片則先上傳取得新連結
+  let photoUrl='';
+  if(_bizCardEditing){
+    const existing=_bizCards.find(c=>c.number===_bizCardEditing);
+    photoUrl=existing?(existing.photoUrl||''):'';
+  }
+  if(_bizCardPhotoBase64){
+    const up=await postGASReadJSON({type:'business_card_upload_photo',token:'graceos2026read',image:_bizCardPhotoBase64});
+    if(up&&up.ok)photoUrl=up.url;
+    else showToast('照片上傳失敗，其他資料仍會照常儲存');
+  }
+  fields.photoUrl=photoUrl;
+
+  if(_bizCardEditing){
+    const res=await postGASReadJSON({type:'business_card_update',token:'graceos2026read',number:_bizCardEditing,updates:fields});
+    if(res&&res.ok){
+      showToast('已更新 ✓');
+      closeBizCardFormOverlay();
+      loadBizCardList();
+    }else{
+      showToast('更新失敗，請確認設定頁的 Apps Script 網址並重新部署後再試');
+    }
+  }else{
+    const res=await postGASReadJSON({type:'business_card_add',token:'graceos2026read',...fields});
+    if(res&&res.ok){
+      showToast(`已新增 #${res.number} ✓`);
+      closeBizCardFormOverlay();
+      loadBizCardList();
+    }else{
+      showToast('新增失敗，請確認設定頁的 Apps Script 網址並重新部署後再試');
+    }
+  }
+}
 </script>
 <!-- Budget Modal -->
 <div class="budget-modal-overlay" id="budget-modal-overlay" onclick="if(event.target===this)closeBudgetModal()">
@@ -3992,6 +4343,94 @@ async function loadTasksFromCloud(){
       <button onclick="addTask()" style="background:#10B981;color:white;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">＋ 新增</button>
     </div>
     <div id="tasks-list"></div>
+  </div>
+</div>
+
+<!-- 📇 名片管理 -->
+<div class="tpl" id="tpl-bizcard">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">📇</span>
+    <div><h2>名片管理</h2>
+      <span class="tag" style="background:#DCFCE7;color:#14532D;">拍照辨識・手動輸入・自動編號</span>
+    </div>
+  </div>
+
+  <input type="file" id="bizcard-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleBizCardPhoto(event)"/>
+
+  <div class="btn-row">
+    <button class="full-btn" style="background:var(--bizcard)" onclick="triggerBizCardPhotoCapture()">📷 拍照建檔</button>
+    <button class="full-btn" style="background:#8A8680" onclick="openBizCardAdd('manual')">✍️ 手動輸入</button>
+  </div>
+
+  <div class="cap-form" style="margin-top:14px">
+    <div class="field" style="margin-bottom:8px">
+      <input type="text" id="bizcard-search" placeholder="搜尋姓名或公司…" oninput="renderBizCardList()"/>
+    </div>
+    <div class="btn-row">
+      <select id="bizcard-filter-source" onchange="renderBizCardList()" style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:14px;background:white;color:var(--text)">
+        <option value="">全部來源</option>
+        <option value="本人">本人</option>
+        <option value="執行長">執行長</option>
+      </select>
+      <select id="bizcard-filter-status" onchange="renderBizCardList()" style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:14px;background:white;color:var(--text)">
+        <option value="">全部狀態</option>
+        <option value="有效">有效</option>
+        <option value="離職">離職</option>
+        <option value="失聯">失聯</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:4px">名片清單（依編號排序）</div>
+  <div id="bizcard-list"></div>
+</div>
+
+<!-- 名片表單（新增／編輯共用） -->
+<div class="cat-picker-overlay" id="bizcard-form-overlay" onclick="if(event.target===this)closeBizCardFormOverlay()">
+  <div class="cat-picker-sheet" style="max-height:88vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:15px;font-weight:700">名片資料　<span id="bizcard-form-number" style="color:var(--muted);font-weight:600;font-size:12px"></span></span>
+      <button class="embed-close" style="color:var(--text);width:auto" onclick="closeBizCardFormOverlay()">✕</button>
+    </div>
+
+    <img id="bizcard-photo-preview" style="display:none;width:100%;max-height:180px;object-fit:contain;border-radius:10px;margin-bottom:8px;background:#F8FAFC"/>
+    <a id="bizcard-photo-link" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;color:var(--plan);margin-bottom:10px">🔗 查看原圖</a>
+
+    <div class="field"><label>來源</label>
+      <div class="seg">
+        <button class="chip sel-green" data-bizsource="本人" onclick="setBizCardField('source','本人')">本人</button>
+        <button class="chip" data-bizsource="執行長" onclick="setBizCardField('source','執行長')">執行長</button>
+      </div>
+    </div>
+    <div class="field"><label>取得方式</label>
+      <div class="seg">
+        <button class="chip" data-bizmethod="名片" onclick="setBizCardField('method','名片')">名片</button>
+        <button class="chip" data-bizmethod="Email" onclick="setBizCardField('method','Email')">Email</button>
+        <button class="chip" data-bizmethod="LINE" onclick="setBizCardField('method','LINE')">LINE</button>
+        <button class="chip" data-bizmethod="其他" onclick="setBizCardField('method','其他')">其他</button>
+      </div>
+    </div>
+    <div class="field"><label>姓名</label><input type="text" id="bizcard-name" placeholder="姓名"/></div>
+    <div class="field"><label>公司</label><input type="text" id="bizcard-company" placeholder="公司"/></div>
+    <div class="field"><label>職稱</label><input type="text" id="bizcard-title" placeholder="職稱"/></div>
+    <div class="field"><label>電話</label><input type="text" id="bizcard-phone" placeholder="電話"/></div>
+    <div class="field"><label>Email</label><input type="text" id="bizcard-email" placeholder="Email"/></div>
+    <div class="field"><label>拿到日期</label><input type="date" id="bizcard-date"/></div>
+    <div class="field" id="bizcard-meetplace-field"><label>見面地點（選填）</label>
+      <input type="text" id="bizcard-meetplace" placeholder="在哪裡認識的"/></div>
+    <div class="field" id="bizcard-notes2-field"><label>聊了什麼／下一步（選填）</label>
+      <textarea id="bizcard-notes2" placeholder="聊了什麼、下一步要做什麼"></textarea></div>
+    <div class="field"><label>狀態</label>
+      <div class="seg">
+        <button class="chip sel-green" data-bizstatus="有效" onclick="setBizCardField('status','有效')">有效</button>
+        <button class="chip" data-bizstatus="離職" onclick="setBizCardField('status','離職')">離職</button>
+        <button class="chip" data-bizstatus="失聯" onclick="setBizCardField('status','失聯')">失聯</button>
+      </div>
+    </div>
+    <div class="field"><label>備註（選填）</label><textarea id="bizcard-notes" placeholder="其他備註"></textarea></div>
+
+    <button class="full-btn" style="background:var(--bizcard)" onclick="submitBizCard()">儲存</button>
   </div>
 </div>
 
