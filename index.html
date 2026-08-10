@@ -1266,8 +1266,11 @@ async function postGASReadJSON(payload){
   const url=gasUrl();if(!url)return null;
   try{
     const r=await fetch(url,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
-    return await r.json();
-  }catch(e){return null}
+    if(!r.ok){window._lastGASError='HTTP '+r.status;return null}
+    const text=await r.text();
+    try{return JSON.parse(text)}
+    catch(parseErr){window._lastGASError='回應不是 JSON：'+text.slice(0,200);return null}
+  }catch(e){window._lastGASError='網路錯誤：'+e.message;return null}
 }
 /* 通用 key-value 雲端同步（走 GAS app_settings，手機/電腦共用） */
 function pushKV(key,data){
@@ -4173,6 +4176,7 @@ async function recognizeBizCardWithAI(dataUrl){
 }
 
 async function submitBizCard(){
+ try{
   if(!gasUrl()){showToast('請先到設定頁填入 Google Sheets 同步網址');return}
   const name=document.getElementById('bizcard-name').value.trim();
   if(!name){showToast('請至少填寫姓名');return}
@@ -4200,31 +4204,39 @@ async function submitBizCard(){
     photoUrl=existing?(existing.photoUrl||''):'';
   }
   if(_bizCardPhotoBase64){
+    window._lastGASError='';
     const up=await postGASReadJSON({type:'business_card_upload_photo',token:'graceos2026read',image:_bizCardPhotoBase64});
     if(up&&up.ok)photoUrl=up.url;
-    else showToast('照片上傳失敗，其他資料仍會照常儲存');
+    else{alert('照片上傳失敗：'+(window._lastGASError||(up&&up.error)||'未知錯誤'));showToast('照片上傳失敗，其他資料仍會照常儲存')}
   }
   fields.photoUrl=photoUrl;
 
   if(_bizCardEditing){
+    window._lastGASError='';
     const res=await postGASReadJSON({type:'business_card_update',token:'graceos2026read',number:_bizCardEditing,updates:fields});
     if(res&&res.ok){
       showToast('已更新 ✓');
       closeBizCardFormOverlay();
       loadBizCardList();
     }else{
+      alert('更新失敗：'+(window._lastGASError||(res&&res.error)||'未知錯誤'));
       showToast('更新失敗，請確認設定頁的 Apps Script 網址並重新部署後再試');
     }
   }else{
+    window._lastGASError='';
     const res=await postGASReadJSON({type:'business_card_add',token:'graceos2026read',...fields});
     if(res&&res.ok){
       showToast(`已新增 #${res.number} ✓`);
       closeBizCardFormOverlay();
       loadBizCardList();
     }else{
+      alert('新增失敗：'+(window._lastGASError||(res&&res.error)||'未知錯誤'));
       showToast('新增失敗，請確認設定頁的 Apps Script 網址並重新部署後再試');
     }
   }
+ }catch(e){
+  alert('儲存過程發生錯誤：'+e.message);
+ }
 }
 </script>
 <!-- Budget Modal -->
