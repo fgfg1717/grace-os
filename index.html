@@ -3981,7 +3981,7 @@ function renderBizCardList(){
 
 function resetBizCardForm(){
   _bizCardField={source:'本人',method:'名片',status:'有效'};
-  ['bizcard-name','bizcard-company','bizcard-title','bizcard-phone','bizcard-email','bizcard-meetplace','bizcard-notes2','bizcard-notes']
+  ['bizcard-name','bizcard-company','bizcard-title','bizcard-phone','bizcard-email','bizcard-address','bizcard-meetplace','bizcard-notes2','bizcard-notes']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
   const prev=document.getElementById('bizcard-photo-preview');if(prev){prev.style.display='none';prev.src=''}
   const link=document.getElementById('bizcard-photo-link');if(link){link.style.display='none';link.href='#'}
@@ -4040,6 +4040,7 @@ function openBizCardEdit(number){
   document.getElementById('bizcard-title').value=c.title||'';
   document.getElementById('bizcard-phone').value=c.phone||'';
   document.getElementById('bizcard-email').value=c.email||'';
+  document.getElementById('bizcard-address').value=c.address||'';
   document.getElementById('bizcard-date').value=c.gotDate?c.gotDate.replace(/\//g,'-'):fmtInputDate(taipeiNow());
   document.getElementById('bizcard-meetplace').value=c.meetPlace||'';
   document.getElementById('bizcard-notes2').value=c.notes2||'';
@@ -4090,7 +4091,7 @@ async function handleBizCardPhoto(evt){
   showToast('處理照片中…');
   let dataUrl;
   try{
-    dataUrl=await compressImageFile(file,1280);
+    dataUrl=await compressImageFile(file,1600);
   }catch(e){
     showToast('照片讀取失敗，請重拍或改用手動輸入');
     return;
@@ -4114,6 +4115,7 @@ async function handleBizCardPhoto(evt){
       document.getElementById('bizcard-title').value=info.title||'';
       document.getElementById('bizcard-phone').value=info.phone||'';
       document.getElementById('bizcard-email').value=info.email||'';
+      document.getElementById('bizcard-address').value=info.address||'';
       showToast('辨識完成，請確認資料 ✓');
     }
   }catch(e){
@@ -4143,7 +4145,7 @@ async function recognizeBizCardWithAI(dataUrl){
         role:'user',
         content:[
           {type:'image',source:{type:'base64',media_type:mediaType,data:base64Data}},
-          {type:'text',text:'這是一張名片照片，幫我讀出姓名、公司、職稱、電話、Email，用 JSON 格式回答，欄位讀不到就留空字串，不要編造。'}
+          {type:'text',text:'這是一張名片照片，幫我讀出姓名、公司、職稱、電話、Email、地址，用 JSON 格式回答，欄位讀不到就留空字串，不要編造。名片上如果中文和英文都有寫（例如中文名字和英文名字都印在上面），姓名/公司/職稱這三個欄位要把中文和英文都寫進去（例如「黃翊琪 Cindy Huang」），不要只挑英文或只挑中文；如果只有其中一種語言，就照實填那個語言。'}
         ]
       }],
       output_config:{
@@ -4156,9 +4158,10 @@ async function recognizeBizCardWithAI(dataUrl){
               company:{type:'string'},
               title:{type:'string'},
               phone:{type:'string'},
-              email:{type:'string'}
+              email:{type:'string'},
+              address:{type:'string'}
             },
-            required:['name','company','title','phone','email'],
+            required:['name','company','title','phone','email','address'],
             additionalProperties:false
           }
         }
@@ -4189,6 +4192,7 @@ async function submitBizCard(){
     title:     document.getElementById('bizcard-title').value.trim(),
     phone:     document.getElementById('bizcard-phone').value.trim(),
     email:     document.getElementById('bizcard-email').value.trim(),
+    address:   document.getElementById('bizcard-address').value.trim(),
     gotDate:   (document.getElementById('bizcard-date').value||'').replace(/-/g,'/'),
     meetPlace: isExec?'':document.getElementById('bizcard-meetplace').value.trim(),
     notes2:    isExec?'':document.getElementById('bizcard-notes2').value.trim(),
@@ -4428,6 +4432,7 @@ async function submitBizCard(){
     <div class="field"><label>職稱</label><input type="text" id="bizcard-title" placeholder="職稱"/></div>
     <div class="field"><label>電話</label><input type="text" id="bizcard-phone" placeholder="電話"/></div>
     <div class="field"><label>Email</label><input type="text" id="bizcard-email" placeholder="Email"/></div>
+    <div class="field"><label>地址（選填）</label><input type="text" id="bizcard-address" placeholder="地址"/></div>
     <div class="field"><label>拿到日期</label><input type="date" id="bizcard-date"/></div>
     <div class="field" id="bizcard-meetplace-field"><label>見面地點（選填）</label>
       <input type="text" id="bizcard-meetplace" placeholder="在哪裡認識的"/></div>

@@ -128,6 +128,7 @@ function doGet(e) {
       status:    String(r[11] || '有效'),
       photoUrl:  String(r[12] || ''),
       notes:     String(r[13] || ''),
+      address:   String(r[14] || ''),
     })).filter(r => r.number);
     return out({ ok: true, data });
   }
@@ -405,6 +406,7 @@ function doPost(e) {
           data.status    || '有效',   // L: 狀態
           data.photoUrl  || '',       // M: 照片連結
           data.notes     || '',       // N: 備註
+          data.address   || '',       // O: 地址
         ]);
         return out({ ok: true, number: number });
       } finally {
@@ -421,7 +423,7 @@ function doPost(e) {
       const idx = numberCol.findIndex(r => String(r[0]) === String(data.number));
       if (idx === -1) return out({ ok: false, error: 'card not found' });
       const rowNum = idx + 2;
-      const cur = sheet.getRange(rowNum, 1, 1, 14).getValues()[0];
+      const cur = sheet.getRange(rowNum, 1, 1, 15).getValues()[0];
       const u = data.updates || {};
       const pick = (val, fallback) => (val !== undefined && val !== null) ? val : fallback;
       const merged = [
@@ -439,8 +441,9 @@ function doPost(e) {
         pick(u.status,    cur[11]),
         pick(u.photoUrl,  cur[12]),
         pick(u.notes,     cur[13]),
+        pick(u.address,   cur[14]),
       ];
-      sheet.getRange(rowNum, 1, 1, 14).setValues([merged]);
+      sheet.getRange(rowNum, 1, 1, 15).setValues([merged]);
       return out({ ok: true });
     }
 
@@ -815,12 +818,17 @@ function getOrCreateBizCardSheet(ss) {
   if (!s) {
     s = ss.insertSheet(BIZCARD_TAB);
     s.appendRow(['編號', '來源', '取得方式', '姓名', '公司', '職稱', '電話', 'Email',
-                 '拿到日期', '見面地點', '聊了什麼／下一步', '狀態', '照片連結', '備註']);
+                 '拿到日期', '見面地點', '聊了什麼／下一步', '狀態', '照片連結', '備註', '地址']);
     s.setFrozenRows(1);
-    s.setColumnWidths(1, 14, 100);
+    s.setColumnWidths(1, 15, 100);
     s.setColumnWidth(11, 260);
     s.setColumnWidth(13, 220);
     s.setColumnWidth(14, 200);
+    s.setColumnWidth(15, 220);
+  } else if (!s.getRange(1, 15).getValue()) {
+    // 補上舊分頁缺少的「地址」欄位（既有資料不受影響）
+    s.getRange(1, 15).setValue('地址');
+    s.setColumnWidth(15, 220);
   }
   return s;
 }
