@@ -365,11 +365,11 @@
     .today-sec-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
       color:var(--muted);margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center}
     .today-task-card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
-    .toeic-word-row{border-bottom:1px dashed var(--border);padding:10px 0}
-    .toeic-word-row:last-child{border-bottom:none}
-    .toeic-word-en{font-size:16px;font-weight:700;display:flex;align-items:center;gap:5px}
-    .toeic-word-zh{font-size:12px;color:var(--muted);margin-top:2px}
-    .toeic-word-ex{font-size:12px;color:var(--muted);font-style:italic;margin-top:3px;line-height:1.5}
+    .daily-word-row{border-bottom:1px dashed var(--border);padding:10px 0}
+    .daily-word-row:last-child{border-bottom:none}
+    .daily-word-en{font-size:16px;font-weight:700;display:flex;align-items:center;gap:5px}
+    .daily-word-zh{font-size:12px;color:var(--muted);margin-top:2px}
+    .daily-word-ex{font-size:12px;color:var(--muted);font-style:italic;margin-top:3px;line-height:1.5}
     .today-sent-card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
     .today-sent-q{font-size:14px;line-height:1.7;margin-bottom:10px;font-weight:600}
     .today-sent-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
@@ -513,7 +513,7 @@
     <div class="card card-vocab full" onclick="show('vocab')">
       <span class="icon">📚</span>
       <div class="label">英文學習中心</div>
-      <div class="hint">TOEIC 每日任務・查字典・課程複習・練習</div>
+      <div class="hint">每日英文任務・查字典・課程複習・練習</div>
     </div>
   </div>
 
@@ -709,7 +709,7 @@
   </div>
 
 
-  <!-- 詞庫（查字典/手動新增/TOEIC 存的內容都在這裡） -->
+  <!-- 詞庫（查字典/手動新增/系統內建詞庫存的內容都在這裡） -->
   <div id="eng-panel-list" class="e-hidden">
     <div class="vocab-filter" id="eng-type-filter">
       <button class="chip sel-purple" data-f="all" onclick="setEngFilter('type','all')">全部</button>
@@ -1632,7 +1632,7 @@ function dedupeEngItems(){
   if(clean.length<a.length)setEngItems(clean);
 }
 
-function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud();autoImportGraceLessons().then(()=>syncGraceSRSFromCloud());}
+function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud();if(ENABLE_GRACE_LESSON_AUTO_IMPORT){autoImportGraceLessons().then(()=>syncGraceSRSFromCloud());}else{syncGraceSRSFromCloud();}}
 
 function switchEngTab(tab){
   const tabs=['today','dict','list','practice'];
@@ -1784,7 +1784,7 @@ function renderEngList(){
   if(!list)return;
   if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄</div>';return}
   const TS={vocab:{l:'單字',bg:'#EDE9FE',c:'#4C1D95'},sentence:{l:'句子',bg:'#DBEAFE',c:'#1E40AF'},grammar:{l:'文法',bg:'#D1FAE5',c:'#065F46'}};
-  const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增',toeic:'📘 TOEIC'};
+  const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增',toeic:'📘 每日新詞'};
   list.innerHTML=items.map(item=>{
     const ts=TS[item.type]||TS.vocab;
     let main='',sub='';
@@ -2179,6 +2179,8 @@ function _sentBlankWord(item,all){
 }
 
 /* ── GraceOS SRS v2 — 講義驅動間隔複習（key: grace_srs_cards_v2）── */
+// 講義／JSON 自動匯入改為全部手動新增，關閉背景自動匯入；程式碼保留，改回 true 即可恢復
+const ENABLE_GRACE_LESSON_AUTO_IMPORT=false;
 const GRACE_SRS_KEY='grace_srs_cards_v2';
 const GRACE_SRS_IMP_KEY='grace_srs_imported_v2';
 const GRACE_SRS_LESSONS_KEY='grace_srs_lessons_v2';
@@ -2368,12 +2370,12 @@ function initGraceOSSRSTab(){
     banner.style.display='';
   }
   const area=document.getElementById('srs-grace-card-area');
-  if(area)area.innerHTML=(totalDue===0||remaining<=0)?renderTOEICDaily():'';
+  if(area)area.innerHTML=(totalDue===0||remaining<=0)?renderDailyNewWords():'';
   const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
 }
 
-/* ── 今日 TOEIC 新詞（複習卡刷完後顯示，每天換 5 個）── */
-function todayTOEICWords(){
+/* ── 今日新詞（複習卡刷完後顯示，每天換 5 個）── */
+function todayNewWords(){
   const now=taipeiNow();
   const start=new Date(now.getFullYear(),0,0);
   const doy=Math.floor((now-start)/864e5);
@@ -2381,25 +2383,25 @@ function todayTOEICWords(){
   for(let i=0;i<5;i++)out.push(TOEIC_WORDS[(doy*5+i)%TOEIC_WORDS.length]);
   return out;
 }
-function renderTOEICDaily(){
-  const words=todayTOEICWords();
+function renderDailyNewWords(){
+  const words=todayNewWords();
   const have=new Set(getEngItems().filter(i=>i.type==='vocab').map(i=>(i.word||'').toLowerCase()));
-  return `<div class="today-sec-label" style="margin-top:4px">📘 今日 TOEIC 新詞 · 每天換 5 個</div>
-  <div class="today-task-card">${words.map((w,i)=>`<div class="toeic-word-row">
-    <div class="toeic-word-en">${esc(w.w)} <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button> <span style="font-size:10px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
-    <div class="toeic-word-zh">${esc(w.zh)}</div>
-    <div class="toeic-word-ex">"${esc(w.ex)}"</div>
+  return `<div class="today-sec-label" style="margin-top:4px">📘 每日新詞 · 每天換 5 個</div>
+  <div class="today-task-card">${words.map((w,i)=>`<div class="daily-word-row">
+    <div class="daily-word-en">${esc(w.w)} <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button> <span style="font-size:10px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
+    <div class="daily-word-zh">${esc(w.zh)}</div>
+    <div class="daily-word-ex">"${esc(w.ex)}"</div>
     ${have.has(w.w.toLowerCase())
       ?'<div style="font-size:11px;color:#059669;font-weight:600;margin-top:4px">✓ 已在詞庫</div>'
-      :`<button class="outline-btn" style="margin-top:6px;padding:7px;font-size:12px" onclick="addTOEICWord(${i})">＋ 加入詞庫（之後會出現在練習）</button>`}
+      :`<button class="outline-btn" style="margin-top:6px;padding:7px;font-size:12px" onclick="addDailyNewWord(${i})">＋ 加入詞庫（之後會出現在練習）</button>`}
   </div>`).join('')}</div>`;
 }
-function addTOEICWord(i){
-  const w=todayTOEICWords()[i];if(!w)return;
+function addDailyNewWord(i){
+  const w=todayNewWords()[i];if(!w)return;
   addEngItem({id:Date.now(),type:'vocab',word:w.w,zhMeaning:w.zh,example:w.ex,source:'toeic',ipa:'',audioUrl:'',enDef:'',date:fmtYMD(taipeiNow())});
   showToast(`「${w.w}」已加入詞庫 ✓`);
   const area=document.getElementById('srs-grace-card-area');
-  if(area&&area.innerHTML)area.innerHTML=renderTOEICDaily();
+  if(area&&area.innerHTML)area.innerHTML=renderDailyNewWords();
 }
 
 function startGraceOSSRS(){

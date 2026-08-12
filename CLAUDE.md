@@ -39,19 +39,18 @@
 | 💎 財務總覽 | 本月收支、銀行帳戶管理、股票+銀行資產快照 | `bank_accounts_v1` |
 | 💰 記帳 | 支出（家用/個人/投資/定存）+ 收入（薪資/獎金等） | `ledgers` |
 | 📈 股票追蹤 | 個人+家庭，台股+美股，定期定額，損益計算 | `stocks`, `stock_prices` |
-| 📚 英文學習中心 | SRS 複習、TOEIC 每日新詞、查字典、課程匯入、練習 | `eng_items_v1`, `eng_lessons_v1` |
+| 📚 英文學習中心 | SRS 複習、每日新詞、查字典、課程匯入、練習 | `eng_items_v1`, `eng_lessons_v1` |
 | 🎯 幕僚沙盤 | iframe 嵌入，連到獨立 App | — |
 | 📋 讀取 AAR | 從 Sheets 讀，一鍵複製給 Claude 週覆盤/月回顧 | — |
 | 📊 週覆盤 | 自動帶入本週靈感紀錄 + 複製給 Claude 分析 | — |
 | 📅 月回顧 | 輸入 → 複製給 Claude 分析 | — |
 
 ## 英文學習中心架構（SRS）
-- **統一學習池**：所有來源（TOEIC 內建、查字典、課程匯入、手動）全進 `eng_items_v1`
+- **統一學習池**：所有來源（內建詞庫、查字典、課程匯入、手動）全進 `eng_items_v1`
 - **SRS 間隔複習**：不會=1天、模糊=3天、會了=7天起、很熟=14天起
-- **TOEIC 內建詞彙**：150+ 高頻詞，存在 `TOEIC_WORDS` 常數，每日推 5 個新詞
-- **TOEIC 進度條**：掌握（reps≥3 且 lastRating≥3）/ 250 個目標（550→750）
-- **課程匯入格式**：JSON，含 `courseTitle`, `classDate`, `vocabulary[]`, `idioms[]`, `sentences[]`, `grammar[]`
-- **今日 tab 邏輯**：有待複習 → 先刷完複習卡；無待複習 → 顯示今日 5 個 TOEIC 新詞
+- **內建詞庫**：150+ 高頻詞，存在 `TOEIC_WORDS` 常數（變數名保留未動，畫面顯示已改「每日新詞」），每日推 5 個新詞
+- **課程匯入格式**：JSON，含 `courseTitle`, `classDate`, `vocabulary[]`, `idioms[]`, `sentences[]`, `grammar[]`；2026/08/13 起背景自動匯入（`autoImportGraceLessons`）已關閉，改開關 `ENABLE_GRACE_LESSON_AUTO_IMPORT` 控制，改回 true 可恢復
+- **今日 tab 邏輯**：有待複習 → 先刷完複習卡；無待複習 → 顯示今日 5 個新詞
 
 ## 財務模組架構
 - **財務總覽**：從 `ledgers` 計算本月收支，從 `bank_accounts_v1` 抓銀行餘額，從 `stocks`+`stock_prices` 計算股票市值
