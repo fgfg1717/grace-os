@@ -41,7 +41,6 @@
 | 📈 股票追蹤 | 個人+家庭，台股+美股，定期定額，損益計算 | `stocks`, `stock_prices` |
 | 📚 英文學習中心 | SRS 複習、TOEIC 每日新詞、查字典、課程匯入、練習 | `eng_items_v1`, `eng_lessons_v1` |
 | 🎯 幕僚沙盤 | iframe 嵌入，連到獨立 App | — |
-| 🗓️ 本週計畫 | 從 Sheets 讀取，今日任務高亮 | — |
 | 📋 讀取 AAR | 從 Sheets 讀，一鍵複製給 Claude 週覆盤/月回顧 | — |
 | 📊 週覆盤 | 自動帶入本週靈感紀錄 + 複製給 Claude 分析 | — |
 | 📅 月回顧 | 輸入 → 複製給 Claude 分析 | — |

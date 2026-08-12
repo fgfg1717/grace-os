@@ -339,19 +339,6 @@
     .aar-loading{text-align:center;padding:32px;color:var(--muted);font-size:14px}
     .copy-bar{display:flex;gap:8px;margin-top:16px}
 
-    /* Plan */
-    .plan-day{margin-bottom:20px}
-    .plan-day-header{padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;
-      margin-bottom:6px;background:#DDE6F0;color:#2A4060}
-    .plan-day-header.today{background:#CBD8E8;color:#1E3652;border:2px solid var(--plan)}
-    .plan-row{display:flex;gap:0;border-bottom:1px solid var(--border)}
-    .plan-row:last-child{border-bottom:none}
-    .plan-time{font-size:12px;color:var(--muted);font-family:'SF Mono',monospace;
-      padding:6px 8px;flex-shrink:0;width:100px}
-    .plan-task{font-size:13px;padding:6px 8px;flex:1;line-height:1.5;color:var(--text)}
-    .plan-cat{font-size:11px;font-weight:600;padding:6px 6px;color:var(--muted);flex-shrink:0}
-    .plan-empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
-
     /* CEO 思維庫 */
     .ceo-pattern-card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .18s}
     .ceo-pattern-card:hover{border-color:var(--ceo)}
@@ -559,11 +546,6 @@
       <span class="icon">🌅</span>
       <div class="label">今日策略</div>
       <div class="hint" id="home-daily-hint">早安・設定今日焦點・按表操課</div>
-    </div>
-    <div class="card card-plan full" onclick="show('plan')">
-      <span class="icon">🗓️</span>
-      <div class="label">本週計畫</div>
-      <div class="hint">從 Google Sheets 讀取・直接看今日任務</div>
     </div>
   </div>
 
@@ -974,19 +956,6 @@
   </div>
 </div>
 
-<!-- 本週計畫 -->
-<div class="tpl" id="tpl-plan">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">🗓️</span>
-    <div><h2>本週計畫</h2>
-      <span class="tag" style="background:#DBEAFE;color:#1E40AF;">按表操課</span>
-    </div>
-  </div>
-  <button class="full-btn" style="background:var(--plan);margin-bottom:16px" onclick="fetchPlan()">讀取本週計畫</button>
-  <div id="plan-content"><div class="plan-empty">點上方按鈕從 Google Sheets 讀取本週計畫</div></div>
-</div>
-
 <!-- 週覆盤 -->
 <div class="tpl" id="tpl-review">
   <button class="back" onclick="goHome()">← 返回</button>
@@ -1387,7 +1356,6 @@ function _showDOM(type){
   else if(type==='finance')initFinance();
   else if(type==='aar')initAAR();
   else if(type==='daily')initDailyStrategy();
-  else if(type==='plan'){const pc=document.getElementById('plan-content');if(pc&&pc.querySelector('.plan-empty'))fetchPlan();}
   else if(type==='review')initReview();
   else if(type==='ceo')initCEO();
   else if(type==='tasks')renderTasks();
@@ -3610,28 +3578,6 @@ function delBank(id){
   setBanks(getBanks().filter(b=>b.id!==id));renderBankList();showToast('已刪除');
 }
 
-/* ════════════════════════════════
-   本週計畫
-════════════════════════════════ */
-async function fetchPlan(){
-  if(!gasUrl()){showToast('請先在快速記錄中設定 Apps Script 網址');return}
-  document.getElementById('plan-content').innerHTML='<div class="plan-empty">讀取中…</div>';
-  const result=await getGAS({type:'plan'});
-  if(!result||!result.ok||!result.data||!result.data.length){document.getElementById('plan-content').innerHTML='<div class="plan-empty">尚未建立本週計畫，請先執行 /週計畫</div>';return}
-  renderPlan(result.data);showToast('本週計畫讀取完成')
-}
-function renderPlan(rows){
-  const now=taipeiNow();const todayLabel=`${now.getMonth()+1}/${now.getDate()}`;
-  let html='';let currentDay='';let dayRows='';let isToday=false;
-  const flush=()=>{if(currentDay){html+=`<div class="plan-day"><div class="plan-day-header ${isToday?'today':''}">${isToday?'📍 今天｜':''} ${esc(currentDay)}</div>${dayRows}</div>`;dayRows=''}};
-  rows.forEach(row=>{
-    const cell0=String(row[0]||'').trim();
-    if(/\d+\/\d+/.test(cell0)&&(cell0.includes('（')||cell0.includes('(')||/[一二三四五六日]/.test(cell0))){flush();currentDay=cell0;isToday=cell0.includes(todayLabel)}
-    else if(cell0==='時段'||!cell0||row.every(c=>!String(c||'').trim())){}
-    else if(currentDay){const time=String(row[0]||'');const task=String(row[1]||'');const cat=String(row[2]||'');const mins=String(row[3]||'');const isHeaderRow=mins!==''&&!/^\d+$/.test(mins);if(!isHeaderRow&&(time||task))dayRows+=`<div class="plan-row"><span class="plan-time">${esc(time)}</span><span class="plan-task">${esc(task)}</span><span class="plan-cat">${esc(cat)}</span></div>`}
-  });flush();
-  document.getElementById('plan-content').innerHTML=html||'<div class="plan-empty">計畫格式無法解析</div>';
-}
 window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
 
 /* ════ CEO 思維庫 ════ */
