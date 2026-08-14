@@ -679,7 +679,6 @@
 
   <!-- 今日任務 — SRS 間隔複習 -->
   <div id="eng-panel-today">
-    <div id="srs-grace-filter" style="margin-bottom:12px"></div>
     <div id="srs-grace-banner" style="background:linear-gradient(135deg,#5B21B6,#7C3AED);color:white;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px;user-select:none;transition:opacity .2s" onclick="startGraceOSSRS()">
       <div style="font-size:32px;margin-bottom:6px">🔄</div>
       <div style="font-size:18px;font-weight:800">載入中…</div>
@@ -1632,7 +1631,7 @@ function dedupeEngItems(){
   if(clean.length<a.length)setEngItems(clean);
 }
 
-function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud();if(ENABLE_GRACE_LESSON_AUTO_IMPORT){autoImportGraceLessons().then(()=>syncGraceSRSFromCloud());}else{syncGraceSRSFromCloud();}}
+function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud().then(()=>{if(document.getElementById('eng-panel-today')&&!document.getElementById('eng-panel-today').classList.contains('e-hidden'))initGraceOSSRSTab();});}
 
 function switchEngTab(tab){
   const tabs=['today','dict','list','practice'];
@@ -2178,173 +2177,54 @@ function _sentBlankWord(item,all){
   return words[Math.floor(Math.random()*words.length)]?.replace(/[.,!?;:'"]/g,'')||'';
 }
 
-/* ── GraceOS SRS v2 — 講義驅動間隔複習（key: grace_srs_cards_v2）── */
-// 講義／JSON 自動匯入改為全部手動新增，關閉背景自動匯入；程式碼保留，改回 true 即可恢復
-const ENABLE_GRACE_LESSON_AUTO_IMPORT=false;
-const GRACE_SRS_KEY='grace_srs_cards_v2';
-const GRACE_SRS_IMP_KEY='grace_srs_imported_v2';
-const GRACE_SRS_LESSONS_KEY='grace_srs_lessons_v2';
+/* ── 今日複習：讀她自己在查記/詞庫累積的紀錄(eng_items_v1)排間隔複習，不再依賴講義匯入 ── */
 const SRS_BATCH_KEY='grace_srs_batch_v1';
 const SRS_BATCH_SIZE=5;
-let graceQueue=[],graceQIdx=0,graceQTotal=0,graceLessonFilter=null;
+let graceQueue=[],graceQIdx=0,graceQTotal=0;
 
 function loadSRSBatch(){try{return JSON.parse(localStorage.getItem(SRS_BATCH_KEY)||'null')}catch{return null}}
 function saveSRSBatch(b){localStorage.setItem(SRS_BATCH_KEY,JSON.stringify(b))}
 
-function loadGraceSRSLessons(){try{return JSON.parse(localStorage.getItem(GRACE_SRS_LESSONS_KEY)||'{}')}catch{return{}}}
-function saveGraceSRSLessons(m){localStorage.setItem(GRACE_SRS_LESSONS_KEY,JSON.stringify(m))}
-
-function loadGraceSRS(){try{return JSON.parse(localStorage.getItem(GRACE_SRS_KEY)||'{}')}catch{return{}}}
-function saveGraceSRS(s){localStorage.setItem(GRACE_SRS_KEY,JSON.stringify(s))}
-
-function importLessonToGraceSRS(lessonJson){
-  const s=loadGraceSRS();
-  const lid=lessonJson.classDate||lessonJson.courseTitle;
+function getDueEngItems(){
   const today=fmtYMD(taipeiNow());
-  (lessonJson.vocabulary||[]).forEach((v,i)=>{
-    const id=`${lid}_vocab_${i}`;
-    if(!s[id])s[id]={id,lessonId:lid,type:'vocab',word:v.word,zh:v.zh,definition:v.definition||'',example:v.example||'',interval_days:1,next_review:today,ease:2.5,review_count:0,wrong_count:0};
-  });
-  (lessonJson.sentences||[]).forEach((v,i)=>{
-    const id=`${lid}_sent_${i}`;
-    if(!s[id])s[id]={id,lessonId:lid,type:'sentence',sentence:v.sentence,zh:v.zh,interval_days:1,next_review:today,ease:2.5,review_count:0,wrong_count:0};
-  });
-  (lessonJson.grammar||[]).forEach((v,i)=>{
-    const id=`${lid}_gram_${i}`;
-    if(!s[id])s[id]={id,lessonId:lid,type:'grammar',rule:v.rule,explanation:v.explanation||'',examples:v.examples||[],interval_days:1,next_review:today,ease:2.5,review_count:0,wrong_count:0};
-  });
-  saveGraceSRS(s);
-  const lm=loadGraceSRSLessons();lm[lid]=lessonJson.courseTitle||lid;saveGraceSRSLessons(lm);
+  return getEngItems().filter(i=>((i.srs&&i.srs.nextReview)||today)<=today);
 }
 
-function reviewGraceCard(cardId,isCorrect){
-  const s=loadGraceSRS();const c=s[cardId];if(!c)return;
-  c.review_count++;
-  if(isCorrect){
-    c.ease=Math.min(c.ease+0.1,3.0);
-    c.interval_days=c.review_count===1?1:c.review_count===2?3:Math.round(c.interval_days*c.ease);
-  }else{
-    c.wrong_count++;c.ease=Math.max(c.ease-0.2,1.3);c.interval_days=1;
-  }
-  const next=new Date(taipeiNow());next.setDate(next.getDate()+c.interval_days);
-  c.next_review=fmtYMD(next);saveGraceSRS(s);
-  scheduleSRSPush();
-}
-
-/* ── SRS 複習進度跨裝置同步 ──
-   只同步輕量狀態（間隔/下次複習/次數），卡片內容由課程檔在各裝置自動建立 */
-let _srsPushTimer=null;
-function _srsStateSlim(){
-  const s=loadGraceSRS();const out={};
-  Object.values(s).forEach(c=>{out[c.id]={i:c.interval_days,n:c.next_review,e:c.ease,r:c.review_count||0,w:c.wrong_count||0}});
-  return out;
-}
-function scheduleSRSPush(){
-  if(!gasUrl())return;
-  if(_srsPushTimer)clearTimeout(_srsPushTimer);
-  _srsPushTimer=setTimeout(()=>{pushKV('grace_srs_state_v1',_srsStateSlim())},5000);
-}
-async function syncGraceSRSFromCloud(){
-  const kv=await getCloudKV();if(!kv)return;
-  const entry=kv['grace_srs_state_v1'];
-  if(!entry?.data||typeof entry.data!=='object')return;
-  const s=loadGraceSRS();let changed=false;
-  Object.entries(entry.data).forEach(([id,cs])=>{
-    const c=s[id];if(!c||!cs)return;
-    const localProg=(c.review_count||0)+(c.wrong_count||0);
-    const cloudProg=(cs.r||0)+(cs.w||0);
-    // 雲端進度較多，或次數相同但複習日較新 → 採用雲端狀態
-    if(cloudProg>localProg||(cloudProg===localProg&&(cs.n||'')>(c.next_review||''))){
-      c.interval_days=cs.i;c.next_review=cs.n;c.ease=cs.e;
-      c.review_count=cs.r;c.wrong_count=cs.w;changed=true;
-    }
-  });
-  if(!changed)return;
-  saveGraceSRS(s);
-  // 已建立的今日批次補進新到期的卡片
-  const b=loadSRSBatch();
-  if(b&&b.date===fmtYMD(taipeiNow())){
-    const today=b.date;
-    const known=new Set(b.allDueIds);
-    Object.values(s).filter(c=>c.next_review<=today&&(!b.lessonFilter||c.lessonId===b.lessonFilter))
-      .forEach(c=>{if(!known.has(c.id))b.allDueIds.push(c.id)});
-    saveSRSBatch(b);
-  }
-  initGraceOSSRSTab();
-  showToast('複習進度已同步 ✓');
-  scheduleSRSPush();
-}
-
-function getDueGraceCards(){
-  const s=loadGraceSRS();const today=fmtYMD(taipeiNow());
-  return Object.values(s).filter(c=>c.next_review<=today);
-}
-
-async function autoImportGraceLessons(){
-  let imp;try{imp=JSON.parse(localStorage.getItem(GRACE_SRS_IMP_KEY)||'[]')}catch{imp=[];}
-  let manifest;
-  try{const r=await fetch('./data/lessons/manifest.json');if(!r.ok)return;manifest=await r.json();}catch{return;}
-  const lessons=manifest.lessons||[];
-  let cardsChanged=false,lmChanged=false;
-  const lm=loadGraceSRSLessons();
-  for(const fname of lessons){
-    try{
-      const r=await fetch(`./data/lessons/${fname}`);if(!r.ok)continue;
-      const j=await r.json();
-      const lid=j.classDate||j.courseTitle;
-      if(!lm[lid]){lm[lid]=j.courseTitle||lid;lmChanged=true;}
-      if(!imp.includes(fname)){importLessonToGraceSRS(j);imp.push(fname);cardsChanged=true;}
-    }catch{}
-  }
-  if(lmChanged)saveGraceSRSLessons(lm);
-  if(cardsChanged)localStorage.setItem(GRACE_SRS_IMP_KEY,JSON.stringify(imp));
-  initGraceOSSRSTab();
+// 4級自評（不會=1／模糊=2／會了=3／很熟=4）→ 間隔天數：1／3／7起／14起
+function updateItemSRS(itemId,rating){
+  const items=getEngItems();
+  const idx=items.findIndex(i=>i.id===itemId);if(idx<0)return;
+  const item=items[idx];
+  const srs=item.srs||{nextReview:fmtYMD(taipeiNow()),interval:0,reps:0,lastRating:0,lastReview:''};
+  srs.reps=(srs.reps||0)+1;
+  srs.lastRating=rating;
+  srs.lastReview=fmtYMD(taipeiNow());
+  if(rating===1)srs.interval=1;
+  else if(rating===2)srs.interval=3;
+  else if(rating===3)srs.interval=srs.interval<7?7:Math.round(srs.interval*1.6);
+  else srs.interval=srs.interval<14?14:Math.round(srs.interval*2);
+  const next=new Date(taipeiNow());next.setDate(next.getDate()+srs.interval);
+  srs.nextReview=fmtYMD(next);
+  item.srs=srs;items[idx]=item;
+  setEngItems(items);_scheduleEngBackup();
 }
 
 /* ── 今日任務 — SRS 複習 ── */
-function renderGraceSRSFilter(){
-  const el=document.getElementById('srs-grace-filter');if(!el)return;
-  const lm=loadGraceSRSLessons();
-  const ids=Object.keys(lm);
-  if(!ids.length){el.innerHTML='';return;}
-  const chips=[{id:null,label:'全部'},...ids.map(id=>({id,label:lm[id]}))];
-  el.innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap">${
-    chips.map(c=>{
-      const sel=c.id===graceLessonFilter;
-      return `<button onclick="selectGraceLesson(${c.id===null?'null':`'${c.id}'`})"
-        style="padding:6px 12px;border-radius:20px;border:1.5px solid ${sel?'#6D28D9':'var(--border)'};
-        background:${sel?'#6D28D9':'white'};color:${sel?'white':'var(--text)'};
-        font-size:12px;font-weight:${sel?'700':'500'};cursor:pointer;white-space:nowrap;
-        font-family:inherit;line-height:1.4">${esc(c.label)}</button>`;
-    }).join('')
-  }</div>`;
-}
-
-function selectGraceLesson(lid){
-  graceLessonFilter=lid;
-  renderGraceSRSFilter();
-  initGraceOSSRSTab();
-}
-
 function initGraceOSSRSTab(){
-  renderGraceSRSFilter();
-  const s=loadGraceSRS();
   const today=fmtYMD(taipeiNow());
-  const lid=graceLessonFilter;
-  // 取今日到期卡片，固定排序確保每天順序一致
-  const allDueNow=Object.values(s)
-    .filter(c=>c.next_review<=today&&(!lid||c.lessonId===lid))
-    .sort((a,b)=>a.id<b.id?-1:1);
+  // 取今日到期項目，固定排序確保每天順序一致
+  const allDueNow=getDueEngItems().sort((a,b)=>a.id<b.id?-1:1);
   // 讀取或初始化今日 batch 狀態
   let b=loadSRSBatch();
-  if(!b||b.date!==today||(b.lessonFilter||null)!==(lid||null)){
-    b={date:today,lessonFilter:lid||null,allDueIds:allDueNow.map(c=>c.id),progress:0};
+  if(!b||b.date!==today){
+    b={date:today,allDueIds:allDueNow.map(i=>i.id),progress:0};
     saveSRSBatch(b);
   }
   const totalDue=b.allDueIds.length;
   const remaining=totalDue-b.progress;
   const batchIds=b.allDueIds.slice(b.progress,b.progress+SRS_BATCH_SIZE);
-  const batchCards=batchIds.map(id=>s[id]).filter(Boolean);
+  const itemsById={};getEngItems().forEach(i=>{itemsById[i.id]=i});
+  const batchCards=batchIds.map(id=>itemsById[id]).filter(Boolean);
   const batchSize=batchCards.length;
   const batchNum=Math.floor(b.progress/SRS_BATCH_SIZE)+1;
   const totalBatches=Math.ceil(totalDue/SRS_BATCH_SIZE)||1;
@@ -2429,12 +2309,12 @@ function renderGraceOSSRSCard(){
   if(card.type==='vocab'){
     front=`<div style="text-align:center;padding:24px 0">
       <div style="font-size:30px;font-weight:800;letter-spacing:.5px">${esc(card.word||'')}</div>
-      <button class="eng-play" style="margin-top:12px;font-size:22px" onclick="engSpeak('${(card.word||'').replace(/'/g,"\\\'")}')">🔊</button>
+      <button class="eng-play" style="margin-top:12px;font-size:22px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.word||'').replace(/'/g,"\\'")}')">🔊</button>
     </div>`;
   }else if(card.type==='sentence'){
     front=`<div style="padding:18px 0">
       <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
-      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\\'")}')">🔊</button>
+      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
     </div>`;
   }else{
     front=`<div style="padding:18px 0">
@@ -2455,20 +2335,21 @@ function revealGraceOSSRSCard(){
   if(card.type==='vocab'){
     front=`<div style="text-align:center;padding:16px 0 8px">
       <div style="font-size:28px;font-weight:800">${esc(card.word||'')}</div>
-      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(card.word||'').replace(/'/g,"\\\'")}')">🔊</button>
+      <button class="eng-play" style="margin-top:8px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.word||'').replace(/'/g,"\\'")}')">🔊</button>
     </div>`;
     back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
-      <div style="font-size:18px;font-weight:700;color:var(--vocab)">${esc(card.zh||'')}</div>
-      ${card.definition?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${esc(card.definition)}</div>`:''}
-      ${card.example?`<div style="font-size:13px;font-style:italic;color:#4B5563;margin-top:8px">"${esc(card.example)}" <button class="eng-play" onclick="engSpeak('${(card.example||'').replace(/'/g,"\\\'")}')">🔊</button></div>`:''}
+      <div style="font-size:18px;font-weight:700;color:var(--vocab)">${esc(card.zhMeaning||'')}</div>
+      ${card.enDef?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${esc(card.enDef)}</div>`:''}
+      ${card.example?`<div style="font-size:13px;font-style:italic;color:#4B5563;margin-top:8px">"${esc(card.example)}" <button class="eng-play" onclick="engSpeak('${(card.example||'').replace(/'/g,"\\'")}')">🔊</button></div>`:''}
     </div>`;
   }else if(card.type==='sentence'){
     front=`<div style="padding:14px 0 6px">
       <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
-      <button class="eng-play" style="margin-top:4px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\\'")}')">🔊</button>
+      <button class="eng-play" style="margin-top:4px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
     </div>`;
     back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
-      <div style="font-size:16px;font-weight:700;color:var(--vocab)">${esc(card.zh||'')}</div>
+      <div style="font-size:16px;font-weight:700;color:var(--vocab)">${esc(card.translation||'')}</div>
+      ${card.notes?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(card.notes)}</div>`:''}
     </div>`;
   }else{
     const exArr=card.examples||[];
@@ -2478,18 +2359,20 @@ function revealGraceOSSRSCard(){
     </div>`;
     back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
       ${card.explanation?`<div style="font-size:13px;line-height:1.7;margin-bottom:8px">${esc(card.explanation)}</div>`:''}
-      ${exArr.slice(0,2).map(e=>`<div style="font-size:12px;font-style:italic;color:#4B5563;margin-bottom:4px">"${esc(e.replace(/_([^_]+)_/g,'$1'))}" <button class="eng-play" onclick="engSpeak('${e.replace(/_([^_]+)_/g,'$1').replace(/'/g,"\\\'")}')">🔊</button></div>`).join('')}
+      ${exArr.slice(0,2).map(e=>`<div style="font-size:12px;font-style:italic;color:#4B5563;margin-bottom:4px">"${esc(e)}" <button class="eng-play" onclick="engSpeak('${e.replace(/'/g,"\\'")}')">🔊</button></div>`).join('')}
     </div>`;
   }
-  const btns=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-    <button onclick="graceOSSRSAnswer(false)" style="padding:12px 8px;border:2px solid #EF4444;border-radius:12px;background:white;color:#EF4444;font-weight:700;font-size:13px;cursor:pointer;line-height:1.4">❌ 不記得<br><span style="font-size:10px;font-weight:400">明天再複習</span></button>
-    <button onclick="graceOSSRSAnswer(true)" style="padding:12px 8px;border:2px solid #10B981;border-radius:12px;background:white;color:#059669;font-weight:700;font-size:13px;cursor:pointer;line-height:1.4">✅ 記得<br><span style="font-size:10px;font-weight:400">間隔拉長</span></button>
+  const btns=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
+    <button onclick="graceOSSRSAnswer(1)" style="padding:10px 4px;border:2px solid #EF4444;border-radius:12px;background:white;color:#EF4444;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">😵 不會<br><span style="font-size:9px;font-weight:400">明天再複習</span></button>
+    <button onclick="graceOSSRSAnswer(2)" style="padding:10px 4px;border:2px solid #F59E0B;border-radius:12px;background:white;color:#D97706;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">🤔 模糊<br><span style="font-size:9px;font-weight:400">3天後再複習</span></button>
+    <button onclick="graceOSSRSAnswer(3)" style="padding:10px 4px;border:2px solid #10B981;border-radius:12px;background:white;color:#059669;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">🙂 會了<br><span style="font-size:9px;font-weight:400">拉長到7天起</span></button>
+    <button onclick="graceOSSRSAnswer(4)" style="padding:10px 4px;border:2px solid #6D28D9;border-radius:12px;background:white;color:#6D28D9;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">💪 很熟<br><span style="font-size:9px;font-weight:400">拉長到14天起</span></button>
   </div>`;
   area.innerHTML=`${_srsProgBar(graceQIdx,graceQueue.length)}<div class="today-task-card">${front}${back}</div>${btns}`;
 }
 
-function graceOSSRSAnswer(isCorrect){
-  reviewGraceCard(graceQueue[graceQIdx].id,isCorrect);
+function graceOSSRSAnswer(rating){
+  updateItemSRS(graceQueue[graceQIdx].id,rating);
   graceQIdx++;renderGraceOSSRSCard();
 }
 
