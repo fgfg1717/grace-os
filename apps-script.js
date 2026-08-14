@@ -1355,6 +1355,7 @@ function onOpen() {
     .addItem('合併所有未合併快取', 'mergeAll')
     .addItem('🔧 修正錯位資料（移回 AAR 區）', 'fixMisplacedData')
     .addItem('🔧 修正跑到底部的資料', 'fixMismerged')
+    .addItem('🔧 修復分類欄下拉選單限制', 'fixCategoryValidation')
     .addSeparator()
     .addItem('⏰ 設定每早 7 點自動建立範本', 'setupMorningTrigger')
     .addItem('⏰ 設定每日 18:45 自動合併', 'setupDailyMerge')
@@ -1369,6 +1370,19 @@ function onOpen() {
 function initLedgerSheet() { getOrCreateLedgerSheet(SpreadsheetApp.openById(SPREADSHEET_ID)); safeAlert('記帳明細分頁已就緒 ✓'); }
 function initStockSheet()  { getOrCreateStockSheet(SpreadsheetApp.openById(SPREADSHEET_ID));  safeAlert('股票紀錄分頁已就緒 ✓');  }
 function initBizCardSheet(){ getOrCreateBizCardSheet(SpreadsheetApp.openById(SPREADSHEET_ID)); safeAlert('名片主檔分頁已就緒 ✓'); }
+
+// ── fixCategoryValidation：修復主紀錄 B 欄（分類）誤設的下拉選單 ──
+// B 欄實際會被 mergeToday/mergeAll 寫入快速記錄的分類
+//（閱讀/Podcast 靈感、財務記帳、股票紀錄、健康管理、工作、生活、工作生活），
+// 但曾被設成只允許週覆盤用的 4 個目標分類，導致合併寫入被 Sheets 擋下。
+// 這裡把整欄的資料驗證規則清掉，B 欄改回自由輸入。
+function fixCategoryValidation() {
+  const ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const main = getMainSheet(ss);
+  const maxRows = main.getMaxRows();
+  main.getRange(1, 2, maxRows, 1).clearDataValidations();
+  safeAlert('✓ 已清除主紀錄 B 欄（分類）的下拉選單限制，現在可以正常合併資料了。');
+}
 
 function setupDailyMerge() {
   ScriptApp.getProjectTriggers().forEach(t => {
