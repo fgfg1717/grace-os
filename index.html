@@ -679,6 +679,7 @@
 
   <!-- 今日任務 — SRS 間隔複習 -->
   <div id="eng-panel-today">
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">點下面的紫色區塊開始複習。每張卡先看正面猜答案，按「翻牌看答案」對答案，再誠實選不會／模糊／會了／很熟——選越熟的，這張卡就會越晚才再考你一次。一次刷 5 張一輪，刷完可以選要不要繼續下一輪。</div>
     <div id="srs-grace-banner" style="background:linear-gradient(135deg,#5B21B6,#7C3AED);color:white;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px;user-select:none;transition:opacity .2s" onclick="startGraceOSSRS()">
       <div style="font-size:32px;margin-bottom:6px">🔄</div>
       <div style="font-size:18px;font-weight:800">載入中…</div>
@@ -1718,10 +1719,22 @@ function engPlay(url,word){
   if(src){const a=new Audio(src);a.play().catch(()=>engSpeak(word));}
   else engSpeak(word);
 }
+// iOS Safari 常見狀況：頁面載入後第一次呼叫 speechSynthesis 容易沒聲音，要先被一次真人手勢「預熱」過才穩定
+let _speechUnlocked=false;
+function _unlockSpeech(){
+  if(_speechUnlocked||!('speechSynthesis'in window))return;
+  _speechUnlocked=true;
+  try{const u=new SpeechSynthesisUtterance('');u.volume=0;speechSynthesis.speak(u);}catch{}
+}
+document.addEventListener('touchstart',_unlockSpeech,{once:true,passive:true});
+document.addEventListener('click',_unlockSpeech,{once:true});
 function engSpeak(text){
   if(!('speechSynthesis'in window))return;
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
+  const voices=speechSynthesis.getVoices();
+  const v=voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang&&v.lang.startsWith('en'));
+  if(v)u.voice=v;
   speechSynthesis.speak(u);
 }
 
@@ -1831,7 +1844,7 @@ function startEngPractice(){
 }
 function genEngQ(item,all,mode){
   if(item.toeicQ){
-    return{prompt:item.prompt,hint:`文法：${item.rule}`,answer:item.opts[item.ans].toLowerCase(),options:item.opts,audioText:'',audioUrl:'',reveal:`✅ 正確答案：${item.opts[item.ans]}\n\n📖 ${item.expl}`,selfAssess:false};
+    return{prompt:item.prompt,hint:'',answer:item.opts[item.ans].toLowerCase(),options:item.opts,audioText:'',audioUrl:'',reveal:`✅ 正確答案：${item.opts[item.ans]}\n📐 文法類型：${item.rule}\n\n📖 ${item.expl}`,selfAssess:false};
   }
   const pool=all.filter(i=>i.type===item.type&&i.id!==item.id);
   const sa=(prompt,hint,answer,audio,audioUrl,reveal)=>({prompt,hint,answer,audioText:audio,audioUrl:audioUrl||'',reveal,selfAssess:true,options:null});
@@ -1869,8 +1882,8 @@ function genEngQ(item,all,mode){
           const opts=engShuffle([targetWord,...engShuffle(wrongPool).slice(0,3)]);
           const revealSent=ex.replace(/_([^_]+)_/g,'$1');
           const otherEx=(item.examples||[]).filter(e=>e!==ex).slice(0,3).map(e=>e.replace(/_([^_]+)_/g,'$1'));
-          const revealText=revealSent+(otherEx.length?'\n\n其他例句：\n'+otherEx.join('\n'):'');
-          return{prompt:displayQ,hint:`文法規則：${item.rule}`,answer:targetWord,options:opts,audioText:revealSent,audioUrl:'',reveal:revealText,selfAssess:false};
+          const revealText=`📐 文法規則：${item.rule}\n\n${revealSent}`+(otherEx.length?'\n\n其他例句：\n'+otherEx.join('\n'):'');
+          return{prompt:displayQ,hint:'',answer:targetWord,options:opts,audioText:revealSent,audioUrl:'',reveal:revealText,selfAssess:false};
         }
       }
       // fallback：若例句沒有 _word_ 標記或干擾選項不足，跳過此題
@@ -2178,7 +2191,8 @@ function _sentBlankWord(item,all){
 }
 
 /* ── 今日複習：讀她自己在查記/詞庫累積的紀錄(eng_items_v1)排間隔複習，不再依賴講義匯入 ── */
-const SRS_BATCH_KEY='grace_srs_batch_v1';
+// 改用新 key，避免讀到改版前殘留的舊批次資料（裡面是舊講義卡片的id，會讓佇列變空但畫面看起來有數字，點了沒反應）
+const SRS_BATCH_KEY='eng_srs_batch_v1';
 const SRS_BATCH_SIZE=5;
 let graceQueue=[],graceQIdx=0,graceQTotal=0;
 
@@ -2214,16 +2228,24 @@ function initGraceOSSRSTab(){
   const today=fmtYMD(taipeiNow());
   // 取今日到期項目，固定排序確保每天順序一致
   const allDueNow=getDueEngItems().sort((a,b)=>a.id<b.id?-1:1);
+  const itemsById={};getEngItems().forEach(i=>{itemsById[i.id]=i});
   // 讀取或初始化今日 batch 狀態
   let b=loadSRSBatch();
   if(!b||b.date!==today){
     b={date:today,allDueIds:allDueNow.map(i=>i.id),progress:0};
     saveSRSBatch(b);
+  }else{
+    // 防呆：批次裡如果有已經找不到對應項目的id（例如殘留舊資料、或項目被刪除），濾掉避免佇列卡住點了沒反應
+    const validIds=b.allDueIds.filter(id=>itemsById[id]);
+    if(validIds.length!==b.allDueIds.length){
+      b.progress=Math.min(b.progress,validIds.length);
+      b.allDueIds=validIds;
+      saveSRSBatch(b);
+    }
   }
   const totalDue=b.allDueIds.length;
   const remaining=totalDue-b.progress;
   const batchIds=b.allDueIds.slice(b.progress,b.progress+SRS_BATCH_SIZE);
-  const itemsById={};getEngItems().forEach(i=>{itemsById[i.id]=i});
   const batchCards=batchIds.map(id=>itemsById[id]).filter(Boolean);
   const batchSize=batchCards.length;
   const batchNum=Math.floor(b.progress/SRS_BATCH_SIZE)+1;
