@@ -1,4 +1,4 @@
-const CACHE = 'graceos-v6';
+const CACHE = 'graceos-v7';
 const ASSETS = ['/grace-os/', '/grace-os/index.html', '/grace-os/manifest.json', '/grace-os/sw.js'];
 
 self.addEventListener('install', e => {

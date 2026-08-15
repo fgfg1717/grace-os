@@ -1740,15 +1740,14 @@ document.addEventListener('touchstart',_unlockSpeech,{once:true,passive:true});
 document.addEventListener('click',_unlockSpeech,{once:true});
 function engSpeak(text){
   if(!('speechSynthesis'in window))return;
-  speechSynthesis.cancel();
-  // iOS Safari 已知問題：cancel() 後馬上 speak() 常被吃掉，隔一個 tick 再講才穩定
-  setTimeout(()=>{
-    const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
-    const voices=speechSynthesis.getVoices();
-    const v=voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang&&v.lang.startsWith('en'));
-    if(v)u.voice=v;
-    speechSynthesis.speak(u);
-  },80);
+  // iOS 要求 speak() 必須在使用者手勢的同步呼叫鏈裡直接執行，任何 setTimeout/await 包住都會被 iOS 靜默擋掉
+  // 只在真的還在講話時才 cancel，避免不必要的中斷
+  if(speechSynthesis.speaking)speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
+  const voices=speechSynthesis.getVoices();
+  const v=voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang&&v.lang.startsWith('en'));
+  if(v)u.voice=v;
+  speechSynthesis.speak(u);
 }
 
 /* ── 手動新增 ── */
