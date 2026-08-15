@@ -1612,6 +1612,16 @@ let _dictEntry=null,_curQ=null;
 
 function getEngItems(){try{return JSON.parse(localStorage.getItem(ENG_KEY)||'[]')}catch{return[]}}
 function setEngItems(a){localStorage.setItem(ENG_KEY,JSON.stringify(a))}
+
+// 偵測文字亂碼（過去同步時曾有編碼問題留下的殘留資料）：連續問號或 U+FFFD 替代字元
+function _isGarbledStr(s){return typeof s==='string'&&(/�/.test(s)||/\?{3,}/.test(s))}
+function isGarbledEngItem(item){
+  if(!item)return false;
+  const fields=[item.word,item.zhMeaning,item.example,item.enDef,item.sentence,item.translation,item.notes,item.rule,item.explanation];
+  if(fields.some(_isGarbledStr))return true;
+  if(Array.isArray(item.examples)&&item.examples.some(_isGarbledStr))return true;
+  return false;
+}
 function addEngItem(item){
   if(!item.srs)item.srs={nextReview:fmtYMD(taipeiNow()),interval:0,reps:0,lastRating:0,lastReview:''};
   const a=getEngItems();
@@ -1731,11 +1741,14 @@ document.addEventListener('click',_unlockSpeech,{once:true});
 function engSpeak(text){
   if(!('speechSynthesis'in window))return;
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
-  const voices=speechSynthesis.getVoices();
-  const v=voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang&&v.lang.startsWith('en'));
-  if(v)u.voice=v;
-  speechSynthesis.speak(u);
+  // iOS Safari 已知問題：cancel() 後馬上 speak() 常被吃掉，隔一個 tick 再講才穩定
+  setTimeout(()=>{
+    const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
+    const voices=speechSynthesis.getVoices();
+    const v=voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang&&v.lang.startsWith('en'));
+    if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  },80);
 }
 
 /* ── 手動新增 ── */
@@ -1811,7 +1824,8 @@ function renderEngList(){
       sub=`${item.explanation?`<div class="eng-zh">${esc(item.explanation)}</div>`:''}`+((item.examples||[]).slice(0,1).map(e=>`<div class="eng-example">"${esc(e)}"<button class="eng-play" onclick="engSpeak('${e.replace(/'/g,"\\'")}')">🔊</button></div>`).join(''));
     }
     const srcMeta=`<span style="font-size:11px;color:var(--muted)">${SL[item.source]||''} ${esc(item.date||'')}</span>`;
-    return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${srcMeta}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
+    const garbledTag=isGarbledEngItem(item)?`<span style="font-size:11px;color:#DC2626;font-weight:700;background:#FEE2E2;padding:2px 8px;border-radius:20px">⚠️ 文字亂碼，建議刪除重存</span>`:'';
+    return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${srcMeta}${garbledTag}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
   }).join('');
 }
 function delEngItem(id){
@@ -1823,14 +1837,14 @@ function delEngItem(id){
 function setPracMode(m){pracMode=m;document.querySelectorAll('#prac-mode-seg .chip').forEach(b=>b.className='chip'+(b.dataset.m===m?' sel-purple':''));renderPracSetup()}
 function setPracRange(r){pracRange=r;document.querySelectorAll('#prac-range-seg .chip').forEach(b=>b.className='chip'+(b.dataset.r===r?' sel-purple':''));renderPracSetup()}
 function renderPracSetup(){
-  let pool=getEngItems();
+  let pool=getEngItems().filter(i=>!isGarbledEngItem(i));
   if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
   const el=document.getElementById('prac-pool-info');
   if(el)el.textContent=`共 ${pool.length} 個項目可練習`;
 }
 function engShuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function startEngPractice(){
-  let pool=getEngItems();
+  let pool=getEngItems().filter(i=>!isGarbledEngItem(i));
   if(pracRange!=='all')pool=pool.filter(i=>i.type===pracRange);
   if(pracRange==='grammar'||pracRange==='all'){
     const toeicGrammarItems=engShuffle(TOEIC_GRAMMAR).slice(0,5).map((g,i)=>({id:'tg_'+i,...g,toeicQ:true,type:'grammar',source:'toeic'}));
@@ -2201,7 +2215,7 @@ function saveSRSBatch(b){localStorage.setItem(SRS_BATCH_KEY,JSON.stringify(b))}
 
 function getDueEngItems(){
   const today=fmtYMD(taipeiNow());
-  return getEngItems().filter(i=>((i.srs&&i.srs.nextReview)||today)<=today);
+  return getEngItems().filter(i=>((i.srs&&i.srs.nextReview)||today)<=today&&!isGarbledEngItem(i));
 }
 
 // 4級自評（不會=1／模糊=2／會了=3／很熟=4）→ 間隔天數：1／3／7起／14起
