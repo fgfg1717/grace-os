@@ -1816,7 +1816,7 @@ function renderEngList(){
       main=`<span class="eng-word">${esc(item.word)}</span>${item.ipa?`<span class="eng-ipa">${esc(item.ipa)}</span>`:''}<button class="eng-play" onclick="engPlay('${(item.audioUrl||'').replace(/'/g,"\\'")}','${esc(item.word)}')">🔊</button>`;
       sub=`<div class="eng-zh">${esc(item.zhMeaning||'')}</div>${item.example?`<div class="eng-example">"${esc(item.example)}"</div>`:''}`;
     }else if(item.type==='sentence'){
-      main=`<span class="eng-word" style="font-size:14px">${esc(item.sentence||'')}</span><button class="eng-play" onclick="engSpeak('${(item.sentence||'').replace(/'/g,"\\'")}')">🔊</button>`;
+      main=`<span class="eng-word" style="font-size:14px">${esc(item.sentence||'')}</span><button class="eng-play" onclick="engPlay('${(item.audioUrl||'').replace(/'/g,"\\'")}','${(item.sentence||'').replace(/'/g,"\\'")}')">🔊</button>`;
       sub=`<div class="eng-zh">${esc(item.translation||'')}</div>${item.notes?`<div class="eng-example">${esc(item.notes)}</div>`:''}`;
     }else{
       main=`<span class="eng-word" style="font-size:14px">${esc(item.rule||'')}</span>`;
@@ -2349,7 +2349,7 @@ function renderGraceOSSRSCard(){
   }else if(card.type==='sentence'){
     front=`<div style="padding:18px 0">
       <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
-      <button class="eng-play" style="margin-top:8px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
+      <button class="eng-play" style="margin-top:8px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
     </div>`;
   }else{
     front=`<div style="padding:18px 0">
@@ -2380,7 +2380,7 @@ function revealGraceOSSRSCard(){
   }else if(card.type==='sentence'){
     front=`<div style="padding:14px 0 6px">
       <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
-      <button class="eng-play" style="margin-top:4px" onclick="engSpeak('${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
+      <button class="eng-play" style="margin-top:4px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
     </div>`;
     back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
       <div style="font-size:16px;font-weight:700;color:var(--vocab)">${esc(card.translation||'')}</div>

@@ -14,6 +14,7 @@ const SETTINGS_TAB   = 'App 設定';
 const INSIGHT_TAB    = '個人洞察庫';
 const BIZCARD_TAB    = '名片主檔';
 const BIZCARD_FOLDER = 'GraceOS名片照片';
+const ENG_AUDIO_FOLDER = 'GraceOS英文聽力音檔';
 const MAIN_GID       = 974288665;
 const READ_TOKEN     = 'graceos2026read';
 
@@ -468,6 +469,28 @@ function doPost(e) {
       }
     }
 
+    // ── 上傳英文聽力音檔到 Google Drive，回傳可播放的分享連結（需 token）──
+    if (type === 'eng_audio_upload') {
+      if (data.token !== READ_TOKEN) return out({ error: 'unauthorized' });
+      try {
+        const raw = String(data.audio || '');
+        const m = raw.match(/^data:(audio\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
+        const mimeType = m ? m[1] : 'audio/mpeg';
+        const base64Body = m ? m[2] : raw;
+        if (!base64Body) return out({ ok: false, error: 'missing audio' });
+        const bytes = Utilities.base64Decode(base64Body);
+        const ext = mimeType.indexOf('wav') >= 0 ? 'wav' : (mimeType.indexOf('mp4') >= 0 || mimeType.indexOf('m4a') >= 0 ? 'm4a' : 'mp3');
+        const filename = (data.filename || ('eng_listen_' + fmt(new Date()).replace(/\//g, '') + '_' + Date.now())) + '.' + ext;
+        const blob = Utilities.newBlob(bytes, mimeType, filename);
+        const folder = getOrCreateEngAudioFolder();
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        return out({ ok: true, url: 'https://drive.google.com/uc?export=download&id=' + file.getId() });
+      } catch (err) {
+        return out({ ok: false, error: err.message });
+      }
+    }
+
     // ── 以下需要 token 驗證 ──
     if (data.token !== READ_TOKEN) return out({ error: 'unauthorized' });
 
@@ -848,6 +871,12 @@ function getOrCreateBizCardFolder() {
   const it = DriveApp.getFoldersByName(BIZCARD_FOLDER);
   if (it.hasNext()) return it.next();
   return DriveApp.createFolder(BIZCARD_FOLDER);
+}
+
+function getOrCreateEngAudioFolder() {
+  const it = DriveApp.getFoldersByName(ENG_AUDIO_FOLDER);
+  if (it.hasNext()) return it.next();
+  return DriveApp.createFolder(ENG_AUDIO_FOLDER);
 }
 
 // ── 寫入格式化週計畫 ─────────────────────────────────────────────
