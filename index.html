@@ -748,6 +748,7 @@
   </div>
 
   <div id="wk-panel-checkin">
+    <div id="wk-checkin-summary" style="margin-bottom:12px"></div>
     <div id="wk-checkin-list"></div>
   </div>
 
@@ -4016,7 +4017,30 @@ function switchWorkoutTab(tab){
 }
 
 /* ── 打卡分頁 ── */
+function renderWorkoutCheckinSummary(){
+  const el=document.getElementById('wk-checkin-summary');if(!el)return;
+  const now=taipeiNow();
+  const mon=mondayOf(now);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const monS=fmtInputDate(mon),sunS=fmtInputDate(sun);
+  const checkins=getWorkoutCheckins().filter(c=>c.date>=monS&&c.date<=sunS);
+  const goals=getWorkoutGoals();
+  const order=['upper','lower','core','cardio'];
+  const remaining=order.map(cat=>{
+    const cnt=checkins.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+    const goal=goals[cat]||0;
+    return{cat,left:Math.max(0,goal-cnt)};
+  }).filter(r=>r.left>0);
+  if(!remaining.length){
+    el.innerHTML=`<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:12px;padding:10px 14px;font-size:13px;color:#065F46;font-weight:600">🎉 本週目標都達成了</div>`;
+    return;
+  }
+  el.innerHTML=`<div style="background:#FFF7ED;border:1.5px solid #FBBF24;border-radius:12px;padding:10px 14px;font-size:13px;color:#92400E">
+    本週還缺：${remaining.map(r=>`${WORKOUT_CAT_EMOJI[r.cat]}${WORKOUT_CATS[r.cat]} ${r.left} 次`).join('、')}
+  </div>`;
+}
 function renderWorkoutCheckinTab(){
+  renderWorkoutCheckinSummary();
   const el=document.getElementById('wk-checkin-list');if(!el)return;
   const today=fmtInputDate(taipeiNow());
   const checkins=getWorkoutCheckins();
