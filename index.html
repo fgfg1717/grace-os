@@ -16,7 +16,7 @@
       --stock:#A85540;   --plan:#445E78;  --aar:#7A7066; --tasks:#10B981;
       --review:#7A7066;  --monthly:#4A7090;
       --health:#A84040;  --english:#9A6B30; --pr:#2E4A6E; --ceo:#604A8A;
-      --bizcard:#2F6F5E;
+      --bizcard:#2F6F5E;  --workout:#C2621A;
       --bg:#F8F5F0; --card:#FFFFFF; --text:#1C1C18;
       --muted:#8A8680; --border:#E4DFD6; --radius:12px;
     }
@@ -66,6 +66,7 @@
     .card-pr:hover     {border-color:var(--pr)}
     .card-ceo:hover    {border-color:var(--ceo)}
     .card-bizcard:hover{border-color:var(--bizcard)}
+    .card-workout:hover{border-color:var(--workout)}
 
     /* Embed overlay */
     .embed-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
@@ -123,6 +124,7 @@
     .chip.sel-cyan  {background:#EEE4D4;border-color:var(--ledger);color:#6A4010}
     .chip.sel-orange{background:#F0E0D4;border-color:var(--stock);color:#703020}
     .chip.sel-purple{background:#EAE4F4;border-color:var(--vocab);color:#4A3070}
+    .chip.sel-workout{background:#F3E2D0;border-color:var(--workout);color:#7A3D0D}
 
     /* Toast */
     .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
@@ -517,6 +519,15 @@
     </div>
   </div>
 
+  <div class="section-label">健康管理</div>
+  <div class="grid">
+    <div class="card card-workout full" onclick="show('workout')">
+      <span class="icon">🏋️</span>
+      <div class="label">運動追蹤</div>
+      <div class="hint">健身房・居家・動作等級打卡</div>
+    </div>
+  </div>
+
   <div class="section-label">職涯發展</div>
   <div class="grid">
     <div class="card card-pr" onclick="openEmbed('pr')">
@@ -743,6 +754,55 @@
       <button class="full-btn" style="background:var(--vocab)" onclick="startEngPractice()">開始練習</button>
     </div>
     <div id="eng-prac-card" style="display:none"></div>
+  </div>
+</div>
+
+<!-- 運動追蹤 -->
+<div class="tpl" id="tpl-workout">
+  <button class="back" onclick="goHome()">← 返回</button>
+  <div class="tpl-header">
+    <span class="big-icon">🏋️</span>
+    <div><h2>運動追蹤</h2>
+      <span class="tag" style="background:#F3E2D0;color:#7A3D0D;">健身房・居家・動作等級打卡</span>
+    </div>
+  </div>
+
+  <div class="eng-tabs">
+    <button class="eng-tab-btn active" onclick="switchWorkoutTab('checkin')">✅ 打卡</button>
+    <button class="eng-tab-btn" onclick="switchWorkoutTab('week')">📅 週檢視</button>
+    <button class="eng-tab-btn" onclick="switchWorkoutTab('month')">🗓️ 月檢視</button>
+    <button class="eng-tab-btn" onclick="switchWorkoutTab('year')">📈 長期趨勢</button>
+  </div>
+
+  <div id="wk-panel-checkin">
+    <div id="wk-checkin-list"></div>
+  </div>
+
+  <div id="wk-panel-week" class="e-hidden">
+    <div id="wk-week-body"></div>
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="section-label">每週訓練目標（可調整）</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div class="field" style="margin-bottom:0"><label>💪 上肢</label><input type="number" id="wk-goal-upper" min="0"/></div>
+        <div class="field" style="margin-bottom:0"><label>🦵 下肢</label><input type="number" id="wk-goal-lower" min="0"/></div>
+        <div class="field" style="margin-bottom:0"><label>🧘 核心</label><input type="number" id="wk-goal-core" min="0"/></div>
+        <div class="field" style="margin-bottom:0"><label>🏃 有氧</label><input type="number" id="wk-goal-cardio" min="0"/></div>
+      </div>
+      <button class="outline-btn" onclick="saveWorkoutGoalsFromForm()">儲存目標</button>
+    </div>
+  </div>
+
+  <div id="wk-panel-month" class="e-hidden">
+    <div id="wk-month-body"></div>
+  </div>
+
+  <div id="wk-panel-year" class="e-hidden">
+    <div id="wk-year-body"></div>
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="section-label">單一動作進度</div>
+      <select id="wk-progress-exercise" onchange="renderWorkoutProgressChart()" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px;background:white"></select>
+      <div id="wk-progress-chart"></div>
+    </div>
   </div>
 </div>
 
@@ -1360,6 +1420,7 @@ function _showDOM(type){
   else if(type==='ceo')initCEO();
   else if(type==='tasks')renderTasks();
   else if(type==='bizcard')initBizCard();
+  else if(type==='workout')initWorkout();
   else if(type==='settings')initSettings();
   window.scrollTo(0,0);
 }
@@ -4107,6 +4168,358 @@ async function submitBizCard(){
  }catch(e){
   alert('儲存過程發生錯誤：'+e.message);
  }
+}
+
+/* ════════════════════════════════════
+   運動追蹤模組
+   ════════════════════════════════════ */
+const WORKOUT_EXERCISES=[
+  {id:'chest_press',name:'胸推',category:'upper',gymVersion:'胸推機 / 槓鈴臥推',homeVersion:'牆壁伏地挺身',homeVersionNote:'面對牆壁，雙手扶牆，身體像伏地挺身一樣靠近再推回來，手不用撐全身重量比較輕鬆',homeSuggestedSets:'3 組 x 8~10 下'},
+  {id:'shoulder_press',name:'肩推',category:'upper',gymVersion:'啞鈴 / 槓鈴肩推機',homeVersion:'水瓶肩推',homeVersionNote:'拿兩瓶水當啞鈴，坐著或站著，從肩膀高度往上推直再放下',homeSuggestedSets:'3 組 x 10 下'},
+  {id:'row',name:'划船',category:'upper',gymVersion:'坐姿划船機',homeVersion:'毛巾划船',homeVersionNote:'長毛巾繞在門把或欄杆上，雙手拉住兩端往身體方向拉',homeSuggestedSets:'3 組 x 10 下'},
+  {id:'bicep_curl',name:'二頭彎舉',category:'upper',gymVersion:'啞鈴彎舉',homeVersion:'水瓶彎舉',homeVersionNote:'手拿水瓶，手肘固定在身體旁邊，慢慢彎起再放下',homeSuggestedSets:'3 組 x 10 下'},
+  {id:'squat',name:'深蹲',category:'lower',gymVersion:'槓鈴深蹲 / 史密斯深蹲',homeVersion:'椅子輔助深蹲',homeVersionNote:'站在椅子前，手扶椅背，慢慢蹲下去像要坐下，快碰到椅子就停住再站起來',homeSuggestedSets:'3 組 x 10 下'},
+  {id:'leg_press',name:'腿推 / 腿彎舉',category:'lower',gymVersion:'腿推機 / 腿彎舉機',homeVersion:'原地弓箭步',homeVersionNote:'一手扶牆，一腳往前跨，兩腳膝蓋彎成像鞠躬一樣，再站直換腳',homeSuggestedSets:'每邊 8 下 x 2 組'},
+  {id:'hip_thrust',name:'臀推',category:'lower',gymVersion:'臀推機 / 槓鈴臀推',homeVersion:'臀橋',homeVersionNote:'躺在地上，膝蓋彎起腳踩地，把屁股往上抬起來再放下',homeSuggestedSets:'3 組 x 12 下'},
+  {id:'calf_raise',name:'小腿提踵',category:'lower',gymVersion:'小腿提踵機',homeVersion:'提踵',homeVersionNote:'站著，腳跟離地墊腳尖再放下，不穩可以扶椅背',homeSuggestedSets:'3 組 x 15 下'},
+  {id:'hamstring_deadlift',name:'硬舉（後大腿）',category:'lower',gymVersion:'羅馬尼亞硬舉 / 直腿硬舉（啞鈴或槓鈴）',homeVersion:'居家硬舉（水瓶或後背包當重量）',homeVersionNote:'雙腳與肩同寬，膝蓋微彎，身體往前傾，重量沿著小腿前方慢慢下滑到接近腳踝，感覺大腿後側緊繃後再站直',homeSuggestedSets:'3 組 x 10 下'},
+  {id:'lat_pulldown',name:'背部下拉',category:'upper',gymVersion:'滑輪下拉機 / 引體向上',homeVersion:'毛巾過頭下拉 / 彈力帶下拉',homeVersionNote:'雙手抓毛巾或彈力帶舉過頭頂，手肘往兩側下拉，像在做引體向上的動作，感覺背部收緊',homeSuggestedSets:'3 組 x 10 下'},
+  {id:'back_extension',name:'下背伸展',category:'upper',gymVersion:'羅馬椅背伸展機',homeVersion:'超人式',homeVersionNote:'趴在地上，手跟腳同時往上抬起，停留一下再放下，練下背的肌力',homeSuggestedSets:'3 組 x 12 下'},
+  {id:'plank',name:'棒式',category:'core',gymVersion:'地墊 / 抗力球棒式',homeVersion:'標準棒式',homeVersionNote:'手肘撐地，身體呈一直線像撐著一塊板子，收緊肚子撐住不塌腰',homeSuggestedSets:'3 組，每次撐 20~30 秒'},
+  {id:'crunch',name:'捲腹',category:'core',gymVersion:'捲腹機 / 抗力球捲腹',homeVersion:'地板捲腹',homeVersionNote:'躺著膝蓋彎起，雙手抱頭或放胸前，肩膀微微捲起離地再放下',homeSuggestedSets:'3 組 x 15 下'},
+  {id:'bird_dog',name:'鳥狗式',category:'core',gymVersion:'通常不需要器材，健身房或家裡都一樣做',homeVersion:'鳥狗式',homeVersionNote:'跪姿，一手往前伸直同時對側腳往後伸直，停留一下再換邊，練平衡跟核心穩定',homeSuggestedSets:'每邊 8 下 x 2 組'},
+  {id:'cardio',name:'有氧',category:'cardio',gymVersion:'跑步機 / 飛輪 / 橢圓機',homeVersion:'原地開合跳 / 爬樓梯 / 快走 / 跳繩',homeVersionNote:'任何讓心跳有明顯升高、持續 15~20 分鐘以上的活動都算',homeSuggestedSets:'15~20 分鐘'},
+];
+const WORKOUT_CATS={upper:'上肢',lower:'下肢',core:'核心',cardio:'有氧'};
+const WORKOUT_CAT_EMOJI={upper:'💪',lower:'🦵',core:'🧘',cardio:'🏃'};
+const WK_KEY='gos_workout_checkins';
+const WK_GOALS_KEY='gos_workout_goals';
+let _wkTab='checkin';
+let _wkSelLoc={};
+
+function getWorkoutCheckins(){try{return JSON.parse(localStorage.getItem(WK_KEY)||'[]')}catch(e){return[]}}
+function setWorkoutCheckins(a){localStorage.setItem(WK_KEY,JSON.stringify(a))}
+function getWorkoutGoals(){
+  let g={};try{g=JSON.parse(localStorage.getItem(WK_GOALS_KEY)||'{}')}catch(e){}
+  return{upper:2,lower:2,core:2,cardio:2,...g};
+}
+function setWorkoutGoals(g){
+  g._savedAt=Date.now();
+  localStorage.setItem(WK_GOALS_KEY,JSON.stringify(g));
+  pushKV('workout_goals',g);
+}
+function wkCategoryOfExercise(exId){const e=WORKOUT_EXERCISES.find(x=>x.id===exId);return e?e.category:null}
+
+/* ── 跨裝置雲端同步（沿用既有 app_settings KV 機制，不需重新部署 GAS）── */
+async function syncWorkoutFromCloud(){
+  if(!gasUrl())return;
+  const cloud=await getCloudKV();
+  if(!cloud)return;
+  if(cloud.workout_checkins&&Array.isArray(cloud.workout_checkins.data)){
+    const local=getWorkoutCheckins();
+    const ids=new Set(local.map(c=>c.id));
+    const toAdd=cloud.workout_checkins.data.filter(c=>c.id&&!ids.has(c.id));
+    if(toAdd.length)setWorkoutCheckins([...local,...toAdd]);
+  }
+  if(cloud.workout_goals&&cloud.workout_goals.data){
+    const local=getWorkoutGoals();
+    if((cloud.workout_goals.ts||0)>(local._savedAt||0)){
+      localStorage.setItem(WK_GOALS_KEY,JSON.stringify({...cloud.workout_goals.data,_savedAt:cloud.workout_goals.ts}));
+    }
+  }
+}
+function pushWorkoutCheckins(){pushKV('workout_checkins',getWorkoutCheckins())}
+
+/* ── 分頁切換 ── */
+function initWorkout(){
+  switchWorkoutTab(_wkTab||'checkin');
+  syncWorkoutFromCloud().then(()=>switchWorkoutTab(_wkTab));
+}
+function switchWorkoutTab(tab){
+  _wkTab=tab;
+  const tabs=['checkin','week','month','year'];
+  tabs.forEach(t=>{
+    const p=document.getElementById('wk-panel-'+t);
+    if(p)p.classList.toggle('e-hidden',t!==tab);
+  });
+  document.querySelectorAll('#tpl-workout .eng-tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',tabs[i]===tab);
+  });
+  if(tab==='checkin')renderWorkoutCheckinTab();
+  if(tab==='week')renderWorkoutWeekTab();
+  if(tab==='month')renderWorkoutMonthTab();
+  if(tab==='year')renderWorkoutYearTab();
+}
+
+/* ── 打卡分頁 ── */
+function renderWorkoutCheckinTab(){
+  const el=document.getElementById('wk-checkin-list');if(!el)return;
+  const today=fmtInputDate(taipeiNow());
+  const checkins=getWorkoutCheckins();
+  const order=['upper','lower','core','cardio'];
+  el.innerHTML=order.map(cat=>{
+    const list=WORKOUT_EXERCISES.filter(x=>x.category===cat);
+    if(!list.length)return'';
+    return `<div class="section-label">${WORKOUT_CAT_EMOJI[cat]} ${WORKOUT_CATS[cat]}</div>`+
+      list.map(ex=>renderWorkoutCard(ex,checkins,today)).join('');
+  }).join('');
+}
+function renderWorkoutCard(ex,checkins,today){
+  const todays=checkins.filter(c=>c.exerciseId===ex.id&&c.date===today);
+  const loc=_wkSelLoc[ex.id]||'';
+  return `
+  <div style="background:white;border:1.5px solid ${todays.length?'var(--workout)':'var(--border)'};border-radius:14px;padding:14px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="font-size:15px;font-weight:700">${todays.length?'✅ ':''}${esc(ex.name)}</div>
+      ${todays.length?`<span style="font-size:11px;color:var(--workout);font-weight:700">今天 ${todays.length} 次</span>`:''}
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px">${esc(ex.homeVersionNote)}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">建議：${esc(ex.homeSuggestedSets)}</div>
+    <div class="seg" style="margin-top:10px;margin-bottom:0">
+      <button class="chip${loc==='gym'?' sel-workout':''}" onclick="setWorkoutLoc('${ex.id}','gym')">🏋️ 健身房</button>
+      <button class="chip${loc==='home'?' sel-workout':''}" onclick="setWorkoutLoc('${ex.id}','home')">🏠 居家</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <input type="number" step="0.5" placeholder="重量kg" id="wk-w-${ex.id}" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+      <input type="number" placeholder="下數" id="wk-r-${ex.id}" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+      <input type="number" placeholder="組數" id="wk-s-${ex.id}" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+    </div>
+    <input type="text" placeholder="備註（選填）" id="wk-n-${ex.id}" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit"/>
+    <button class="full-btn" style="background:var(--workout);margin-top:10px;padding:10px" onclick="doWorkoutCheckin('${ex.id}')">打卡 ✓</button>
+    ${todays.length?`<div style="margin-top:8px">${todays.map(c=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
+        <span>${c.location==='gym'?'🏋️ 健身房':'🏠 居家'}${c.weightKg?` ・${c.weightKg}kg`:''}${c.reps?` ・${c.reps}下`:''}${c.sets?` ・${c.sets}組`:''}${c.note?` ・${esc(c.note)}`:''}</span>
+        <button class="del-btn" onclick="delWorkoutCheckin('${c.id}')">✕</button>
+      </div>`).join('')}</div>`:''}
+  </div>`;
+}
+function setWorkoutLoc(exId,loc){
+  _wkSelLoc[exId]=_wkSelLoc[exId]===loc?'':loc;
+  renderWorkoutCheckinTab();
+}
+function doWorkoutCheckin(exId){
+  const loc=_wkSelLoc[exId];
+  if(!loc){showToast('請先選「健身房」或「居家」');return}
+  const w=document.getElementById('wk-w-'+exId).value;
+  const r=document.getElementById('wk-r-'+exId).value;
+  const s=document.getElementById('wk-s-'+exId).value;
+  const n=document.getElementById('wk-n-'+exId).value;
+  const rec={
+    id:'wk_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    date:fmtInputDate(taipeiNow()),
+    exerciseId:exId,
+    location:loc,
+    weightKg:w?Number(w):null,
+    reps:r?Number(r):null,
+    sets:s?Number(s):null,
+    note:n||''
+  };
+  setWorkoutCheckins([rec,...getWorkoutCheckins()]);
+  pushWorkoutCheckins();
+  delete _wkSelLoc[exId];
+  showToast('打卡成功 ✓');
+  renderWorkoutCheckinTab();
+}
+function delWorkoutCheckin(id){
+  setWorkoutCheckins(getWorkoutCheckins().filter(c=>String(c.id)!==String(id)));
+  pushWorkoutCheckins();
+  renderWorkoutCheckinTab();
+  if(_wkTab==='week')renderWorkoutWeekTab();
+  if(_wkTab==='month')renderWorkoutMonthTab();
+  if(_wkTab==='year')renderWorkoutYearTab();
+}
+
+/* ── 週檢視 ── */
+function renderWorkoutWeekTab(){
+  const el=document.getElementById('wk-week-body');if(!el)return;
+  const now=taipeiNow();
+  const mon=mondayOf(now);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const monS=fmtInputDate(mon),sunS=fmtInputDate(sun);
+  const checkins=getWorkoutCheckins().filter(c=>c.date>=monS&&c.date<=sunS);
+  const goals=getWorkoutGoals();
+  const order=['upper','lower','core','cardio'];
+  const rows=order.map(cat=>{
+    const cnt=checkins.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+    const goal=goals[cat]||0;
+    const pct=goal?Math.min(100,Math.round(cnt/goal*100)):0;
+    const hit=cnt>=goal;
+    return `<div class="ldg-cat-row">
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px">
+        <span>${WORKOUT_CAT_EMOJI[cat]} ${WORKOUT_CATS[cat]} ${hit?'✅':''}</span>
+        <span>${cnt} / ${goal} 次</span>
+      </div>
+      <div class="ldg-cat-bar-bg"><div class="ldg-cat-bar-fill" style="width:${pct}%;background:${hit?'#10B981':'var(--workout)'}"></div></div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">本週 ${fmtYMD(mon)} – ${fmtYMD(sun)}</div>`+rows;
+  const gu=document.getElementById('wk-goal-upper'),gl=document.getElementById('wk-goal-lower'),
+        gc=document.getElementById('wk-goal-core'),gd=document.getElementById('wk-goal-cardio');
+  if(gu){gu.value=goals.upper;gl.value=goals.lower;gc.value=goals.core;gd.value=goals.cardio;}
+}
+function saveWorkoutGoalsFromForm(){
+  const g={
+    upper:Number(document.getElementById('wk-goal-upper').value)||0,
+    lower:Number(document.getElementById('wk-goal-lower').value)||0,
+    core:Number(document.getElementById('wk-goal-core').value)||0,
+    cardio:Number(document.getElementById('wk-goal-cardio').value)||0,
+  };
+  setWorkoutGoals(g);
+  showToast('目標已儲存 ✓');
+  renderWorkoutWeekTab();
+}
+
+/* ── 月檢視 ── */
+function wkWeeksInMonth(y,m){
+  const first=new Date(y,m,1);
+  const last=new Date(y,m+1,0);
+  const weeks=[];
+  let cur=mondayOf(first);
+  while(cur<=last){
+    const wEnd=new Date(cur);wEnd.setDate(cur.getDate()+6);
+    weeks.push({start:new Date(cur),end:wEnd});
+    cur=new Date(cur);cur.setDate(cur.getDate()+7);
+  }
+  return weeks;
+}
+function renderWorkoutMonthTab(){
+  const el=document.getElementById('wk-month-body');if(!el)return;
+  const now=taipeiNow();
+  const y=now.getFullYear(),m=now.getMonth();
+  const ymPrefix=`${y}-${String(m+1).padStart(2,'0')}`;
+  const checkins=getWorkoutCheckins().filter(c=>c.date.startsWith(ymPrefix));
+  const goals=getWorkoutGoals();
+  const weeks=wkWeeksInMonth(y,m);
+  const weekRows=weeks.map((w,i)=>{
+    const s=fmtInputDate(w.start),e=fmtInputDate(w.end);
+    const wc=getWorkoutCheckins().filter(c=>c.date>=s&&c.date<=e);
+    const cats=['upper','lower','core','cardio'].map(cat=>{
+      const cnt=wc.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+      const hit=cnt>=(goals[cat]||0);
+      return `<span style="margin-right:8px">${WORKOUT_CAT_EMOJI[cat]}${hit?'✅':'⬜'}</span>`;
+    }).join('');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <span style="color:var(--muted)">第 ${i+1} 週（${w.start.getMonth()+1}/${w.start.getDate()}–${w.end.getMonth()+1}/${w.end.getDate()}）</span>
+      <span>${cats}</span>
+    </div>`;
+  }).join('');
+  const total=checkins.length;
+  const gym=checkins.filter(c=>c.location==='gym').length;
+  const home=checkins.filter(c=>c.location==='home').length;
+  el.innerHTML=`
+    <div class="finance-stat">
+      <div class="fin-stat-row"><span>本月總打卡</span><span style="font-weight:700">${total} 次</span></div>
+      <div class="fin-stat-row"><span>健身房 vs 居家</span><span style="font-weight:700">${gym} : ${home}</span></div>
+    </div>
+    <div class="section-label">每週達標狀況</div>
+    ${weekRows||'<div class="empty-msg">本月還沒有打卡紀錄</div>'}
+  `;
+}
+
+/* ── 長期趨勢 ── */
+function computeWorkoutMonthSummary(y,m){
+  const ymPrefix=`${y}-${String(m+1).padStart(2,'0')}`;
+  const checkins=getWorkoutCheckins().filter(c=>c.date.startsWith(ymPrefix));
+  const goals=getWorkoutGoals();
+  const weeks=wkWeeksInMonth(y,m);
+  const catHit={upper:0,lower:0,core:0,cardio:0};
+  weeks.forEach(w=>{
+    const s=fmtInputDate(w.start),e=fmtInputDate(w.end);
+    const wc=getWorkoutCheckins().filter(c=>c.date>=s&&c.date<=e);
+    ['upper','lower','core','cardio'].forEach(cat=>{
+      const cnt=wc.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+      if(cnt>=(goals[cat]||0))catHit[cat]++;
+    });
+  });
+  const gym=checkins.filter(c=>c.location==='gym').length;
+  const home=checkins.filter(c=>c.location==='home').length;
+  return{y,m,total:checkins.length,weekCount:weeks.length,catHit,gym,home};
+}
+function renderWorkoutYearTab(){
+  const el=document.getElementById('wk-year-body');if(!el)return;
+  const checkins=getWorkoutCheckins();
+  const months=[...new Set(checkins.map(c=>c.date.slice(0,7)))].sort().reverse();
+  if(!months.length){
+    el.innerHTML='<div class="empty-msg">還沒有打卡紀錄，先去打卡頁記錄幾筆吧</div>';
+  }else{
+    const summaries=months.map(ym=>{
+      const parts=ym.split('-').map(Number);
+      return computeWorkoutMonthSummary(parts[0],parts[1]-1);
+    });
+    const recent=summaries.slice(0,3);
+    const lagCats=['upper','lower','core','cardio'].filter(cat=>{
+      const totalWeeks=recent.reduce((s,r)=>s+r.weekCount,0);
+      const totalHit=recent.reduce((s,r)=>s+r.catHit[cat],0);
+      return totalWeeks>0&&(totalHit/totalWeeks)<0.5;
+    });
+    el.innerHTML=`
+      ${lagCats.length?`<div style="background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#991B1B">
+        ⚠️ 近 3 個月持續落後：${lagCats.map(c=>WORKOUT_CAT_EMOJI[c]+WORKOUT_CATS[c]).join('、')}
+      </div>`:''}
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:420px">
+        <tr style="text-align:left;color:var(--muted);border-bottom:1.5px solid var(--border)">
+          <th style="padding:6px 4px">月份</th><th style="padding:6px 4px">總打卡</th>
+          <th style="padding:6px 4px">上肢</th><th style="padding:6px 4px">下肢</th>
+          <th style="padding:6px 4px">核心</th><th style="padding:6px 4px">有氧</th>
+          <th style="padding:6px 4px">房:家</th>
+        </tr>
+        ${summaries.map(s=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:6px 4px;font-weight:600">${s.y}/${s.m+1}</td>
+          <td style="padding:6px 4px">${s.total}</td>
+          <td style="padding:6px 4px">${s.catHit.upper}/${s.weekCount}</td>
+          <td style="padding:6px 4px">${s.catHit.lower}/${s.weekCount}</td>
+          <td style="padding:6px 4px">${s.catHit.core}/${s.weekCount}</td>
+          <td style="padding:6px 4px">${s.catHit.cardio}/${s.weekCount}</td>
+          <td style="padding:6px 4px">${s.gym}:${s.home}</td>
+        </tr>`).join('')}
+      </table>
+      </div>
+    `;
+  }
+  const sel=document.getElementById('wk-progress-exercise');
+  if(sel&&!sel.dataset.filled){
+    sel.innerHTML=WORKOUT_EXERCISES.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+    sel.dataset.filled='1';
+  }
+  renderWorkoutProgressChart();
+}
+function renderWorkoutProgressChart(){
+  const sel=document.getElementById('wk-progress-exercise');
+  const holder=document.getElementById('wk-progress-chart');
+  if(!sel||!holder)return;
+  const exId=sel.value||WORKOUT_EXERCISES[0].id;
+  const recs=getWorkoutCheckins().filter(c=>c.exerciseId===exId).sort((a,b)=>a.date<b.date?-1:1);
+  if(!recs.length){holder.innerHTML='<div class="empty-msg">這個動作還沒有打卡紀錄</div>';return}
+  const pts=recs.map(c=>({date:c.date,val:c.weightKg!=null?c.weightKg:(c.reps&&c.sets?c.reps*c.sets:null)})).filter(p=>p.val!=null);
+  if(!pts.length){holder.innerHTML='<div class="empty-msg">這個動作還沒有重量或下數紀錄，先在打卡時填數字</div>';return}
+  holder.innerHTML=buildWorkoutSparkline(pts);
+}
+function buildWorkoutSparkline(pts){
+  const W=320,H=120,pad=24;
+  const vals=pts.map(p=>p.val);
+  const min=Math.min(...vals),max=Math.max(...vals);
+  const range=max-min||1;
+  const stepX=pts.length>1?(W-pad*2)/(pts.length-1):0;
+  const coords=pts.map((p,i)=>{
+    const x=pad+i*stepX;
+    const y=H-pad-((p.val-min)/range)*(H-pad*2);
+    return{x,y,date:p.date,val:p.val};
+  });
+  const line=coords.map(c=>`${c.x},${c.y}`).join(' ');
+  const dots=coords.map(c=>`<circle cx="${c.x}" cy="${c.y}" r="3.5" fill="#C2621A"/>`).join('');
+  const first=coords[0],last=coords[coords.length-1];
+  return`
+  <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px">
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
+      <polyline points="${line}" fill="none" stroke="#C2621A" stroke-width="2.5"/>
+      ${dots}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px">
+      <span>${first.date}（${first.val}）</span>
+      <span>${last.date}（${last.val}）</span>
+    </div>
+  </div>`;
 }
 </script>
 <!-- Budget Modal -->
