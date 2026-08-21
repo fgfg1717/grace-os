@@ -14,7 +14,6 @@
     :root {
       --capture:#4E7B52; --vocab:#7055A0; --ledger:#9A6B30;
       --stock:#A85540;   --plan:#445E78;  --aar:#7A7066; --tasks:#10B981;
-      --review:#7A7066;  --monthly:#4A7090;
       --health:#A84040;  --english:#9A6B30; --pr:#2E4A6E; --ceo:#604A8A;
       --bizcard:#2F6F5E;  --workout:#C2621A;
       --bg:#F8F5F0; --card:#FFFFFF; --text:#1C1C18;
@@ -58,10 +57,7 @@
     .fin-net{font-size:18px;font-weight:800}
     .fin-asset-card{background:linear-gradient(135deg,#2E4A6E,#604A8A);border-radius:12px;padding:18px;color:white;margin-bottom:10px}
     .card-tasks:hover  {border-color:var(--tasks)}
-    .card-plan:hover   {border-color:var(--plan)}
     .card-aar:hover    {border-color:var(--aar)}
-    .card-review:hover {border-color:var(--review)}
-    .card-monthly:hover{border-color:var(--monthly)}
     .card-english:hover{border-color:var(--english)}
     .card-pr:hover     {border-color:var(--pr)}
     .card-ceo:hover    {border-color:var(--ceo)}
@@ -551,29 +547,6 @@
     </div>
   </div>
 
-  <div class="section-label">工作規劃</div>
-  <div class="grid">
-    <div class="card card-plan full" onclick="show('daily')">
-      <span class="icon">🌅</span>
-      <div class="label">今日策略</div>
-      <div class="hint" id="home-daily-hint">早安・設定今日焦點・按表操課</div>
-    </div>
-  </div>
-
-  <div class="section-label">覆盤與成果</div>
-  <div class="grid">
-    <div class="card card-review" onclick="show('review')">
-      <span class="icon">📊</span>
-      <div class="label">週覆盤</div>
-      <div class="hint">每週日 · 30 分鐘</div>
-    </div>
-    <div class="card card-monthly" onclick="show('monthly')">
-      <span class="icon">📅</span>
-      <div class="label">月回顧</div>
-      <div class="hint">每月底 · 60 分鐘</div>
-    </div>
-  </div>
-
   <div class="section-label">系統</div>
   <div class="grid">
     <div class="card card-aar full" onclick="show('settings')">
@@ -982,75 +955,6 @@
   <div id="finance-assets"></div>
 </div>
 
-<!-- 今日策略 -->
-<div class="tpl" id="tpl-daily">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">🌅</span>
-    <div><h2>今日策略</h2>
-      <span class="tag" style="background:#DBEAFE;color:#1E3A8A;" id="daily-date-tag">今天</span>
-    </div>
-  </div>
-  <div id="daily-plan-section" style="margin-bottom:16px"></div>
-  <div class="cap-form">
-    <div class="field">
-      <label>🎯 今天最重要的一件事</label>
-      <input type="text" id="daily-top1" placeholder="完成後今天就值了…"
-        style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/>
-    </div>
-    <div class="field">
-      <label>✅ 今日必完成（1-3 件）</label>
-      <textarea id="daily-must" placeholder="1. &#10;2. &#10;3." style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;min-height:90px;resize:vertical"></textarea>
-    </div>
-    <div class="field">
-      <label>⚠️ 潛在障礙與應對</label>
-      <input type="text" id="daily-block" placeholder="可能卡住的點，提前想好怎麼應對…"
-        style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/>
-    </div>
-    <button class="full-btn" style="background:var(--plan)" onclick="saveDailyStrategy()">儲存今日策略 ✓</button>
-  </div>
-  <div id="daily-saved" style="display:none;margin-top:14px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:14px;padding:16px">
-    <div style="font-size:12px;font-weight:700;color:#1E40AF;margin-bottom:8px">📋 今日策略已設定</div>
-    <div id="daily-saved-content" style="font-size:14px;line-height:1.8;color:var(--text);white-space:pre-wrap"></div>
-    <button class="outline-btn" onclick="editDailyStrategy()" style="margin-top:8px">重新編輯</button>
-  </div>
-</div>
-
-<!-- 週覆盤 -->
-<div class="tpl" id="tpl-review">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">📊</span>
-    <div><h2>週覆盤</h2>
-      <span class="tag" style="background:#F1F5F9;color:#475569;">每週日 · 30 分鐘</span>
-    </div>
-  </div>
-  <div class="field"><label>週期</label><input type="text" id="r-week"/></div>
-  <div id="review-insights-section" style="margin-bottom:12px"></div>
-  <div class="field"><label>這週其他補充（選填）</label>
-    <textarea class="lg" id="r-notes" placeholder="其他想補充的…（靈感紀錄已自動帶入上方）"></textarea>
-  </div>
-  <button class="full-btn" style="background:var(--review)" onclick="copyOnly('review')">複製內容 → Claude 分析</button>
-</div>
-
-<!-- 月回顧 -->
-<div class="tpl" id="tpl-monthly">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">📅</span>
-    <div><h2>月回顧</h2>
-      <span class="tag" style="background:#E0F2FE;color:#075985;">每月底 · 60 分鐘</span>
-    </div>
-  </div>
-  <div class="field"><label>月份</label><input type="text" id="mo-month"/></div>
-  <div class="field"><label>🏢 事業成果</label><textarea id="mo-career" placeholder="這個月工作完成了什麼？"></textarea></div>
-  <div class="field"><label>📈 個人成長</label><textarea id="mo-growth" placeholder="英文進度、學習、個人發展？"></textarea></div>
-  <div class="field"><label>👨‍👩‍👧‍👦 家庭關係</label><textarea id="mo-family" placeholder="與孩子互動、家庭關係？"></textarea></div>
-  <div class="field"><label>💪 身心健康</label><textarea id="mo-health" placeholder="健身、飲食、睡眠狀態？"></textarea></div>
-  <div class="field"><label>下月最重要 1 件事</label><textarea id="mo-next" placeholder="如果只能專注一件事，是什麼？"></textarea></div>
-  <button class="full-btn" style="background:var(--monthly)" onclick="copyOnly('monthly')">複製內容 → Claude 分析</button>
-</div>
-
 <!-- CEO 思維庫 -->
 <div class="tpl" id="tpl-ceo">
   <button class="back" onclick="goHome()">← 返回</button>
@@ -1415,8 +1319,6 @@ function _showDOM(type){
   else if(type==='stock')initStock();
   else if(type==='finance')initFinance();
   else if(type==='aar')initAAR();
-  else if(type==='daily')initDailyStrategy();
-  else if(type==='review')initReview();
   else if(type==='ceo')initCEO();
   else if(type==='tasks')renderTasks();
   else if(type==='bizcard')initBizCard();
@@ -1473,47 +1375,6 @@ function updateHomeFinanceHint(){
   const net=inc-exp;
   el.textContent=`本月支出 NT$ ${exp.toLocaleString()}・結餘 ${net>=0?'+':'−'}NT$ ${Math.abs(net).toLocaleString()}`;
 }
-
-/* ════ Review copy ════ */
-function getWeekInsights(){
-  const now=taipeiNow();const mon=mondayOf(now);
-  const captures=getCaptures();
-  const result=[];
-  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const ds=fmtYMD(d);
-    captures.filter(c=>c.date===ds&&c.category==='閱讀/Podcast 靈感').forEach(c=>result.push({date:ds,summary:c.summary}));
-  }
-  return result;
-}
-
-function initReview(){
-  const insights=getWeekInsights();
-  const el=document.getElementById('review-insights-section');if(!el)return;
-  if(!insights.length){
-    el.innerHTML=`<div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted)">本週還沒有「靈感」紀錄 — 有想法時在「快速記錄」選「📚 靈感」分類記下來，週覆盤時會自動出現在這裡。</div>`;
-    return;
-  }
-  el.innerHTML=`<div style="background:#EDE9FE;border:1.5px solid #A78BFA;border-radius:12px;padding:12px 14px">
-    <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#4C1D95;margin-bottom:8px">📚 本週靈感紀錄（${insights.length} 則）· 複製時自動帶入</div>
-    ${insights.map(i=>`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #C4B5FD">
-      <span style="font-size:11px;color:#7C3AED;white-space:nowrap;font-weight:600">${esc(i.date)}</span>
-      <span style="font-size:13px;color:#1E293B;line-height:1.5">${esc(i.summary)}</span>
-    </div>`).join('')}
-  </div>`;
-}
-
-function assemble(type){
-  const v=id=>(document.getElementById(id)||{}).value||'';
-  if(type==='review'){
-    const insights=getWeekInsights();
-    const insightText=insights.length
-      ?`\n\n📚 本週靈感與觀察：\n${insights.map(i=>`・[${i.date}] ${i.summary}`).join('\n')}`
-      :'';
-    const notes=v('r-notes');
-    return`週日覆盤，這週是 ${v('r-week')}。${insightText}${notes?`\n\n其他補充：\n${notes}`:''}\n\n請依照我寫的內容，告訴我：\n1. 1 個亮點、1 個痛點\n2. 從本週靈感中，哪 1-2 個最值得下週變成行動？\n3. 1 個防呆行動（讓下週更順的小改變）\n4. 公司目標與個人目標比例是否平衡`;
-  }
-  if(type==='monthly')return`月回顧，${v('mo-month')}。\n\n🏢 事業：${v('mo-career')||'（未填）'}\n📈 成長：${v('mo-growth')||'（未填）'}\n👨‍👩‍👧‍👦 家庭：${v('mo-family')||'（未填）'}\n💪 健康：${v('mo-health')||'（未填）'}\n下月重點：${v('mo-next')||'（未填）'}\n\n請幫我做本月總結：1 個月度亮點、1 個需要改變的模式、1 句績效描述句。`;
-}
-function copyOnly(type){doCopy(assemble(type),'已複製！貼給 Claude 分析')}
 
 /* ════ 設定頁 ════ */
 function initSettings(){
@@ -3327,103 +3188,6 @@ function copyAARFmt(mode){
 /* ════════════════════════════════
    今日策略
 ════════════════════════════════ */
-const DAILY_KEY='daily_strategy_v1';
-function getDailyStrategy(){try{return JSON.parse(localStorage.getItem(DAILY_KEY)||'{}')}catch{return{}}}
-function setDailyStrategy(obj){localStorage.setItem(DAILY_KEY,JSON.stringify(obj))}
-
-async function initDailyStrategy(){
-  const now=taipeiNow();
-  const today=fmtYMD(now);
-  const w=['日','一','二','三','四','五','六'];
-  const tag=document.getElementById('daily-date-tag');
-  if(tag)tag.textContent=`${now.getMonth()+1}/${now.getDate()}（週${w[now.getDay()]}）`;
-
-  // 讀今天已存的策略
-  const saved=getDailyStrategy();
-  if(saved.date===today&&saved.top1){
-    showDailySaved(saved);
-  }else{
-    document.getElementById('daily-saved').style.display='none';
-    document.getElementById('daily-top1').value='';
-    document.getElementById('daily-must').value='';
-    document.getElementById('daily-block').value='';
-  }
-
-  // 跨裝置：雲端有更新的今日策略就帶下來
-  getCloudKV().then(kv=>{
-    const e=kv&&kv[DAILY_KEY];if(!e?.data)return;
-    const cloud=e.data;const local=getDailyStrategy();
-    if(cloud.date===today&&cloud.top1&&(cloud._ts||0)>(local._ts||0)){
-      setDailyStrategy(cloud);showDailySaved(cloud);updateHomeDailyHint(cloud.top1);
-      showToast('今日策略已從另一台裝置同步 ✓');
-    }
-  });
-
-  // 從 Sheets 抓今天的計畫
-  const planEl=document.getElementById('daily-plan-section');
-  if(!planEl)return;
-  if(!gasUrl()){planEl.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">設定 Apps Script 網址後可顯示今日排程</div>';return}
-  planEl.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px">讀取今日排程…</div>';
-  const result=await getGAS({type:'plan'});
-  if(!result||!result.ok||!result.data){planEl.innerHTML='';return}
-  const todayLabel=`${now.getMonth()+1}/${now.getDate()}`;
-  const rows=result.data;
-  let inToday=false;let todayRows=[];
-  rows.forEach(row=>{
-    const c0=String(row[0]||'').trim();
-    if(/\d+\/\d+/.test(c0)&&(c0.includes('（')||c0.includes('(')||/[一二三四五六日]/.test(c0))){
-      inToday=c0.includes(todayLabel);return;
-    }
-    if(inToday&&c0!=='時段'&&(c0||String(row[1]||'').trim()))todayRows.push(row);
-  });
-  if(!todayRows.length){planEl.innerHTML='<div style="background:#F8FAFC;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:13px;color:var(--muted);text-align:center">今天尚未排入行程，或尚未建立本週計畫</div>';return}
-  planEl.innerHTML=`<div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:12px;margin-bottom:4px">
-    <div style="font-size:11px;font-weight:700;color:#1E40AF;margin-bottom:8px">📅 今日排程</div>
-    ${todayRows.map(r=>`<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px dashed #DBEAFE">
-      <span style="font-size:12px;color:#3B82F6;font-family:monospace;white-space:nowrap;width:100px;flex-shrink:0">${esc(String(r[0]||''))}</span>
-      <span style="font-size:13px;color:var(--text)">${esc(String(r[1]||''))}</span>
-    </div>`).join('')}
-  </div>`;
-}
-
-function saveDailyStrategy(){
-  const top1=(document.getElementById('daily-top1').value||'').trim();
-  const must=(document.getElementById('daily-must').value||'').trim();
-  const block=(document.getElementById('daily-block').value||'').trim();
-  if(!top1){showToast('請填寫今天最重要的一件事');return}
-  const today=fmtYMD(taipeiNow());
-  const data={date:today,top1,must,block,_ts:Date.now()};
-  setDailyStrategy(data);
-  pushKV(DAILY_KEY,data);
-  showDailySaved(data);
-  showToast('今日策略已儲存 ✓');
-  updateHomeDailyHint(top1);
-}
-
-function showDailySaved(data){
-  document.getElementById('daily-saved').style.display='block';
-  document.getElementById('daily-saved-content').textContent=
-    `🎯 今天最重要：${data.top1}\n\n✅ 必完成：\n${data.must||'（未填）'}\n\n⚠️ 潛在障礙：${data.block||'（無）'}`;
-}
-
-function editDailyStrategy(){
-  const saved=getDailyStrategy();
-  document.getElementById('daily-top1').value=saved.top1||'';
-  document.getElementById('daily-must').value=saved.must||'';
-  document.getElementById('daily-block').value=saved.block||'';
-  document.getElementById('daily-saved').style.display='none';
-}
-
-function updateHomeDailyHint(top1){
-  const el=document.getElementById('home-daily-hint');
-  if(el&&top1)el.textContent=`今日焦點：${top1.length>18?top1.slice(0,18)+'…':top1}`;
-}
-
-(function loadDailyHint(){
-  const saved=getDailyStrategy();const today=fmtYMD(taipeiNow());
-  if(saved.date===today&&saved.top1)updateHomeDailyHint(saved.top1);
-})();
-
 /* ════════════════════════════════
    財務總覽
 ════════════════════════════════ */
