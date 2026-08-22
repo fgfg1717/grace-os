@@ -1296,8 +1296,6 @@ async function syncStocksFromCloud(){
 (function init(){
   const now=taipeiNow();
   document.getElementById('today-label').textContent=fmtDate(now);
-  document.getElementById('r-week').value=weekRange();
-  document.getElementById('mo-month').value=fmtMonth(now);
   try{history.replaceState(null,'')}catch(e){}
   updateTasksHint();
   updateHomeFinanceHint();
