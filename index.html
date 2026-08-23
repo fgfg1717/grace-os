@@ -3972,6 +3972,16 @@ function setWorkoutGoals(g){
   pushKV('workout_goals',g);
 }
 function wkCategoryOfExercise(exId){const e=WORKOUT_EXERCISES.find(x=>x.id===exId);return e?e.category:null}
+function wkDaysBetween(dateStr,today){
+  const d1=new Date(dateStr+'T00:00:00'),d2=new Date(today+'T00:00:00');
+  return Math.round((d2-d1)/86400000);
+}
+function wkLastDoneInfo(exId,checkins,today){
+  const recs=checkins.filter(c=>c.exerciseId===exId).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!recs.length)return{days:Infinity,label:'還沒打卡過'};
+  const days=wkDaysBetween(recs[0].date,today);
+  return{days,label:days===0?'今天做過':`上次 ${days} 天前`};
+}
 
 /* ── 跨裝置雲端同步（沿用既有 app_settings KV 機制，不需重新部署 GAS）── */
 async function syncWorkoutFromCloud(){
@@ -4046,18 +4056,27 @@ function renderWorkoutCheckinTab(){
   el.innerHTML=order.map(cat=>{
     const list=WORKOUT_EXERCISES.filter(x=>x.category===cat);
     if(!list.length)return'';
+    const withInfo=list.map(ex=>({ex,info:wkLastDoneInfo(ex.id,checkins,today)}));
+    const sorted=[...withInfo].sort((a,b)=>{
+      if(a.info.days===b.info.days)return 0;
+      if(a.info.days===Infinity)return-1;
+      if(b.info.days===Infinity)return 1;
+      return b.info.days-a.info.days;
+    });
+    const suggestId=sorted[0].ex.id;
     return `<div class="section-label">${WORKOUT_CAT_EMOJI[cat]} ${WORKOUT_CATS[cat]}</div>`+
-      list.map(ex=>renderWorkoutCard(ex,checkins,today)).join('');
+      list.map(ex=>renderWorkoutCard(ex,checkins,today,ex.id===suggestId)).join('');
   }).join('');
 }
-function renderWorkoutCard(ex,checkins,today){
+function renderWorkoutCard(ex,checkins,today,suggested){
   const todays=checkins.filter(c=>c.exerciseId===ex.id&&c.date===today);
   const loc=_wkSelLoc[ex.id]||'';
+  const info=wkLastDoneInfo(ex.id,checkins,today);
   return `
-  <div style="background:white;border:1.5px solid ${todays.length?'var(--workout)':'var(--border)'};border-radius:14px;padding:14px;margin-bottom:10px">
+  <div style="background:white;border:1.5px solid ${todays.length?'var(--workout)':(suggested?'#F59E0B':'var(--border)')};border-radius:14px;padding:14px;margin-bottom:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <div style="font-size:15px;font-weight:700">${todays.length?'✅ ':''}${esc(ex.name)}</div>
-      ${todays.length?`<span style="font-size:11px;color:var(--workout);font-weight:700">今天 ${todays.length} 次</span>`:''}
+      <div style="font-size:15px;font-weight:700">${todays.length?'✅ ':''}${esc(ex.name)}${suggested&&!todays.length?' <span style="font-size:11px;font-weight:700;color:#B45309;background:#FEF3C7;border-radius:6px;padding:2px 6px;margin-left:4px">⭐ 建議</span>':''}</div>
+      ${todays.length?`<span style="font-size:11px;color:var(--workout);font-weight:700">今天 ${todays.length} 次</span>`:`<span style="font-size:11px;color:var(--muted)">${info.label}</span>`}
     </div>
     <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px">${esc(ex.homeVersionNote)}</div>
     <div style="font-size:11px;color:var(--muted);margin-top:2px">建議：${esc(ex.homeSuggestedSets)}</div>
