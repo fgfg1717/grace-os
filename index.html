@@ -1645,10 +1645,29 @@ function saveDictWord(){
   document.getElementById('dict-input').value='';_dictEntry=null;
 }
 
+// 發音播放：重複使用同一個 Audio 元件，避免每次點都重新下載造成延遲；
+// 線上音檔載入失敗、或超過 1.4 秒還沒開始播，就自動改用系統語音，避免乾等或靜默
+let _engAudio=null;
 function engPlay(url,word){
   const src=url&&url.length>4?(url.startsWith('http')?url:'https:'+url):'';
-  if(src){const a=new Audio(src);a.play().catch(()=>engSpeak(word));}
-  else engSpeak(word);
+  if(!src){engSpeak(word);return;}
+  try{
+    if(!_engAudio){_engAudio=new Audio();_engAudio.preload='auto';}
+    const a=_engAudio;
+    if(a._cleanup)a._cleanup();
+    try{a.pause();}catch(e){}
+    let settled=false;
+    const clear=()=>{a.removeEventListener('playing',onOk);a.removeEventListener('error',onErr);clearTimeout(t);a._cleanup=null;};
+    const onOk=()=>{if(settled)return;settled=true;clear();};
+    const onErr=()=>{if(settled)return;settled=true;clear();engSpeak(word);};
+    a._cleanup=clear;
+    a.addEventListener('playing',onOk);
+    a.addEventListener('error',onErr);
+    const t=setTimeout(onErr,1400);
+    if(a.src!==src)a.src=src;else a.currentTime=0;
+    const p=a.play();
+    if(p&&p.catch)p.catch(onErr);
+  }catch(e){engSpeak(word);}
 }
 // iOS Safari 常見狀況：頁面載入後第一次呼叫 speechSynthesis 容易沒聲音，要先被一次真人手勢「預熱」過才穩定
 let _speechUnlocked=false;
@@ -1659,16 +1678,26 @@ function _unlockSpeech(){
 }
 document.addEventListener('touchstart',_unlockSpeech,{once:true,passive:true});
 document.addEventListener('click',_unlockSpeech,{once:true});
+// 桌機 Chrome 首次呼叫時 getVoices() 常是空的，第一次唸不出來；先預載，清單就緒時補上
+let _engVoices=[];
+function _refreshVoices(){try{const v=speechSynthesis.getVoices();if(v&&v.length)_engVoices=v;}catch(e){}}
+if('speechSynthesis'in window){
+  _refreshVoices();
+  try{speechSynthesis.addEventListener('voiceschanged',_refreshVoices);}catch(e){speechSynthesis.onvoiceschanged=_refreshVoices;}
+}
 function engSpeak(text){
-  if(!('speechSynthesis'in window))return;
+  if(!text||!('speechSynthesis'in window))return;
+  _unlockSpeech();
   // iOS 要求 speak() 必須在使用者手勢的同步呼叫鏈裡直接執行，任何 setTimeout/await 包住都會被 iOS 靜默擋掉
   // 只在真的還在講話時才 cancel，避免不必要的中斷
-  if(speechSynthesis.speaking)speechSynthesis.cancel();
+  try{if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();}catch(e){}
   const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
-  const voices=speechSynthesis.getVoices();
+  const voices=_engVoices.length?_engVoices:(speechSynthesis.getVoices()||[]);
   const v=voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang&&v.lang.startsWith('en'));
   if(v)u.voice=v;
   speechSynthesis.speak(u);
+  // Chrome 有時會在開始前自己 pause，補一次 resume 才會出聲
+  setTimeout(()=>{try{if(speechSynthesis.paused)speechSynthesis.resume();}catch(e){}},80);
 }
 
 /* ── 手動新增 ── */
@@ -3944,12 +3973,15 @@ const WORKOUT_EXERCISES=[
   {id:'squat',name:'深蹲',category:'lower',gymVersion:'槓鈴深蹲 / 史密斯深蹲',homeVersion:'椅子輔助深蹲',homeVersionNote:'站在椅子前，手扶椅背，慢慢蹲下去像要坐下，快碰到椅子就停住再站起來',homeSuggestedSets:'3 組 x 10 下'},
   {id:'leg_press',name:'腿推 / 腿彎舉',category:'lower',gymVersion:'腿推機 / 腿彎舉機',homeVersion:'原地弓箭步',homeVersionNote:'一手扶牆，一腳往前跨，兩腳膝蓋彎成像鞠躬一樣，再站直換腳',homeSuggestedSets:'每邊 8 下 x 2 組'},
   {id:'hip_thrust',name:'臀推',category:'lower',gymVersion:'臀推機 / 槓鈴臀推',homeVersion:'臀橋',homeVersionNote:'躺在地上，膝蓋彎起腳踩地，把屁股往上抬起來再放下',homeSuggestedSets:'3 組 x 12 下'},
+  {id:'clam',name:'蚌殼式（臀開）',category:'lower',gymVersion:'側躺髖外展 / 髖外展機',homeVersion:'蚌殼式',homeVersionNote:'側躺，兩邊膝蓋彎曲、腳跟貼腳跟，上面那隻膝蓋像蚌殼打開一樣往上抬再放下，骨盆不要跟著翻',homeSuggestedSets:'每邊 15 下 x 3 組'},
   {id:'calf_raise',name:'小腿提踵',category:'lower',gymVersion:'小腿提踵機',homeVersion:'提踵',homeVersionNote:'站著，腳跟離地墊腳尖再放下，不穩可以扶椅背',homeSuggestedSets:'3 組 x 15 下'},
   {id:'hamstring_deadlift',name:'硬舉（後大腿）',category:'lower',gymVersion:'羅馬尼亞硬舉 / 直腿硬舉（啞鈴或槓鈴）',homeVersion:'居家硬舉（水瓶或後背包當重量）',homeVersionNote:'雙腳與肩同寬，膝蓋微彎，身體往前傾，重量沿著小腿前方慢慢下滑到接近腳踝，感覺大腿後側緊繃後再站直',homeSuggestedSets:'3 組 x 10 下'},
   {id:'lat_pulldown',name:'背部下拉',category:'upper',gymVersion:'滑輪下拉機 / 引體向上',homeVersion:'毛巾過頭下拉 / 彈力帶下拉',homeVersionNote:'雙手抓毛巾或彈力帶舉過頭頂，手肘往兩側下拉，像在做引體向上的動作，感覺背部收緊',homeSuggestedSets:'3 組 x 10 下'},
   {id:'back_extension',name:'下背伸展',category:'upper',gymVersion:'羅馬椅背伸展機',homeVersion:'超人式',homeVersionNote:'趴在地上，手跟腳同時往上抬起，停留一下再放下，練下背的肌力',homeSuggestedSets:'3 組 x 12 下'},
   {id:'plank',name:'棒式',category:'core',gymVersion:'地墊 / 抗力球棒式',homeVersion:'標準棒式',homeVersionNote:'手肘撐地，身體呈一直線像撐著一塊板子，收緊肚子撐住不塌腰',homeSuggestedSets:'3 組，每次撐 20~30 秒'},
   {id:'crunch',name:'捲腹',category:'core',gymVersion:'捲腹機 / 抗力球捲腹',homeVersion:'地板捲腹',homeVersionNote:'躺著膝蓋彎起，雙手抱頭或放胸前，肩膀微微捲起離地再放下',homeSuggestedSets:'3 組 x 15 下'},
+  {id:'dead_bug',name:'死蟲式',category:'core',gymVersion:'地墊（健身房或家裡做法一樣）',homeVersion:'死蟲式',homeVersionNote:'仰躺，雙手往天花板伸直、雙腳抬起膝蓋彎 90 度，對側的手跟腳同時往地板方向慢慢伸長再收回，整個過程腰背貼緊地板不要拱起來',homeSuggestedSets:'每邊 10 下 x 3 組'},
+  {id:'russian_twist',name:'俄羅斯轉體',category:'core',gymVersion:'負重轉體（啞鈴或槓片）',homeVersion:'徒手 / 水瓶俄羅斯轉體',homeVersionNote:'坐在地上膝蓋彎曲，上半身微微後傾，雙手抱著（或拿水瓶）往左右兩側輪流轉，轉到身體側邊接近碰地',homeSuggestedSets:'左右各 15 下 x 3 組'},
   {id:'bird_dog',name:'鳥狗式',category:'core',gymVersion:'通常不需要器材，健身房或家裡都一樣做',homeVersion:'鳥狗式',homeVersionNote:'跪姿，一手往前伸直同時對側腳往後伸直，停留一下再換邊，練平衡跟核心穩定',homeSuggestedSets:'每邊 8 下 x 2 組'},
   {id:'cardio',name:'有氧',category:'cardio',gymVersion:'跑步機 / 飛輪 / 橢圓機',homeVersion:'原地開合跳 / 爬樓梯 / 快走 / 跳繩',homeVersionNote:'任何讓心跳有明顯升高、持續 15~20 分鐘以上的活動都算',homeSuggestedSets:'15~20 分鐘'},
 ];
@@ -3971,7 +4003,11 @@ function setWorkoutGoals(g){
   localStorage.setItem(WK_GOALS_KEY,JSON.stringify(g));
   pushKV('workout_goals',g);
 }
-function wkCategoryOfExercise(exId){const e=WORKOUT_EXERCISES.find(x=>x.id===exId);return e?e.category:null}
+function wkCategoryOfExercise(ex){
+  // 可傳動作 id，或整筆打卡紀錄（自訂動作會帶 customCat）
+  if(ex&&typeof ex==='object'){if(ex.customCat)return ex.customCat;ex=ex.exerciseId;}
+  const e=WORKOUT_EXERCISES.find(x=>x.id===ex);return e?e.category:null;
+}
 function wkDaysBetween(dateStr,today){
   const d1=new Date(dateStr+'T00:00:00'),d2=new Date(today+'T00:00:00');
   return Math.round((d2-d1)/86400000);
@@ -4035,7 +4071,7 @@ function renderWorkoutCheckinSummary(){
   const goals=getWorkoutGoals();
   const order=['upper','lower','core','cardio'];
   const remaining=order.map(cat=>{
-    const cnt=checkins.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+    const cnt=checkins.filter(c=>wkCategoryOfExercise(c)===cat).length;
     const goal=goals[cat]||0;
     return{cat,left:Math.max(0,goal-cnt)};
   }).filter(r=>r.left>0);
@@ -4066,7 +4102,37 @@ function renderWorkoutCheckinTab(){
     const suggestId=sorted[0].ex.id;
     return `<div class="section-label">${WORKOUT_CAT_EMOJI[cat]} ${WORKOUT_CATS[cat]}</div>`+
       list.map(ex=>renderWorkoutCard(ex,checkins,today,ex.id===suggestId)).join('');
-  }).join('');
+  }).join('')+renderWorkoutCustomCard(checkins,today);
+}
+let _wkCustomDraft={};
+function renderWorkoutCustomCard(checkins,today){
+  const todays=checkins.filter(c=>c.exerciseId==='custom'&&c.date===today);
+  const loc=_wkSelLoc.custom||'';
+  const catOpts=['upper','lower','core','cardio'].map(k=>`<option value="${k}"${_wkCustomDraft.cat===k?' selected':''}>${WORKOUT_CAT_EMOJI[k]} ${WORKOUT_CATS[k]}</option>`).join('');
+  return `
+  <div class="section-label">➕ 其他</div>
+  <div style="background:white;border:1.5px dashed var(--border);border-radius:14px;padding:14px;margin-bottom:10px">
+    <div style="font-size:15px;font-weight:700">自訂動作</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px">清單沒有的動作，自己打名稱、選部位就能打卡；週／月統計會算進你選的部位</div>
+    <input type="text" placeholder="動作名稱（例：側平板、滑步機）" id="wk-c-name" value="${esc(_wkCustomDraft.name||'')}" oninput="_wkCustomDraft.name=this.value" style="width:100%;margin-top:10px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit"/>
+    <select id="wk-c-cat" onchange="_wkCustomDraft.cat=this.value" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:white;font-family:inherit">${catOpts}</select>
+    <div class="seg" style="margin-top:10px;margin-bottom:0">
+      <button class="chip${loc==='gym'?' sel-workout':''}" onclick="setWorkoutLoc('custom','gym')">🏋️ 健身房</button>
+      <button class="chip${loc==='home'?' sel-workout':''}" onclick="setWorkoutLoc('custom','home')">🏠 居家</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <input type="number" step="0.5" placeholder="重量kg" id="wk-c-w" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+      <input type="number" placeholder="下數" id="wk-c-r" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+      <input type="number" placeholder="組數" id="wk-c-s" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+    </div>
+    <input type="text" placeholder="備註（選填）" id="wk-c-n" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit"/>
+    <button class="full-btn" style="background:var(--workout);margin-top:10px;padding:10px" onclick="doWorkoutCustomCheckin()">打卡 ✓</button>
+    ${todays.length?`<div style="margin-top:8px">${todays.map(c=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
+        <span>${esc(c.customName||'自訂動作')}・${WORKOUT_CAT_EMOJI[c.customCat]||''}${c.location==='gym'?'🏋️ 健身房':'🏠 居家'}${c.weightKg?` ・${c.weightKg}kg`:''}${c.reps?` ・${c.reps}下`:''}${c.sets?` ・${c.sets}組`:''}${c.note?` ・${esc(c.note)}`:''}</span>
+        <button class="del-btn" onclick="delWorkoutCheckin('${c.id}')">✕</button>
+      </div>`).join('')}</div>`:''}
+  </div>`;
 }
 function renderWorkoutCard(ex,checkins,today,suggested){
   const todays=checkins.filter(c=>c.exerciseId===ex.id&&c.date===today);
@@ -4125,6 +4191,35 @@ function doWorkoutCheckin(exId){
   showToast('打卡成功 ✓');
   renderWorkoutCheckinTab();
 }
+function doWorkoutCustomCheckin(){
+  const loc=_wkSelLoc.custom;
+  if(!loc){showToast('請先選「健身房」或「居家」');return}
+  const name=(document.getElementById('wk-c-name').value||'').trim();
+  if(!name){showToast('請先填動作名稱');return}
+  const cat=document.getElementById('wk-c-cat').value||'core';
+  const w=document.getElementById('wk-c-w').value;
+  const r=document.getElementById('wk-c-r').value;
+  const s=document.getElementById('wk-c-s').value;
+  const n=document.getElementById('wk-c-n').value;
+  const rec={
+    id:'wk_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    date:fmtInputDate(taipeiNow()),
+    exerciseId:'custom',
+    customName:name,
+    customCat:cat,
+    location:loc,
+    weightKg:w?Number(w):null,
+    reps:r?Number(r):null,
+    sets:s?Number(s):null,
+    note:n||''
+  };
+  setWorkoutCheckins([rec,...getWorkoutCheckins()]);
+  pushWorkoutCheckins();
+  delete _wkSelLoc.custom;
+  _wkCustomDraft={};
+  showToast('打卡成功 ✓');
+  renderWorkoutCheckinTab();
+}
 function delWorkoutCheckin(id){
   setWorkoutCheckins(getWorkoutCheckins().filter(c=>String(c.id)!==String(id)));
   pushWorkoutCheckins();
@@ -4145,7 +4240,7 @@ function renderWorkoutWeekTab(){
   const goals=getWorkoutGoals();
   const order=['upper','lower','core','cardio'];
   const rows=order.map(cat=>{
-    const cnt=checkins.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+    const cnt=checkins.filter(c=>wkCategoryOfExercise(c)===cat).length;
     const goal=goals[cat]||0;
     const pct=goal?Math.min(100,Math.round(cnt/goal*100)):0;
     const hit=cnt>=goal;
@@ -4199,7 +4294,7 @@ function renderWorkoutMonthTab(){
     const s=fmtInputDate(w.start),e=fmtInputDate(w.end);
     const wc=getWorkoutCheckins().filter(c=>c.date>=s&&c.date<=e);
     const cats=['upper','lower','core','cardio'].map(cat=>{
-      const cnt=wc.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+      const cnt=wc.filter(c=>wkCategoryOfExercise(c)===cat).length;
       const hit=cnt>=(goals[cat]||0);
       return `<span style="margin-right:8px">${WORKOUT_CAT_EMOJI[cat]}${hit?'✅':'⬜'}</span>`;
     }).join('');
@@ -4232,7 +4327,7 @@ function computeWorkoutMonthSummary(y,m){
     const s=fmtInputDate(w.start),e=fmtInputDate(w.end);
     const wc=getWorkoutCheckins().filter(c=>c.date>=s&&c.date<=e);
     ['upper','lower','core','cardio'].forEach(cat=>{
-      const cnt=wc.filter(c=>wkCategoryOfExercise(c.exerciseId)===cat).length;
+      const cnt=wc.filter(c=>wkCategoryOfExercise(c)===cat).length;
       if(cnt>=(goals[cat]||0))catHit[cat]++;
     });
   });
@@ -4283,9 +4378,12 @@ function renderWorkoutYearTab(){
     `;
   }
   const sel=document.getElementById('wk-progress-exercise');
-  if(sel&&!sel.dataset.filled){
-    sel.innerHTML=WORKOUT_EXERCISES.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
-    sel.dataset.filled='1';
+  if(sel){
+    const prev=sel.value;
+    const customNames=[...new Set(getWorkoutCheckins().filter(c=>c.exerciseId==='custom'&&c.customName).map(c=>c.customName))];
+    sel.innerHTML=WORKOUT_EXERCISES.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')
+      +customNames.map(n=>`<option value="custom::${esc(n)}">${esc(n)}</option>`).join('');
+    if(prev)sel.value=prev;
   }
   renderWorkoutProgressChart();
 }
@@ -4294,7 +4392,10 @@ function renderWorkoutProgressChart(){
   const holder=document.getElementById('wk-progress-chart');
   if(!sel||!holder)return;
   const exId=sel.value||WORKOUT_EXERCISES[0].id;
-  const recs=getWorkoutCheckins().filter(c=>c.exerciseId===exId).sort((a,b)=>a.date<b.date?-1:1);
+  const recs=(exId.indexOf('custom::')===0
+    ? getWorkoutCheckins().filter(c=>c.exerciseId==='custom'&&c.customName===exId.slice(8))
+    : getWorkoutCheckins().filter(c=>c.exerciseId===exId)
+  ).sort((a,b)=>a.date<b.date?-1:1);
   if(!recs.length){holder.innerHTML='<div class="empty-msg">這個動作還沒有打卡紀錄</div>';return}
   const pts=recs.map(c=>({date:c.date,val:c.weightKg!=null?c.weightKg:(c.reps&&c.sets?c.reps*c.sets:null)})).filter(p=>p.val!=null);
   if(!pts.length){holder.innerHTML='<div class="empty-msg">這個動作還沒有重量或下數紀錄，先在打卡時填數字</div>';return}
