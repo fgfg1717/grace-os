@@ -3989,11 +3989,16 @@ const WORKOUT_CATS={upper:'上肢',lower:'下肢',core:'核心',cardio:'有氧'}
 const WORKOUT_CAT_EMOJI={upper:'💪',lower:'🦵',core:'🧘',cardio:'🏃'};
 const WK_KEY='gos_workout_checkins';
 const WK_GOALS_KEY='gos_workout_goals';
+const WK_MOVES_KEY='gos_workout_custom_moves';
 let _wkTab='checkin';
 let _wkSelLoc={};
+let _wkMoveForm=null;   // null=收合；{}=新增；{id,...}=編輯
+let _wkMoveDraft={};
 
 function getWorkoutCheckins(){try{return JSON.parse(localStorage.getItem(WK_KEY)||'[]')}catch(e){return[]}}
 function setWorkoutCheckins(a){localStorage.setItem(WK_KEY,JSON.stringify(a))}
+function getWorkoutMoves(){try{return JSON.parse(localStorage.getItem(WK_MOVES_KEY)||'[]')}catch(e){return[]}}
+function setWorkoutMoves(a){localStorage.setItem(WK_MOVES_KEY,JSON.stringify(a));pushKV('workout_custom_moves',a);}
 function getWorkoutGoals(){
   let g={};try{g=JSON.parse(localStorage.getItem(WK_GOALS_KEY)||'{}')}catch(e){}
   return{upper:2,lower:2,core:2,cardio:2,...g};
@@ -4006,7 +4011,8 @@ function setWorkoutGoals(g){
 function wkCategoryOfExercise(ex){
   // 可傳動作 id，或整筆打卡紀錄（自訂動作會帶 customCat）
   if(ex&&typeof ex==='object'){if(ex.customCat)return ex.customCat;ex=ex.exerciseId;}
-  const e=WORKOUT_EXERCISES.find(x=>x.id===ex);return e?e.category:null;
+  const e=WORKOUT_EXERCISES.find(x=>x.id===ex);if(e)return e.category;
+  const m=getWorkoutMoves().find(x=>x.id===ex);return m?m.category:null;
 }
 function wkDaysBetween(dateStr,today){
   const d1=new Date(dateStr+'T00:00:00'),d2=new Date(today+'T00:00:00');
@@ -4035,6 +4041,15 @@ async function syncWorkoutFromCloud(){
     if((cloud.workout_goals.ts||0)>(local._savedAt||0)){
       localStorage.setItem(WK_GOALS_KEY,JSON.stringify({...cloud.workout_goals.data,_savedAt:cloud.workout_goals.ts}));
     }
+  }
+  if(cloud.workout_custom_moves&&Array.isArray(cloud.workout_custom_moves.data)){
+    const byId={};getWorkoutMoves().forEach(m=>{if(m&&m.id)byId[m.id]=m});
+    cloud.workout_custom_moves.data.forEach(m=>{
+      if(!m||!m.id)return;
+      const cur=byId[m.id];
+      if(!cur||(m._savedAt||0)>(cur._savedAt||0))byId[m.id]=m;
+    });
+    localStorage.setItem(WK_MOVES_KEY,JSON.stringify(Object.values(byId)));
   }
 }
 function pushWorkoutCheckins(){pushKV('workout_checkins',getWorkoutCheckins())}
@@ -4102,34 +4117,97 @@ function renderWorkoutCheckinTab(){
     const suggestId=sorted[0].ex.id;
     return `<div class="section-label">${WORKOUT_CAT_EMOJI[cat]} ${WORKOUT_CATS[cat]}</div>`+
       list.map(ex=>renderWorkoutCard(ex,checkins,today,ex.id===suggestId)).join('');
-  }).join('')+renderWorkoutCustomCard(checkins,today);
+  }).join('')+renderWorkoutCustomSection(checkins,today);
 }
-let _wkCustomDraft={};
-function renderWorkoutCustomCard(checkins,today){
-  const todays=checkins.filter(c=>c.exerciseId==='custom'&&c.date===today);
-  const loc=_wkSelLoc.custom||'';
-  const catOpts=['upper','lower','core','cardio'].map(k=>`<option value="${k}"${_wkCustomDraft.cat===k?' selected':''}>${WORKOUT_CAT_EMOJI[k]} ${WORKOUT_CATS[k]}</option>`).join('');
+function renderWorkoutCustomSection(checkins,today){
+  const moves=getWorkoutMoves();
+  let h=`<div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
+    <span>🙋 我的自訂動作</span>
+    ${_wkMoveForm?'':`<button class="chip" style="font-size:12px;padding:4px 10px" onclick="openWkMoveForm()">＋ 新增</button>`}
+  </div>`;
+  if(!moves.length&&!_wkMoveForm){
+    h+=`<div style="background:white;border:1.5px dashed var(--border);border-radius:14px;padding:16px;margin-bottom:10px;font-size:13px;color:var(--muted);line-height:1.6">
+      放你自己的動作。按上面「＋ 新增」，填一次名稱、部位、執行說明，之後每次都能直接打卡（一樣記組數、下數、重量），說明也會一直顯示。
+    </div>`;
+  }
+  h+=moves.map(m=>renderWorkoutMoveCard(m,checkins,today)).join('');
+  if(_wkMoveForm)h+=renderWkMoveForm();
+  return h;
+}
+function renderWkMoveForm(){
+  const f=_wkMoveForm||{};
+  const editing=!!f.id;
+  const cat=_wkMoveDraft.cat||f.category||'core';
+  const catOpts=['upper','lower','core','cardio'].map(k=>`<option value="${k}"${cat===k?' selected':''}>${WORKOUT_CAT_EMOJI[k]} ${WORKOUT_CATS[k]}</option>`).join('');
+  const nameVal=_wkMoveDraft.name!=null?_wkMoveDraft.name:(f.name||'');
+  const noteVal=_wkMoveDraft.note!=null?_wkMoveDraft.note:(f.note||'');
   return `
-  <div class="section-label">➕ 其他</div>
-  <div style="background:white;border:1.5px dashed var(--border);border-radius:14px;padding:14px;margin-bottom:10px">
-    <div style="font-size:15px;font-weight:700">自訂動作</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px">清單沒有的動作，自己打名稱、選部位就能打卡；週／月統計會算進你選的部位</div>
-    <input type="text" placeholder="動作名稱（例：側平板、滑步機）" id="wk-c-name" value="${esc(_wkCustomDraft.name||'')}" oninput="_wkCustomDraft.name=this.value" style="width:100%;margin-top:10px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit"/>
-    <select id="wk-c-cat" onchange="_wkCustomDraft.cat=this.value" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:white;font-family:inherit">${catOpts}</select>
+  <div style="background:white;border:1.5px solid var(--workout);border-radius:14px;padding:14px;margin-bottom:10px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:8px">${editing?'編輯動作':'新增自訂動作'}</div>
+    <input type="text" placeholder="動作名稱（例：側棒式、滑步機）" id="wk-mf-name" value="${esc(nameVal)}" oninput="_wkMoveDraft.name=this.value" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:14px;font-family:inherit"/>
+    <select id="wk-mf-cat" onchange="_wkMoveDraft.cat=this.value" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;background:white;font-family:inherit">${catOpts}</select>
+    <textarea id="wk-mf-note" placeholder="執行說明／提醒（選填，打卡時會一直顯示）" oninput="_wkMoveDraft.note=this.value" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;min-height:66px;resize:vertical;font-family:inherit">${esc(noteVal)}</textarea>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <button class="full-btn" style="background:var(--workout);padding:9px;flex:1" onclick="saveWkMove()">${editing?'儲存':'新增'} ✓</button>
+      <button class="chip" style="padding:9px 14px" onclick="closeWkMoveForm()">取消</button>
+    </div>
+  </div>`;
+}
+function openWkMoveForm(){_wkMoveForm={};_wkMoveDraft={};renderWorkoutCheckinTab();}
+function editWkMove(id){const m=getWorkoutMoves().find(x=>x.id===id);if(!m)return;_wkMoveForm={...m};_wkMoveDraft={};renderWorkoutCheckinTab();}
+function closeWkMoveForm(){_wkMoveForm=null;_wkMoveDraft={};renderWorkoutCheckinTab();}
+function saveWkMove(){
+  const name=((_wkMoveDraft.name!=null?_wkMoveDraft.name:(_wkMoveForm&&_wkMoveForm.name))||'').trim();
+  if(!name){showToast('請先填動作名稱');return}
+  const cat=_wkMoveDraft.cat||(_wkMoveForm&&_wkMoveForm.category)||'core';
+  const note=((_wkMoveDraft.note!=null?_wkMoveDraft.note:(_wkMoveForm&&_wkMoveForm.note))||'').trim();
+  const moves=getWorkoutMoves();
+  if(_wkMoveForm&&_wkMoveForm.id){
+    const i=moves.findIndex(x=>x.id===_wkMoveForm.id);
+    if(i>=0)moves[i]={...moves[i],name,category:cat,note,_savedAt:Date.now()};
+  }else{
+    moves.push({id:'cm_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),name,category:cat,note,_savedAt:Date.now()});
+  }
+  setWorkoutMoves(moves);
+  _wkMoveForm=null;_wkMoveDraft={};
+  showToast('已儲存 ✓');
+  renderWorkoutCheckinTab();
+}
+function delWkMove(id){
+  if(!confirm('刪除這個自訂動作？（已打卡的紀錄會保留）'))return;
+  setWorkoutMoves(getWorkoutMoves().filter(m=>m.id!==id));
+  showToast('已刪除');
+  renderWorkoutCheckinTab();
+}
+function renderWorkoutMoveCard(m,checkins,today){
+  const todays=checkins.filter(c=>c.exerciseId===m.id&&c.date===today);
+  const loc=_wkSelLoc[m.id]||'';
+  const info=wkLastDoneInfo(m.id,checkins,today);
+  return `
+  <div style="background:white;border:1.5px solid ${todays.length?'var(--workout)':'var(--border)'};border-radius:14px;padding:14px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="font-size:15px;font-weight:700">${todays.length?'✅ ':''}${esc(m.name)} <span style="font-size:10px;font-weight:600;color:var(--muted)">${WORKOUT_CAT_EMOJI[m.category]||''}${WORKOUT_CATS[m.category]||''}</span></div>
+      ${todays.length?`<span style="font-size:11px;color:var(--workout);font-weight:700">今天 ${todays.length} 次</span>`:`<span style="font-size:11px;color:var(--muted)">${info.label}</span>`}
+    </div>
+    ${m.note?`<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px">${esc(m.note)}</div>`:''}
     <div class="seg" style="margin-top:10px;margin-bottom:0">
-      <button class="chip${loc==='gym'?' sel-workout':''}" onclick="setWorkoutLoc('custom','gym')">🏋️ 健身房</button>
-      <button class="chip${loc==='home'?' sel-workout':''}" onclick="setWorkoutLoc('custom','home')">🏠 居家</button>
+      <button class="chip${loc==='gym'?' sel-workout':''}" onclick="setWorkoutLoc('${m.id}','gym')">🏋️ 健身房</button>
+      <button class="chip${loc==='home'?' sel-workout':''}" onclick="setWorkoutLoc('${m.id}','home')">🏠 居家</button>
     </div>
     <div style="display:flex;gap:6px;margin-top:8px">
-      <input type="number" step="0.5" placeholder="重量kg" id="wk-c-w" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
-      <input type="number" placeholder="下數" id="wk-c-r" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
-      <input type="number" placeholder="組數" id="wk-c-s" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+      <input type="number" step="0.5" placeholder="重量kg" id="wk-w-${m.id}" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+      <input type="number" placeholder="下數" id="wk-r-${m.id}" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
+      <input type="number" placeholder="組數" id="wk-s-${m.id}" style="flex:1;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:8px 6px;font-size:13px;text-align:center"/>
     </div>
-    <input type="text" placeholder="備註（選填）" id="wk-c-n" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit"/>
-    <button class="full-btn" style="background:var(--workout);margin-top:10px;padding:10px" onclick="doWorkoutCustomCheckin()">打卡 ✓</button>
+    <input type="text" placeholder="備註（選填）" id="wk-n-${m.id}" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit"/>
+    <button class="full-btn" style="background:var(--workout);margin-top:10px;padding:10px" onclick="doWorkoutCheckin('${m.id}')">打卡 ✓</button>
+    <div style="display:flex;gap:16px;margin-top:8px">
+      <button class="del-btn" style="font-size:11px" onclick="editWkMove('${m.id}')">✏️ 編輯動作</button>
+      <button class="del-btn" style="font-size:11px" onclick="delWkMove('${m.id}')">🗑 刪除動作</button>
+    </div>
     ${todays.length?`<div style="margin-top:8px">${todays.map(c=>`
       <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
-        <span>${esc(c.customName||'自訂動作')}・${WORKOUT_CAT_EMOJI[c.customCat]||''}${c.location==='gym'?'🏋️ 健身房':'🏠 居家'}${c.weightKg?` ・${c.weightKg}kg`:''}${c.reps?` ・${c.reps}下`:''}${c.sets?` ・${c.sets}組`:''}${c.note?` ・${esc(c.note)}`:''}</span>
+        <span>${c.location==='gym'?'🏋️ 健身房':'🏠 居家'}${c.weightKg?` ・${c.weightKg}kg`:''}${c.reps?` ・${c.reps}下`:''}${c.sets?` ・${c.sets}組`:''}${c.note?` ・${esc(c.note)}`:''}</span>
         <button class="del-btn" onclick="delWorkoutCheckin('${c.id}')">✕</button>
       </div>`).join('')}</div>`:''}
   </div>`;
@@ -4185,38 +4263,11 @@ function doWorkoutCheckin(exId){
     sets:s?Number(s):null,
     note:n||''
   };
+  const mv=getWorkoutMoves().find(m=>m.id===exId);
+  if(mv){rec.customName=mv.name;rec.customCat=mv.category;}
   setWorkoutCheckins([rec,...getWorkoutCheckins()]);
   pushWorkoutCheckins();
   delete _wkSelLoc[exId];
-  showToast('打卡成功 ✓');
-  renderWorkoutCheckinTab();
-}
-function doWorkoutCustomCheckin(){
-  const loc=_wkSelLoc.custom;
-  if(!loc){showToast('請先選「健身房」或「居家」');return}
-  const name=(document.getElementById('wk-c-name').value||'').trim();
-  if(!name){showToast('請先填動作名稱');return}
-  const cat=document.getElementById('wk-c-cat').value||'core';
-  const w=document.getElementById('wk-c-w').value;
-  const r=document.getElementById('wk-c-r').value;
-  const s=document.getElementById('wk-c-s').value;
-  const n=document.getElementById('wk-c-n').value;
-  const rec={
-    id:'wk_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
-    date:fmtInputDate(taipeiNow()),
-    exerciseId:'custom',
-    customName:name,
-    customCat:cat,
-    location:loc,
-    weightKg:w?Number(w):null,
-    reps:r?Number(r):null,
-    sets:s?Number(s):null,
-    note:n||''
-  };
-  setWorkoutCheckins([rec,...getWorkoutCheckins()]);
-  pushWorkoutCheckins();
-  delete _wkSelLoc.custom;
-  _wkCustomDraft={};
   showToast('打卡成功 ✓');
   renderWorkoutCheckinTab();
 }
@@ -4380,9 +4431,11 @@ function renderWorkoutYearTab(){
   const sel=document.getElementById('wk-progress-exercise');
   if(sel){
     const prev=sel.value;
-    const customNames=[...new Set(getWorkoutCheckins().filter(c=>c.exerciseId==='custom'&&c.customName).map(c=>c.customName))];
+    const moves=getWorkoutMoves();
+    const legacy=[...new Set(getWorkoutCheckins().filter(c=>c.exerciseId==='custom'&&c.customName).map(c=>c.customName))];
     sel.innerHTML=WORKOUT_EXERCISES.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')
-      +customNames.map(n=>`<option value="custom::${esc(n)}">${esc(n)}</option>`).join('');
+      +moves.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')
+      +legacy.map(n=>`<option value="custom::${esc(n)}">${esc(n)}</option>`).join('');
     if(prev)sel.value=prev;
   }
   renderWorkoutProgressChart();
