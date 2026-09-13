@@ -655,21 +655,9 @@
   </div>
 
   <div class="eng-tabs">
-    <button class="eng-tab-btn active" onclick="switchEngTab('today')">📅 今日</button>
-    <button class="eng-tab-btn" onclick="switchEngTab('dict')">🔍 查記</button>
+    <button class="eng-tab-btn active" onclick="switchEngTab('dict')">🔍 查記</button>
     <button class="eng-tab-btn" onclick="switchEngTab('list')">📖 詞庫</button>
     <button class="eng-tab-btn" onclick="switchEngTab('practice')">🎯 練習</button>
-  </div>
-
-  <!-- 今日任務 — SRS 間隔複習 -->
-  <div id="eng-panel-today">
-    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">點下面的紫色區塊開始複習。每張卡先看正面猜答案，按「翻牌看答案」對答案，再誠實選不會／模糊／會了／很熟——選越熟的，這張卡就會越晚才再考你一次。一次刷 5 張一輪，刷完可以選要不要繼續下一輪。</div>
-    <div id="srs-grace-banner" style="background:linear-gradient(135deg,#5B21B6,#7C3AED);color:white;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px;user-select:none;transition:opacity .2s" onclick="startGraceOSSRS()">
-      <div style="font-size:32px;margin-bottom:6px">🔄</div>
-      <div style="font-size:18px;font-weight:800">載入中…</div>
-    </div>
-    <div id="srs-grace-card-area"></div>
-    <div id="srs-grace-done" style="display:none"></div>
   </div>
 
   <!-- 查記 -->
@@ -1563,10 +1551,10 @@ function dedupeEngItems(){
   if(clean.length<a.length)setEngItems(clean);
 }
 
-function initEngCenter(){dedupeEngItems();switchEngTab('today');renderEngManualForm();syncEngItemsFromCloud().then(()=>{if(document.getElementById('eng-panel-today')&&!document.getElementById('eng-panel-today').classList.contains('e-hidden'))initGraceOSSRSTab();});}
+function initEngCenter(){dedupeEngItems();switchEngTab('practice');renderEngManualForm();syncEngItemsFromCloud().then(()=>{if(document.getElementById('eng-panel-practice')&&!document.getElementById('eng-panel-practice').classList.contains('e-hidden'))renderPracSetup();});}
 
 function switchEngTab(tab){
-  const tabs=['today','dict','list','practice'];
+  const tabs=['dict','list','practice'];
   tabs.forEach(t=>{
     const p=document.getElementById('eng-panel-'+t);
     if(p)p.classList.toggle('e-hidden',t!==tab);
@@ -1574,7 +1562,6 @@ function switchEngTab(tab){
   document.querySelectorAll('#tpl-vocab .eng-tab-btn').forEach((b,i)=>{
     b.classList.toggle('active',tabs[i]===tab);
   });
-  if(tab==='today')initGraceOSSRSTab();
   if(tab==='list')renderEngList();
   if(tab==='practice')renderPracSetup();
 }
@@ -1798,6 +1785,10 @@ function startEngPractice(){
   if(pracRange==='grammar'||pracRange==='all'){
     const toeicGrammarItems=engShuffle(TOEIC_GRAMMAR).slice(0,5).map((g,i)=>({id:'tg_'+i,...g,toeicQ:true,type:'grammar',source:'toeic'}));
     pool=[...pool,...toeicGrammarItems];
+  }
+  if(pracRange==='vocab'||pracRange==='all'){
+    const toeicVocabItems=engShuffle(TOEIC_WORDS.map((w,i)=>({id:'tw_'+i,type:'vocab',word:w.w,zhMeaning:w.zh,example:w.ex,source:'toeic'}))).slice(0,5);
+    pool=[...pool,...toeicVocabItems];
   }
   if(pool.length<2){showToast('至少需要 2 個項目才能練習');return}
   pracPool=engShuffle(pool);pracIdx=0;pracScore={c:0,t:0};
@@ -2151,250 +2142,6 @@ function _sentBlankWord(item,all){
   }
   const words=(item.sentence||'').split(/\s+/).filter(w=>w.replace(/[^a-zA-Z]/g,'').length>4);
   return words[Math.floor(Math.random()*words.length)]?.replace(/[.,!?;:'"]/g,'')||'';
-}
-
-/* ── 今日複習：讀她自己在查記/詞庫累積的紀錄(eng_items_v1)排間隔複習，不再依賴講義匯入 ── */
-// 改用新 key，避免讀到改版前殘留的舊批次資料（裡面是舊講義卡片的id，會讓佇列變空但畫面看起來有數字，點了沒反應）
-const SRS_BATCH_KEY='eng_srs_batch_v1';
-const SRS_BATCH_SIZE=5;
-let graceQueue=[],graceQIdx=0,graceQTotal=0;
-
-function loadSRSBatch(){try{return JSON.parse(localStorage.getItem(SRS_BATCH_KEY)||'null')}catch{return null}}
-function saveSRSBatch(b){localStorage.setItem(SRS_BATCH_KEY,JSON.stringify(b))}
-
-function getDueEngItems(){
-  const today=fmtYMD(taipeiNow());
-  return getEngItems().filter(i=>((i.srs&&i.srs.nextReview)||today)<=today&&!isGarbledEngItem(i));
-}
-
-// 4級自評（不會=1／模糊=2／會了=3／很熟=4）→ 間隔天數：1／3／7起／14起
-function updateItemSRS(itemId,rating){
-  const items=getEngItems();
-  const idx=items.findIndex(i=>i.id===itemId);if(idx<0)return;
-  const item=items[idx];
-  const srs=item.srs||{nextReview:fmtYMD(taipeiNow()),interval:0,reps:0,lastRating:0,lastReview:''};
-  srs.reps=(srs.reps||0)+1;
-  srs.lastRating=rating;
-  srs.lastReview=fmtYMD(taipeiNow());
-  if(rating===1)srs.interval=1;
-  else if(rating===2)srs.interval=3;
-  else if(rating===3)srs.interval=srs.interval<7?7:Math.round(srs.interval*1.6);
-  else srs.interval=srs.interval<14?14:Math.round(srs.interval*2);
-  const next=new Date(taipeiNow());next.setDate(next.getDate()+srs.interval);
-  srs.nextReview=fmtYMD(next);
-  item.srs=srs;items[idx]=item;
-  setEngItems(items);_scheduleEngBackup();
-}
-
-/* ── 今日任務 — SRS 複習 ── */
-function initGraceOSSRSTab(){
-  const today=fmtYMD(taipeiNow());
-  // 取今日到期項目，固定排序確保每天順序一致
-  const allDueNow=getDueEngItems().sort((a,b)=>a.id<b.id?-1:1);
-  const itemsById={};getEngItems().forEach(i=>{itemsById[i.id]=i});
-  // 讀取或初始化今日 batch 狀態
-  let b=loadSRSBatch();
-  if(!b||b.date!==today){
-    b={date:today,allDueIds:allDueNow.map(i=>i.id),progress:0};
-    saveSRSBatch(b);
-  }else{
-    // 防呆：批次裡如果有已經找不到對應項目的id（例如殘留舊資料、或項目被刪除），濾掉避免佇列卡住點了沒反應
-    const validIds=b.allDueIds.filter(id=>itemsById[id]);
-    if(validIds.length!==b.allDueIds.length){
-      b.progress=Math.min(b.progress,validIds.length);
-      b.allDueIds=validIds;
-      saveSRSBatch(b);
-    }
-  }
-  const totalDue=b.allDueIds.length;
-  const remaining=totalDue-b.progress;
-  const batchIds=b.allDueIds.slice(b.progress,b.progress+SRS_BATCH_SIZE);
-  const batchCards=batchIds.map(id=>itemsById[id]).filter(Boolean);
-  const batchSize=batchCards.length;
-  const batchNum=Math.floor(b.progress/SRS_BATCH_SIZE)+1;
-  const totalBatches=Math.ceil(totalDue/SRS_BATCH_SIZE)||1;
-  graceQTotal=totalDue;graceQueue=batchCards;graceQIdx=0;
-  const banner=document.getElementById('srs-grace-banner');
-  if(banner){
-    if(totalDue===0){
-      banner.innerHTML=`<div style="font-size:32px;margin-bottom:6px">🔄</div>
-        <div style="font-size:18px;font-weight:800">今天暫無需複習的卡片</div>
-        <div style="font-size:13px;opacity:.8;margin-top:5px">繼續累積，明天見！</div>`;
-      banner.style.opacity='0.45';banner.style.pointerEvents='none';
-    }else if(remaining<=0){
-      banner.innerHTML=`<div style="font-size:32px;margin-bottom:6px">✅</div>
-        <div style="font-size:18px;font-weight:800">今日 ${totalDue} 張全部完成！</div>
-        <div style="font-size:13px;opacity:.8;margin-top:5px">明天繼續加油</div>`;
-      banner.style.opacity='0.45';banner.style.pointerEvents='none';
-    }else{
-      banner.innerHTML=`<div style="font-size:32px;margin-bottom:6px">🔄</div>
-        <div style="font-size:18px;font-weight:800">今天共 ${totalDue} 張，這輪 ${batchSize} 張</div>
-        <div style="font-size:13px;opacity:.8;margin-top:5px">第 ${batchNum} / ${totalBatches} 輪 · 點擊開始</div>`;
-      banner.style.opacity='1';banner.style.pointerEvents='auto';
-    }
-    banner.style.display='';
-  }
-  const area=document.getElementById('srs-grace-card-area');
-  if(area)area.innerHTML=(totalDue===0||remaining<=0)?renderDailyNewWords():'';
-  const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
-}
-
-/* ── 今日新詞（複習卡刷完後顯示，每天換 5 個）── */
-function todayNewWords(){
-  const now=taipeiNow();
-  const start=new Date(now.getFullYear(),0,0);
-  const doy=Math.floor((now-start)/864e5);
-  const out=[];
-  for(let i=0;i<5;i++)out.push(TOEIC_WORDS[(doy*5+i)%TOEIC_WORDS.length]);
-  return out;
-}
-function renderDailyNewWords(){
-  const words=todayNewWords();
-  const have=new Set(getEngItems().filter(i=>i.type==='vocab').map(i=>(i.word||'').toLowerCase()));
-  return `<div class="today-sec-label" style="margin-top:4px">📘 每日新詞 · 每天換 5 個</div>
-  <div class="today-task-card">${words.map((w,i)=>`<div class="daily-word-row">
-    <div class="daily-word-en">${esc(w.w)} <button class="eng-play" onclick="engSpeak('${w.w.replace(/'/g,"\\'")}')">🔊</button> <span style="font-size:10px;color:var(--muted);font-weight:400">${esc(w.pos)}</span></div>
-    <div class="daily-word-zh">${esc(w.zh)}</div>
-    <div class="daily-word-ex">"${esc(w.ex)}"</div>
-    ${have.has(w.w.toLowerCase())
-      ?'<div style="font-size:11px;color:#059669;font-weight:600;margin-top:4px">✓ 已在詞庫</div>'
-      :`<button class="outline-btn" style="margin-top:6px;padding:7px;font-size:12px" onclick="addDailyNewWord(${i})">＋ 加入詞庫（之後會出現在練習）</button>`}
-  </div>`).join('')}</div>`;
-}
-function addDailyNewWord(i){
-  const w=todayNewWords()[i];if(!w)return;
-  addEngItem({id:Date.now(),type:'vocab',word:w.w,zhMeaning:w.zh,example:w.ex,source:'toeic',ipa:'',audioUrl:'',enDef:'',date:fmtYMD(taipeiNow())});
-  showToast(`「${w.w}」已加入詞庫 ✓`);
-  const area=document.getElementById('srs-grace-card-area');
-  if(area&&area.innerHTML)area.innerHTML=renderDailyNewWords();
-}
-
-function startGraceOSSRS(){
-  if(!graceQueue.length)return;
-  graceQIdx=0;
-  const banner=document.getElementById('srs-grace-banner');if(banner)banner.style.display='none';
-  renderGraceOSSRSCard();
-}
-
-function _srsProgBar(idx,total){
-  const pct=total>0?Math.round(idx/total*100):0;
-  return `<div style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px">
-      <span>複習 ${idx+1} / ${total}</span>
-    </div>
-    <div style="background:#F1F5F9;border-radius:6px;height:6px;overflow:hidden"><div style="background:linear-gradient(90deg,#7C3AED,#A78BFA);height:100%;width:${pct}%;border-radius:6px;transition:width .3s"></div></div>
-  </div>`;
-}
-
-function renderGraceOSSRSCard(){
-  const area=document.getElementById('srs-grace-card-area');if(!area)return;
-  if(graceQIdx>=graceQueue.length){showGraceOSSRSSummary();return;}
-  const card=graceQueue[graceQIdx];
-  let front='';
-  if(card.type==='vocab'){
-    front=`<div style="text-align:center;padding:24px 0">
-      <div style="font-size:30px;font-weight:800;letter-spacing:.5px">${esc(card.word||'')}</div>
-      <button class="eng-play" style="margin-top:12px;font-size:22px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.word||'').replace(/'/g,"\\'")}')">🔊</button>
-    </div>`;
-  }else if(card.type==='sentence'){
-    front=`<div style="padding:18px 0">
-      <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
-      <button class="eng-play" style="margin-top:8px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
-    </div>`;
-  }else{
-    front=`<div style="padding:18px 0">
-      <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:6px">📐 文法規則</div>
-      <div style="font-size:18px;font-weight:800">${esc(card.rule||'')}</div>
-      ${card.explanation?`<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">${esc(card.explanation)}</div>`:''}
-    </div>`;
-  }
-  area.innerHTML=`${_srsProgBar(graceQIdx,graceQueue.length)}<div class="today-task-card">${front}
-    <button class="full-btn" style="background:#6D28D9;margin-top:4px" onclick="revealGraceOSSRSCard()">翻牌看答案</button>
-  </div>`;
-}
-
-function revealGraceOSSRSCard(){
-  const area=document.getElementById('srs-grace-card-area');if(!area)return;
-  const card=graceQueue[graceQIdx];
-  let front='',back='';
-  if(card.type==='vocab'){
-    front=`<div style="text-align:center;padding:16px 0 8px">
-      <div style="font-size:28px;font-weight:800">${esc(card.word||'')}</div>
-      <button class="eng-play" style="margin-top:8px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.word||'').replace(/'/g,"\\'")}')">🔊</button>
-    </div>`;
-    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
-      <div style="font-size:18px;font-weight:700;color:var(--vocab)">${esc(card.zhMeaning||'')}</div>
-      ${card.enDef?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${esc(card.enDef)}</div>`:''}
-      ${card.example?`<div style="font-size:13px;font-style:italic;color:#4B5563;margin-top:8px">"${esc(card.example)}" <button class="eng-play" onclick="engSpeak('${(card.example||'').replace(/'/g,"\\'")}')">🔊</button></div>`:''}
-    </div>`;
-  }else if(card.type==='sentence'){
-    front=`<div style="padding:14px 0 6px">
-      <div style="font-size:15px;font-weight:600;line-height:1.8">${esc(card.sentence||'')}</div>
-      <button class="eng-play" style="margin-top:4px" onclick="engPlay('${(card.audioUrl||'').replace(/'/g,"\\'")}','${(card.sentence||'').replace(/'/g,"\\'")}')">🔊</button>
-    </div>`;
-    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
-      <div style="font-size:16px;font-weight:700;color:var(--vocab)">${esc(card.translation||'')}</div>
-      ${card.notes?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(card.notes)}</div>`:''}
-    </div>`;
-  }else{
-    const exArr=card.examples||[];
-    front=`<div style="padding:14px 0 6px">
-      <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:5px">📐 文法規則</div>
-      <div style="font-size:18px;font-weight:800">${esc(card.rule||'')}</div>
-    </div>`;
-    back=`<div style="padding:12px;background:#F8FAFC;border-radius:10px;margin-top:8px">
-      ${card.explanation?`<div style="font-size:13px;line-height:1.7;margin-bottom:8px">${esc(card.explanation)}</div>`:''}
-      ${exArr.slice(0,2).map(e=>`<div style="font-size:12px;font-style:italic;color:#4B5563;margin-bottom:4px">"${esc(e)}" <button class="eng-play" onclick="engSpeak('${e.replace(/'/g,"\\'")}')">🔊</button></div>`).join('')}
-    </div>`;
-  }
-  const btns=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
-    <button onclick="graceOSSRSAnswer(1)" style="padding:10px 4px;border:2px solid #EF4444;border-radius:12px;background:white;color:#EF4444;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">😵 不會<br><span style="font-size:9px;font-weight:400">明天再複習</span></button>
-    <button onclick="graceOSSRSAnswer(2)" style="padding:10px 4px;border:2px solid #F59E0B;border-radius:12px;background:white;color:#D97706;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">🤔 模糊<br><span style="font-size:9px;font-weight:400">3天後再複習</span></button>
-    <button onclick="graceOSSRSAnswer(3)" style="padding:10px 4px;border:2px solid #10B981;border-radius:12px;background:white;color:#059669;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">🙂 會了<br><span style="font-size:9px;font-weight:400">拉長到7天起</span></button>
-    <button onclick="graceOSSRSAnswer(4)" style="padding:10px 4px;border:2px solid #6D28D9;border-radius:12px;background:white;color:#6D28D9;font-weight:700;font-size:12px;cursor:pointer;line-height:1.4">💪 很熟<br><span style="font-size:9px;font-weight:400">拉長到14天起</span></button>
-  </div>`;
-  area.innerHTML=`${_srsProgBar(graceQIdx,graceQueue.length)}<div class="today-task-card">${front}${back}</div>${btns}`;
-}
-
-function graceOSSRSAnswer(rating){
-  updateItemSRS(graceQueue[graceQIdx].id,rating);
-  graceQIdx++;renderGraceOSSRSCard();
-}
-
-function showGraceOSSRSSummary(){
-  const area=document.getElementById('srs-grace-card-area');if(area)area.innerHTML='';
-  const done=document.getElementById('srs-grace-done');if(!done)return;
-  // 更新 batch 進度
-  let b=loadSRSBatch();
-  const completedThisRound=graceQueue.length;
-  if(b){b.progress=Math.min((b.progress||0)+completedThisRound,b.allDueIds.length);saveSRSBatch(b);}
-  const totalDue=b?b.allDueIds.length:graceQTotal;
-  const remaining=b?totalDue-b.progress:0;
-  done.style.display='block';
-  if(remaining<=0){
-    done.innerHTML=`<div style="text-align:center;padding:24px 0">
-      <div style="font-size:42px;margin-bottom:8px">🎉</div>
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px">今日全部 ${totalDue} 張完成！</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">持續複習，記憶越來越穩固</div>
-      <button onclick="initGraceOSSRSTab()" class="full-btn" style="background:var(--vocab)">← 回到今日</button>
-    </div>`;
-  }else{
-    const nextBatchSize=Math.min(remaining,SRS_BATCH_SIZE);
-    done.innerHTML=`<div style="text-align:center;padding:24px 0">
-      <div style="font-size:42px;margin-bottom:8px">✅</div>
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px">這輪 ${completedThisRound} 張完成！</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">還有 ${remaining} 張，之後繼續刷也可以</div>
-      <button onclick="continueNextBatch()" class="full-btn" style="background:var(--vocab);margin-bottom:10px">繼續下 ${nextBatchSize} 張 →</button>
-      <button onclick="initGraceOSSRSTab()" class="outline-btn">← 先休息，回到今日</button>
-    </div>`;
-  }
-}
-
-function continueNextBatch(){
-  initGraceOSSRSTab();
-  const done=document.getElementById('srs-grace-done');if(done)done.style.display='none';
-  const banner=document.getElementById('srs-grace-banner');if(banner)banner.style.display='none';
-  graceQIdx=0;renderGraceOSSRSCard();
 }
 
 /* ════════════════════════════════
