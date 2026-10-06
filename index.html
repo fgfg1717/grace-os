@@ -1753,6 +1753,7 @@ function renderEngList(){
   const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增',toeic:'📘 每日新詞'};
   list.innerHTML=items.map(item=>{
     const ts=TS[item.type]||TS.vocab;
+    if(_engEditId!==null&&String(item.id)===_engEditId)return _engEditForm(item,ts);
     let main='',sub='';
     if(item.type==='vocab'){
       main=`<span class="eng-word">${esc(item.word)}</span>${item.ipa?`<span class="eng-ipa">${esc(item.ipa)}</span>`:''}<button class="eng-play" onclick="engPlay('${(item.audioUrl||'').replace(/'/g,"\\'")}','${esc(item.word)}')">🔊</button>`;
@@ -1766,8 +1767,41 @@ function renderEngList(){
     }
     const srcMeta=`<span style="font-size:11px;color:var(--muted)">${SL[item.source]||''} ${esc(item.date||'')}</span>`;
     const garbledTag=isGarbledEngItem(item)?`<span style="font-size:11px;color:#DC2626;font-weight:700;background:#FEE2E2;padding:2px 8px;border-radius:20px">⚠️ 文字亂碼，建議刪除重存</span>`:'';
-    return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${srcMeta}${garbledTag}</span><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
+    return `<div class="eng-item"><div class="eng-item-top"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${srcMeta}${garbledTag}</span><button class="del-btn" title="編輯" onclick="editEngItem('${String(item.id).replace(/'/g,"\\'")}')">✏️</button><button class="del-btn" onclick="delEngItem(${item.id})">✕</button></div><div class="eng-item-main">${main}</div>${sub}</div>`;
   }).join('');
+}
+/* ── 詞庫編輯 ── */
+let _engEditId=null;
+const _ENG_EDIT_FIELDS={
+  vocab:[['word','英文單字','input'],['zhMeaning','中文意思','input'],['example','例句','textarea']],
+  sentence:[['sentence','英文句子','textarea'],['translation','中文翻譯','textarea'],['notes','備註','textarea']],
+  grammar:[['rule','文法規則','input'],['explanation','說明','textarea'],['examples','例句（一行一句）','textarea']]
+};
+function _engEditForm(item,ts){
+  const fs=_ENG_EDIT_FIELDS[item.type]||_ENG_EDIT_FIELDS.vocab;
+  const st='width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit;margin:2px 0 8px';
+  const rows=fs.map(([k,label,tag])=>{
+    const v=k==='examples'?(item.examples||[]).join('\n'):(item[k]||'');
+    return `<div style="font-size:12px;color:var(--muted)">${label}</div>`+(tag==='input'
+      ?`<input type="text" id="eng-edit-${k}" style="${st}" value="${esc(v).replace(/"/g,'&quot;')}" autocapitalize="off"/>`
+      :`<textarea id="eng-edit-${k}" rows="${k==='examples'?4:2}" style="${st};resize:vertical">${esc(v)}</textarea>`);
+  }).join('');
+  return `<div class="eng-item" style="border-color:var(--vocab)"><div class="eng-item-top" style="margin-bottom:8px"><span class="type-badge" style="background:${ts.bg};color:${ts.c}">${ts.l}</span><span style="flex:1;margin-left:6px;font-size:12px;color:var(--muted)">編輯中</span></div>${rows}<div style="display:flex;gap:8px"><button class="full-btn" style="flex:1;background:var(--vocab);margin:0" onclick="saveEngEdit()">儲存</button><button class="full-btn" style="flex:1;background:#94A3B8;margin:0" onclick="cancelEngEdit()">取消</button></div></div>`;
+}
+function editEngItem(id){_engEditId=String(id);renderEngList()}
+function cancelEngEdit(){_engEditId=null;renderEngList()}
+function saveEngEdit(){
+  const a=getEngItems(),i=a.findIndex(x=>String(x.id)===_engEditId);
+  if(i<0){cancelEngEdit();return}
+  const it=a[i],fs=_ENG_EDIT_FIELDS[it.type]||_ENG_EDIT_FIELDS.vocab;
+  const vals={};
+  fs.forEach(([k])=>{vals[k]=(document.getElementById('eng-edit-'+k)?.value||'').trim()});
+  const main=fs[0][0];
+  if(!vals[main]){showToast(`${fs[0][1]}不能空白`);return}
+  fs.forEach(([k])=>{it[k]=k==='examples'?vals[k].split('\n').map(x=>x.trim()).filter(Boolean):vals[k]});
+  it.updatedAt=Date.now();
+  setEngItems(a);_scheduleEngBackup();
+  _engEditId=null;renderEngList();showToast('已儲存 ✓（會同步到其他裝置）');
 }
 function delEngItem(id){
   if(!confirm('確定從詞庫刪除這一筆？'))return;
