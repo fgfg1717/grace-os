@@ -1226,16 +1226,21 @@ async function syncEngItemsFromCloud(){
   const res=await getGAS({type:'eng_items'});
   if(!res?.ok||!res.data?.length)return;
   const local=getEngItems();
-  const localMap={};
-  local.forEach(item=>{const k=item.word||item.sentence||item.rule||String(item.id);localMap[k]=item});
+  const localMap={},localById={};
+  local.forEach(item=>{const k=item.word||item.sentence||item.rule||String(item.id);localMap[k]=item;localById[String(item.id)]=item});
   let added=0;
   res.data.forEach(ci=>{
     const k=ci.word||ci.sentence||ci.rule||String(ci.id);
-    if(!localMap[k]){local.unshift(ci);added++;}
+    // 先用 id 對（練習時改過句子，內容就對不上了），再用內容對
+    const li=localById[String(ci.id)]||localMap[k];
+    if(!li){local.unshift(ci);added++;}
     else{
-      const ls=(localMap[k].srs||{}).lastReview||'';
+      const ls=(li.srs||{}).lastReview||'';
       const cs=(ci.srs||{}).lastReview||'';
-      if(cs>ls)localMap[k].srs=ci.srs;
+      const srs=cs>ls?ci.srs:li.srs;
+      // 另一台裝置改過內容（updatedAt 比較新）→ 用改過的版本
+      if((ci.updatedAt||0)>(li.updatedAt||0))Object.assign(li,ci);
+      li.srs=srs;
     }
   });
   setEngItems(local);
@@ -1869,9 +1874,9 @@ function genEngQ(item,all,mode){
     }
   }
   if(mode==='translate'){
-    if(item.type==='vocab'&&item.zhMeaning)return sa(`中文：${item.zhMeaning}`,`用英文寫出這個單字和例句`,item.example||item.word,item.word,item.audioUrl,`${item.word}\n例句：${item.example||''}`);
-    if(item.type==='sentence'&&item.translation)return sa(`中文：${item.translation}`,'翻譯成英文',item.sentence,item.sentence,'',item.sentence);
-    if(item.type==='grammar'&&(item.examples||[]).length)return sa(`【${item.rule}】\n${item.explanation||''}\n\n請用英文造一個正確例句`,item.rule,item.examples[0],item.examples[0],'',item.examples.join('\n'));
+    if(item.type==='vocab'&&item.word&&item.zhMeaning)return{...sa(`中文：${item.zhMeaning}`,'上面寫單字，下面用它造一個例句（句子自己想，意思對、文法對就算對）',item.word,item.word,item.audioUrl,`${item.word}\n例句：${item.example||''}`),trans:'vocab',item};
+    if(item.type==='sentence'&&item.translation)return{...sa(`中文：${item.translation}`,'翻譯成英文（意思對、文法對就算對，不用跟參考答案一模一樣）',item.sentence,item.sentence,'',item.sentence),trans:'sentence',item};
+    if(item.type==='grammar'&&(item.examples||[]).length)return{...sa(`【${item.rule}】\n${item.explanation||''}\n\n請用英文造一個正確例句`,item.rule,item.examples[0],item.examples[0],'',item.examples.join('\n')),trans:'grammar',item};
   }
   return null;
 }
@@ -1886,16 +1891,22 @@ function renderPracQ(){
   if(!q){renderPracQ();return}
   _curQ=q;
   const prog=`${pracIdx+1} / ${maxQ}`;
-  const audioBtn=q.audioText?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聆聽</button>`:'';
+  const audioBtn=q.audioText&&!q.trans?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聆聽</button>`:'';
   let inputHtml='';
-  if(q.options){
+  if(q.trans){
+    const ta='width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit;margin-bottom:8px';
+    inputHtml=(q.trans==='vocab'?`<input type="text" id="prac-word" style="${ta}" placeholder="英文單字…" autocapitalize="off"/>`:'')+
+    `<textarea id="prac-fill" rows="3" style="${ta};resize:vertical" placeholder="${q.trans==='vocab'?'用這個單字造一個例句…':'輸入你的英文句子…'}"></textarea>
+    ${q.trans==='sentence'?`<button class="prac-audio-btn" style="margin:0 0 8px" onclick="showTransHint()">💡 提示</button><div id="prac-hint" style="display:none;font-size:14px;color:var(--muted);margin-bottom:8px;letter-spacing:.5px"></div>`:''}
+    <button class="full-btn" id="prac-trans-btn" style="background:var(--vocab)" onclick="checkEngTranslate()">確認</button>`;
+  }else if(q.options){
     inputHtml=`<div class="prac-options">${q.options.map(o=>`<button class="prac-opt" data-value="${o.replace(/"/g,'&quot;')}" onclick="checkEngChoice(this,'${o.replace(/'/g,"\\'")}')"><span>${esc(stripGrammarMarkers(o))}</span></button>`).join('')}</div>`;
   }else{
     inputHtml=`<input type="text" id="prac-fill" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit;margin-bottom:8px" placeholder="輸入答案…" onkeydown="if(event.key==='Enter')checkEngFill()"/>
     <button class="full-btn" style="background:var(--vocab)" onclick="checkEngFill()">確認</button>`;
   }
   document.getElementById('eng-prac-card').innerHTML=`
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between"><span>${prog}</span><span>答對 ${pracScore.c} 題</span></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span>${prog}　答對 ${pracScore.c} 題</span><button onclick="quitEngPrac()" style="background:none;border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:12px;color:var(--muted);cursor:pointer">✕ 結束練習</button></div>
     <div class="prac-card"><div class="prac-prompt">${esc(q.prompt)}</div>${audioBtn}${q.hint?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(q.hint)}</div>`:''}</div>
     ${inputHtml}
     <div id="prac-fb" style="display:none"></div>`;
@@ -1930,6 +1941,78 @@ function showPracFb(correct,reveal,audioText,audioUrl){
   const fb=document.getElementById('prac-fb');
   fb.style.display='block';fb.className=correct?'prac-fb correct-fb':'prac-fb wrong-fb';
   fb.innerHTML=`<div class="fb-title">${correct?'✅ 正確！':'❌ 答錯了'}</div><div style="font-size:13px;line-height:1.7;white-space:pre-line;margin-top:4px">${esc(reveal||'')}</div>${audioText?`<button class="prac-audio-btn" onclick="engPlay('${(audioUrl||'').replace(/'/g,"\\'")}','${audioText.replace(/'/g,"\\'")}')">🔊 再聽一次</button>`:''}<button class="btn-primary" style="margin-top:10px;width:100%;padding:12px;border:none;border-radius:10px;color:white;background:var(--vocab);font-size:15px;font-weight:700;cursor:pointer" onclick="nextEngQ()">下一題 →</button>`;
+}
+function quitEngPrac(){
+  if(pracScore.t)showToast(`這輪答對 ${pracScore.c} / ${pracScore.t} 題`);
+  _curQ=null;resetEngPrac();
+}
+// 提示：每個字只露第一個字母，例：W___ a__ y__ g____?
+function showTransHint(){
+  const q=_curQ,el=document.getElementById('prac-hint');if(!q||!el)return;
+  el.textContent=(q.answer||'').split(/\s+/).map(w=>w.replace(/^([^A-Za-z]*[A-Za-z])([A-Za-z']*)/,(m,a,b)=>a+'_'.repeat(b.length))).join(' ');
+  el.style.display='block';
+}
+async function _judgeEngTranslate(q,word,sent){
+  const key=localStorage.getItem('pr_gemini_key_v1');
+  if(!key)return null;
+  const it=q.item;
+  const task=q.trans==='vocab'
+    ?`題目：用單字「${it.word}」（${it.zhMeaning}）造一個英文例句。\n學生單字欄：${word}\n學生例句：${sent}\n判斷標準：例句有用到這個單字（可有時態/單複數變化），用法正確、文法正確就算對。`
+    :q.trans==='sentence'
+    ?`題目：把這句中文翻成英文：「${it.translation}」\n參考答案：${it.sentence}\n學生答案：${sent}\n判斷標準：意思和中文一致、文法正確就算對，不必跟參考答案一樣。`
+    :`題目：用文法規則「${it.rule}」造一個英文例句。\n說明：${it.explanation||''}\n參考例句：${(it.examples||[]).join(' / ')}\n學生例句：${sent}\n判斷標準：有用到這個文法、文法正確就算對。`;
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',temperature:0.2,max_tokens:400,response_format:{type:'json_object'},messages:[
+      {role:'system',content:'你是溫和的英文老師，幫臺灣上班族批改英文。只回 JSON：{"ok":true或false,"feedback":"繁體中文一到兩句，說哪裡好或哪裡錯","better":"更自然的英文寫法，原句已經很好就留空字串"}。小錯字或大小寫、標點不算錯，但要在 feedback 提醒。'},
+      {role:'user',content:task}]})
+  });
+  if(!res.ok)throw new Error('api error');
+  const d=await res.json();
+  return JSON.parse(d.choices[0].message.content);
+}
+let _transUser='';
+async function checkEngTranslate(){
+  const q=_curQ;if(!q)return;
+  const word=(document.getElementById('prac-word')?.value||'').trim();
+  const sent=(document.getElementById('prac-fill')?.value||'').trim();
+  if(q.trans==='vocab'&&!word){showToast('先寫單字');return}
+  if(!sent){showToast(q.trans==='vocab'?'例句也寫一下':'先寫你的答案');return}
+  _transUser=sent;
+  const btn=document.getElementById('prac-trans-btn');if(btn){btn.disabled=true;btn.textContent='批改中…'}
+  const fb=document.getElementById('prac-fb');
+  const wordOk=q.trans!=='vocab'||word.toLowerCase()===q.item.word.trim().toLowerCase();
+  const audio=q.audioText?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聽參考答案</button>`:'';
+  const canSave=q.item&&q.item.source!=='toeic';
+  const saveBtn=canSave?`<button class="prac-audio-btn" style="margin-left:6px" onclick="saveMyEngSentence()">📝 用我的句子取代詞庫${q.trans==='sentence'?'英文':'例句'}</button>`:'';
+  const refHtml=`<div style="font-size:12px;color:var(--muted);margin-top:10px">參考答案</div><div style="font-size:14px;line-height:1.7;white-space:pre-line">${esc(q.reveal)}</div>`;
+  let r=null;
+  try{r=await _judgeEngTranslate(q,word,sent)}catch(e){r=null}
+  if(btn)btn.style.display='none';
+  if(!r){
+    // 沒有 AI key 或連不上：自己對照參考答案判斷
+    fb.style.display='block';fb.className='prac-fb self-fb';
+    fb.innerHTML=`${q.trans==='vocab'?`<div style="font-weight:700">單字：${wordOk?'✅ 正確':`❌ 應該是 ${esc(q.item.word)}`}</div>`:''}<div style="font-size:13px;margin-top:6px">AI 批改沒連上，請自己對照：意思對、文法對就按「對了」</div>${refHtml}${audio}${saveBtn}<div style="display:flex;gap:8px;margin-top:10px"><button class="prac-opt correct" style="flex:1" onclick="selfMark(true)">✅ 對了</button><button class="prac-opt wrong" style="flex:1" onclick="selfMark(false)">❌ 答錯</button></div>`;
+    return;
+  }
+  const ok=!!r.ok&&wordOk;
+  pracScore.t++;if(ok)pracScore.c++;
+  fb.style.display='block';fb.className=ok?'prac-fb correct-fb':'prac-fb wrong-fb';
+  fb.innerHTML=`<div class="fb-title">${ok?'✅ 正確！':'❌ 再修一下'}</div>${q.trans==='vocab'?`<div style="font-size:13px;margin-top:4px">單字：${wordOk?'✅ 正確':`❌ 應該是 ${esc(q.item.word)}`}</div>`:''}<div style="font-size:13px;line-height:1.7;margin-top:4px">${esc(r.feedback||'')}</div>${r.better?`<div style="font-size:13px;margin-top:6px">💬 更自然的說法：${esc(r.better)}</div>`:''}${refHtml}${audio}${saveBtn}
+  <div style="font-size:12px;margin-top:8px"><a href="#" style="color:var(--muted)" onclick="flipEngJudge(${ok});this.parentNode.remove();return false">AI 判錯了？改成「${ok?'答錯':'答對'}」</a></div>
+  <button class="btn-primary" style="margin-top:10px;width:100%;padding:12px;border:none;border-radius:10px;color:white;background:var(--vocab);font-size:15px;font-weight:700;cursor:pointer" onclick="nextEngQ()">下一題 →</button>`;
+}
+function flipEngJudge(wasOk){pracScore.c+=wasOk?-1:1;showToast('已改判')}
+function saveMyEngSentence(){
+  const q=_curQ;if(!q||!q.item||!_transUser)return;
+  const a=getEngItems(),i=a.findIndex(x=>x.id===q.item.id);if(i<0){showToast('詞庫裡找不到這筆');return}
+  const old=q.trans==='vocab'?a[i].example:q.trans==='sentence'?a[i].sentence:(a[i].examples||[])[0];
+  if(!confirm(`把詞庫裡的\n「${old||'（空白）'}」\n換成\n「${_transUser}」？`))return;
+  if(q.trans==='vocab')a[i].example=_transUser;
+  else if(q.trans==='sentence')a[i].sentence=_transUser;
+  else a[i].examples=[_transUser,...(a[i].examples||[]).filter(e=>e!==_transUser)];
+  a[i].updatedAt=Date.now();
+  setEngItems(a);_scheduleEngBackup();showToast('已換成你的句子 ✓（會同步到其他裝置）');
 }
 function stripGrammarMarkers(s){return s.replace(/_([^_]+)_/g,'$1')}
 function nextEngQ(){pracIdx++;renderPracQ()}
