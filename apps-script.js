@@ -71,8 +71,11 @@ function doGet(e) {
   if (params.type === 'eng_items') {
     const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('英文詞庫快照');
     if (!sheet || sheet.getLastRow() <= 1) return out({ ok: true, data: [], ts: 0 });
-    const row = sheet.getRange(2, 1, 1, 2).getValues()[0];
-    let items = []; try { items = JSON.parse(String(row[1])); } catch(e) {}
+    // JSON 可能拆在 B、C、D… 多格（單格上限 5 萬字），讀取時依序串回
+    const lastCol = Math.max(2, sheet.getLastColumn());
+    const row = sheet.getRange(2, 1, 1, lastCol).getValues()[0];
+    const json = row.slice(1).map(String).join('');
+    let items = []; try { items = JSON.parse(json); } catch(e) {}
     return out({ ok: true, data: items, ts: Number(row[0]) || 0 });
   }
 
@@ -537,8 +540,14 @@ function doPost(e) {
       const sheet = getOrCreateEngItemsSheet(ss);
       const ts   = data.ts || Date.now();
       const json = JSON.stringify(data.items || []);
-      if (sheet.getLastRow() <= 1) { sheet.appendRow([ts, json]); }
-      else { sheet.getRange(2, 1, 1, 2).setValues([[ts, json]]); }
+      // 單格上限 5 萬字 → 每 40000 字切一格，放 B、C、D…
+      const CHUNK = 40000, chunks = [];
+      for (let i = 0; i < json.length; i += CHUNK) chunks.push(json.slice(i, i + CHUNK));
+      if (!chunks.length) chunks.push('[]');
+      const rowVals = [ts].concat(chunks);
+      if (sheet.getLastRow() > 1) sheet.getRange(2, 1, 1, Math.max(sheet.getLastColumn(), 1)).clearContent();
+      if (sheet.getMaxColumns() < rowVals.length) sheet.insertColumnsAfter(sheet.getMaxColumns(), rowVals.length - sheet.getMaxColumns());
+      sheet.getRange(2, 1, 1, rowVals.length).setValues([rowVals]);
       return out({ ok: true });
     }
 
