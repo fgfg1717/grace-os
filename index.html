@@ -1701,7 +1701,7 @@ function setEngAddType(t){
 }
 function renderEngManualForm(){
   const f=document.getElementById('eng-manual-form');if(!f)return;
-  const srcSel=`<div class="field"><label>來源</label><select id="m-src" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;background:white;font-family:inherit"><option value="teacher">👩‍🏫 老師課堂補充</option><option value="manual">✍️ 自己記的</option></select></div>`;
+  const srcSel=`<div class="field"><label>來源</label><select id="m-src" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;background:white;font-family:inherit"><option value="teacher">👩‍🏫 老師課堂補充</option><option value="manual">✍️ 自己記的</option><option value="podcast">🎧 Podcast</option></select></div>`;
   if(engAddType==='vocab'){
     f.innerHTML=`<div class="field"><label>英文單字</label><input type="text" id="m-word" placeholder="例：ephemeral" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/></div>
     <div class="field"><label>中文意思</label><input type="text" id="m-zh" placeholder="例：短暫的" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit"/></div>
@@ -1751,7 +1751,7 @@ function renderEngList(){
   if(!list)return;
   if(!items.length){list.innerHTML='<div class="empty-msg">還沒有紀錄</div>';return}
   const TS={vocab:{l:'單字',bg:'#EDE9FE',c:'#4C1D95'},sentence:{l:'句子',bg:'#DBEAFE',c:'#1E40AF'},grammar:{l:'文法',bg:'#D1FAE5',c:'#065F46'}};
-  const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增',toeic:'📘 每日新詞'};
+  const SL={lookup:'🔍 查字典',teacher:'👩‍🏫 老師補充',manual:'✍️ 手動新增',toeic:'📘 每日新詞',podcast:'🎧 Podcast'};
   list.innerHTML=items.map(item=>{
     const ts=TS[item.type]||TS.vocab;
     if(_engEditId!==null&&String(item.id)===_engEditId)return _engEditForm(item,ts);
