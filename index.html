@@ -1884,28 +1884,42 @@ function genEngQ(item,all,mode){
       return null;
     }
   }
+  // 填空一律是「句子挖空＋四選一」，不出造句題
   if(mode==='fill'){
-    if(item.type==='vocab'&&item.word&&item.example){
-      const re=new RegExp('\\b'+item.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');
-      const blank=item.example.replace(re,'______');
-      return{prompt:blank!==item.example?blank:`請造一個包含「${item.word}」的句子（中文意思：${item.zhMeaning}）`,hint:`中文意思：${item.zhMeaning}`,answer:item.word.toLowerCase(),options:null,audioText:item.example,audioUrl:item.audioUrl||'',reveal:item.example,selfAssess:blank===item.example};
+    const vocab=all.filter(v=>v.type==='vocab'&&v.word);
+    if(item.type==='vocab'&&item.word){
+      const hit=_findWordInText(item.word,item.example);
+      if(!hit)return{needAI:true};  // 例句找不到這個字（片語有變化、沒例句）→ 交給 AI 出題
+      const d=_engDistractors(item.word,vocab.map(v=>v.word));
+      if(d.length<3)return{needAI:true};
+      const changed=hit.toLowerCase()!==item.word.toLowerCase();
+      return{prompt:item.example.replace(hit,'______'),hint:`中文意思：${item.zhMeaning||''}${changed?'（選項是原形，句子裡有變化）':''}`,answer:item.word,options:engShuffle([item.word,...d]),audioText:item.example,audioUrl:'',reveal:`${item.example}\n\n${item.word} — ${item.zhMeaning||''}`,selfAssess:false};
     }
     if(item.type==='sentence'&&item.sentence){
-      const words=item.sentence.split(/\s+/);
-      const cands=words.filter(w=>w.replace(/[^a-zA-Z]/g,'').length>3);
-      if(!cands.length)return null;
-      const target=cands[Math.floor(Math.random()*cands.length)];
-      return{prompt:item.sentence.replace(target,'______'),hint:`中文提示：${item.translation||''}`,answer:target.replace(/[^a-zA-Z']/g,'').toLowerCase(),options:null,audioText:item.sentence,audioUrl:'',reveal:item.sentence,selfAssess:false};
+      // 優先挖詞庫裡學過的單字/片語，沒有才隨機挖一個長字
+      let target='',hit='',cands=vocab.map(v=>v.word);
+      for(const v of engShuffle(vocab)){const h=_findWordInText(v.word,item.sentence);if(h&&v.word.length>3){target=v.word;hit=h;break}}
+      if(!target){
+        const ws=item.sentence.match(/[A-Za-z']{5,}/g)||[];if(!ws.length)return null;
+        hit=target=ws[Math.floor(Math.random()*ws.length)];
+        cands=all.filter(i=>i.type==='sentence'&&i.id!==item.id).flatMap(i=>(i.sentence||'').match(/[A-Za-z']{5,}/g)||[]);
+      }
+      const d=_engDistractors(target,cands);if(d.length<3)return null;
+      return{prompt:item.sentence.replace(hit,'______'),hint:item.translation?`中文：${item.translation}`:'',answer:target,options:engShuffle([target,...d]),audioText:item.sentence,audioUrl:'',reveal:`${item.sentence}${item.translation?'\n'+item.translation:''}`,selfAssess:false};
     }
-    if(item.type==='grammar'&&(item.examples||[]).length){
-      return sa(`【${item.rule}】\n${item.explanation||''}\n\n請造一個正確的例句`,item.rule,item.examples[0],item.examples[0],'',item.examples.join('\n'));
-    }
+    if(item.type==='grammar')return{needAI:true};
   }
   if(mode==='listen'){
     if(item.type==='vocab'&&item.word)return{prompt:'🎧 聆聽發音，輸入這個單字',hint:`中文意思：${item.zhMeaning||''}`,answer:item.word.toLowerCase(),options:null,audioText:item.word,audioUrl:item.audioUrl||'',reveal:`${item.word}${item.ipa?` [${item.ipa}]`:''} — ${item.zhMeaning||''}`,selfAssess:false};
     if(item.type==='sentence'&&item.sentence&&item.translation){
       const opts=engShuffle([item.translation,...engShuffle(pool).slice(0,3).map(i=>i.translation).filter(Boolean)]);
       return{prompt:'🎧 聆聽句子，選出正確的中文意思',hint:'',answer:item.translation,options:opts,audioText:item.sentence,audioUrl:'',reveal:`${item.sentence}\n${item.translation}`,selfAssess:false};
+    }
+    // 文法、沒中文的句子：聽整句，選出空格裡聽到的字
+    if(item.type==='grammar'||item.type==='sentence'){
+      const f=genEngQ(item,all,'fill');
+      if(!f||f.needAI)return f;
+      return{...f,prompt:'🎧 聽句子，選出空格裡的字\n\n'+f.prompt,hint:''};
     }
   }
   if(mode==='translate'){
@@ -1915,18 +1929,94 @@ function genEngQ(item,all,mode){
   }
   return null;
 }
-function renderPracQ(){
+/* ── 填空出題小工具 ── */
+function _reEsc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+// 在句子裡找單字/片語，容許 -s/-ed/-ing 變化、my/your 互換；找到回傳句子裡實際出現的那段字
+function _findWordInText(word,text){
+  if(!word||!text)return '';
+  let m=text.match(new RegExp('\\b'+_reEsc(word)+'\\b','i'));if(m)return m[0];
+  const core=word.replace(/["“”‘’]/g,'').replace(/\.\.\.|…/g,' ').replace(/\+.*$/,' ').replace(/\b(something|someone|sth|sb)\b/gi,' ').trim().split(/\s+/).filter(Boolean);
+  if(!core.length||core.length>5)return '';
+  const pron='(?:my|your|his|her|their|our|its|one\'s)';
+  const pat=core.map(w=>/^(my|your|his|her|their|our|its|one's)$/i.test(w)?pron:w.length>3?_reEsc(w.replace(/e$/i,''))+"[a-z]{0,3}":_reEsc(w)).join('\\s+');
+  m=text.match(new RegExp('\\b'+pat+'\\b','i'));
+  return m?m[0]:'';
+}
+// 干擾選項：優先挑字數一樣的，比較不會一眼看出答案
+function _engDistractors(target,cands,n=3){
+  const t=target.trim().toLowerCase(),wc=t.split(/\s+/).length;
+  const u=[...new Set(cands.filter(Boolean).map(c=>c.trim()))].filter(c=>c.toLowerCase()!==t);
+  const same=engShuffle(u.filter(c=>c.split(/\s+/).length===wc)),other=engShuffle(u.filter(c=>c.split(/\s+/).length!==wc));
+  return[...same,...other].slice(0,n);
+}
+// 文法題、例句對不上的片語：請 AI 照這個文法點出一題四選一（錯誤選項要是臺灣人常犯的錯）
+const _engFillCache={};let _engNoKeyWarned=false;
+async function _fetchAIFill(item,key){
+  const topic=item.type==='grammar'
+    ?`文法點：${item.rule}\n說明：${item.explanation||''}\n例句：${(item.examples||[]).join(' / ')}`
+    :`片語/單字：${item.word}（${item.zhMeaning||''}）\n例句：${item.example||''}`;
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',temperature:0.7,max_tokens:500,response_format:{type:'json_object'},messages:[
+      {role:'system',content:'你是英文老師，幫臺灣上班族出多益 Part 5 風格的單句填空選擇題。只回 JSON：{"sentence":"一句英文，要考的地方用 ____ 代替","options":["四個選項"],"answer":正確選項的索引0到3,"zh":"整句的繁體中文翻譯","why":"繁體中文一到兩句：為什麼答案對，最容易選錯的那個錯在哪"}。規則：空格考的正是使用者給的文法點或片語；三個錯誤選項要是臺灣人真的會犯的錯（時態、詞性、介系詞、to V 跟 V-ing 混用、單複數、可數不可數），不能一看就知道錯；只能有一個正確答案；換一個職場或生活情境，不要照抄例句。如果這個文法點只跟發音有關、沒辦法用文字填空考，回 {"skip":true}。'},
+      {role:'user',content:topic}]})
+  });
+  if(!res.ok)throw new Error('api error');
+  const d=await res.json();
+  const r=JSON.parse(d.choices[0].message.content);
+  if(r.skip)return null;
+  const opts=(r.options||[]).map(o=>String(o).trim());
+  if(opts.length!==4||new Set(opts.map(o=>o.toLowerCase())).size!==4||!(r.answer>=0&&r.answer<4)||!/_{2,}/.test(r.sentence||''))return null;
+  return{sentence:r.sentence,options:opts,answer:opts[r.answer],zh:r.zh||'',why:r.why||''};
+}
+function _engAIFillStart(item){
+  const key=localStorage.getItem('pr_gemini_key_v1');
+  if(!key)return null;
+  if(!(item.id in _engFillCache))_engFillCache[item.id]=_fetchAIFill(item,key).catch(()=>{delete _engFillCache[item.id];return null});
+  return _engFillCache[item.id];
+}
+async function _engAIFillQ(item,mode){
+  const p=_engAIFillStart(item);
+  if(!p){if(!_engNoKeyWarned){_engNoKeyWarned=true;showToast('文法填空要用 AI 出題，這台裝置還沒設定 AI key，先跳過')}return null}
+  const r=await p;delete _engFillCache[item.id];  // 用完就丟，下一輪同一筆會出新題目
+  if(!r)return null;
+  const full=r.sentence.replace(/_{2,}/,r.answer);
+  const reveal=`${full}${r.zh?'\n'+r.zh:''}${item.type==='grammar'?`\n\n📐 ${item.rule}`:''}${r.why?`\n📖 ${r.why}`:''}`;
+  const base={answer:r.answer,options:engShuffle(r.options),audioText:full,audioUrl:'',reveal,selfAssess:false};
+  return mode==='listen'?{...base,prompt:'🎧 聽句子，選出空格裡的字\n\n'+r.sentence,hint:''}:{...base,prompt:r.sentence,hint:r.zh?`中文：${r.zh}`:''};
+}
+// 先幫下一題叫 AI 出題，答完不用等
+function _prefetchEngQ(){
+  const nx=pracPool[pracIdx+1];if(!nx)return;
+  const q=genEngQ(nx,getEngItems(),pracMode);
+  if(q&&q.needAI)_engAIFillStart(nx);
+}
+let _pracRenderId=0;
+async function renderPracQ(){
+  const myId=++_pracRenderId;
   const maxQ=Math.min(pracPool.length,10);
   if(pracIdx>=maxQ){
     const pct=Math.round(pracScore.c/pracScore.t*100)||0;
     document.getElementById('eng-prac-card').innerHTML=`<div style="text-align:center;padding:24px 0"><div style="font-size:48px;margin-bottom:12px">${pct>=80?'🎉':pct>=60?'👍':'💪'}</div><div style="font-size:22px;font-weight:800;margin-bottom:6px">${pracScore.c} / ${pracScore.t}</div><div style="color:var(--muted);margin-bottom:20px">${pct}% 答對</div><button class="full-btn" style="background:var(--vocab)" onclick="resetEngPrac()">再練一輪</button></div>`;return;
   }
-  let item=pracPool[pracIdx],q=null,tries=0;
-  while(!q&&tries<pracPool.length){q=genEngQ(item,getEngItems(),pracMode);if(!q){pracIdx++;tries++;if(pracIdx>=maxQ){renderPracQ();return}item=pracPool[pracIdx]}}
+  let q=null;
+  while(pracIdx<maxQ){
+    const item=pracPool[pracIdx];
+    q=genEngQ(item,getEngItems(),pracMode);
+    if(q&&q.needAI){
+      document.getElementById('eng-prac-card').innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span>${pracIdx+1} / ${maxQ}</span><button onclick="quitEngPrac()" style="background:none;border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:12px;color:var(--muted);cursor:pointer">✕ 結束練習</button></div><div class="prac-card" style="text-align:center;color:var(--muted)">出題中…</div>`;
+      q=await _engAIFillQ(item,pracMode);
+      if(myId!==_pracRenderId)return;  // 等的時候已經結束練習
+    }
+    if(q)break;
+    pracIdx++;
+  }
   if(!q){renderPracQ();return}
   _curQ=q;
+  _prefetchEngQ();
   const prog=`${pracIdx+1} / ${maxQ}`;
-  const audioBtn=q.audioText&&!q.trans?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聆聽</button>`:'';
+  // 填空題作答前不給聽整句（會直接聽到答案），批改後才有「再聽一次」
+  const audioBtn=q.audioText&&!q.trans&&pracMode!=='fill'?`<button class="prac-audio-btn" onclick="engPlay('${(q.audioUrl||'').replace(/'/g,"\\'")}','${q.audioText.replace(/'/g,"\\'")}')">🔊 聆聽</button>`:'';
   let inputHtml='';
   if(q.trans){
     const ta='width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit;margin-bottom:8px';
@@ -1935,7 +2025,7 @@ function renderPracQ(){
     ${q.trans==='sentence'?`<button class="prac-audio-btn" style="margin:0 0 8px" onclick="showTransHint()">💡 提示</button><div id="prac-hint" style="display:none;font-size:14px;color:var(--muted);margin-bottom:8px;letter-spacing:.5px"></div>`:''}
     <button class="full-btn" id="prac-trans-btn" style="background:var(--vocab)" onclick="checkEngTranslate()">確認</button>`;
   }else if(q.options){
-    inputHtml=`<div class="prac-options">${q.options.map(o=>`<button class="prac-opt" data-value="${o.replace(/"/g,'&quot;')}" onclick="checkEngChoice(this,'${o.replace(/'/g,"\\'")}')"><span>${esc(stripGrammarMarkers(o))}</span></button>`).join('')}</div>`;
+    inputHtml=`<div class="prac-options">${q.options.map(o=>`<button class="prac-opt" data-value="${o.replace(/"/g,'&quot;')}" onclick="checkEngChoice(this,this.dataset.value)"><span>${esc(stripGrammarMarkers(o))}</span></button>`).join('')}</div>`;
   }else{
     inputHtml=`<input type="text" id="prac-fill" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:15px;font-family:inherit;margin-bottom:8px" placeholder="輸入答案…" onkeydown="if(event.key==='Enter')checkEngFill()"/>
     <button class="full-btn" style="background:var(--vocab)" onclick="checkEngFill()">確認</button>`;
@@ -2052,6 +2142,7 @@ function saveMyEngSentence(){
 function stripGrammarMarkers(s){return s.replace(/_([^_]+)_/g,'$1')}
 function nextEngQ(){pracIdx++;renderPracQ()}
 function resetEngPrac(){
+  _pracRenderId++;
   document.getElementById('eng-practice-setup').style.display='block';
   document.getElementById('eng-prac-card').style.display='none';
   renderPracSetup();
