@@ -489,20 +489,10 @@
 
   <div class="section-label">財務管理</div>
   <div class="grid">
-    <div class="card card-finance full" onclick="show('finance')">
-      <span class="icon">💎</span>
-      <div class="label">財務總覽</div>
-      <div class="hint" id="home-finance-hint">本月收支・銀行存款・股票資產</div>
-    </div>
-    <div class="card card-ledger" onclick="show('ledger')">
+    <div class="card card-ledger full" onclick="show('ledger')">
       <span class="icon">💰</span>
       <div class="label">記帳</div>
-      <div class="hint">家用・個人・收入・支出</div>
-    </div>
-    <div class="card card-stock" onclick="show('stock')">
-      <span class="icon">📈</span>
-      <div class="label">股票追蹤</div>
-      <div class="hint">個人・家庭・台股・美股</div>
+      <div class="hint" id="home-finance-hint">家用・個人・收入・支出</div>
     </div>
   </div>
 
@@ -524,20 +514,6 @@
     </div>
   </div>
 
-  <div class="section-label">職涯發展</div>
-  <div class="grid">
-    <div class="card card-pr" onclick="openEmbed('pr')">
-      <span class="icon">🎯</span>
-      <div class="label">幕僚沙盤</div>
-      <div class="hint">危機模擬 · AI 雙角色評估</div>
-    </div>
-    <div class="card card-ceo" onclick="show('ceo')">
-      <span class="icon">🧠</span>
-      <div class="label">CEO 思維庫</div>
-      <div class="hint">模式 · 新增回饋 · 問 Claude</div>
-    </div>
-  </div>
-
   <div class="section-label">聯絡人</div>
   <div class="grid">
     <div class="card card-bizcard full" onclick="show('bizcard')">
@@ -552,7 +528,7 @@
     <div class="card card-aar full" onclick="show('settings')">
       <span class="icon">⚙️</span>
       <div class="label">設定</div>
-      <div class="hint">Google Sheets 同步・幕僚沙盤 API Key</div>
+      <div class="hint">Google Sheets 同步・AI 批改 Key</div>
     </div>
   </div>
 </div>
@@ -616,10 +592,10 @@
       <button class="btn-secondary" onclick="window.location.reload()">🔄 重新載入 App</button>
       <button class="btn-secondary" onclick="forceResyncAll()">🔁 強制重新同步</button>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">「強制重新同步」會以 Google Sheets 的資料覆蓋手機上的記帳／記錄／股票（尚未上傳的不會被刪）。</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">「強制重新同步」會以 Google Sheets 的資料覆蓋手機上的記帳／記錄（尚未上傳的不會被刪）。</div>
   </div>
   <div class="cap-form">
-    <div class="section-label" style="margin-top:0">🎯 幕僚沙盤／CEO 出考題 API Key</div>
+    <div class="section-label" style="margin-top:0">🤖 AI 批改 Key（英文練習用）</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">
       使用 <strong>Groq</strong> AI 服務（免費），Key 以 <code>gsk_</code> 開頭。<br>
       申請網址：<strong>console.groq.com</strong>
@@ -843,316 +819,8 @@
   </div>
 </div>
 
-<!-- 股票追蹤 -->
-<div class="tpl" id="tpl-stock">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">📈</span>
-    <div><h2>股票追蹤</h2>
-      <span class="tag" style="background:#FED7AA;color:#7C2D12;">個人・家庭・台股・美股</span>
-    </div>
-  </div>
-  <div class="stock-tabs">
-    <button class="stab sel" onclick="showStockTab('record')">新增交易</button>
-    <button class="stab" onclick="showStockTab('holdings')">持倉損益</button>
-    <button class="stab" onclick="showStockTab('history')">交易紀錄</button>
-  </div>
-  <!-- 新增交易 -->
-  <div id="stock-tab-record">
-    <div class="cap-form">
-      <div class="seg">
-        <button class="chip sel-orange" data-saccount="個人" onclick="setStockField('account','個人')">👤 個人</button>
-        <button class="chip" data-saccount="家庭" onclick="setStockField('account','家庭')">👨‍👩‍👧‍👦 家庭</button>
-      </div>
-      <div class="seg">
-        <button class="chip" data-smarket="台股" onclick="setStockField('market','台股')">🇹🇼 台股</button>
-        <button class="chip" data-smarket="美股" onclick="setStockField('market','美股')">🇺🇸 美股</button>
-      </div>
-      <div class="seg">
-        <button class="chip" data-saction="買入" onclick="setStockField('action','買入')">📥 買入</button>
-        <button class="chip" data-saction="定期定額" onclick="setStockField('action','定期定額')">🔄 定期定額</button>
-        <button class="chip" data-saction="賣出" onclick="setStockField('action','賣出')">📤 賣出</button>
-      </div>
-      <div class="field"><label>日期</label><input type="date" id="stock-date"/></div>
-      <div class="btn-row">
-        <div class="field" style="flex:1;margin-bottom:0"><label>股票代號</label>
-          <input type="text" id="stock-code" placeholder="例：2330 / AAPL"/></div>
-        <div class="field" style="flex:1;margin-bottom:0"><label>股票名稱</label>
-          <input type="text" id="stock-name" placeholder="例：台積電"/></div>
-      </div>
-      <div class="btn-row" style="margin-top:10px">
-        <div class="field" style="flex:1;margin-bottom:0"><label>數量（股）</label>
-          <input type="number" id="stock-qty" placeholder="0" inputmode="decimal" oninput="calcStockTotal()"/></div>
-        <div class="field" style="flex:1;margin-bottom:0"><label>成交價</label>
-          <input type="number" id="stock-price" placeholder="0" inputmode="decimal" oninput="calcStockTotal()"/></div>
-      </div>
-      <div class="btn-row" style="margin-top:10px">
-        <div class="field" style="flex:1;margin-bottom:0"><label>總金額（自動計算）</label>
-          <input type="text" id="stock-total" placeholder="0" readonly style="background:#F8FAFC;font-weight:700"/></div>
-        <div class="field" style="flex:1;margin-bottom:0"><label>手續費（選填）</label>
-          <input type="number" id="stock-fee" placeholder="0" inputmode="decimal"/></div>
-      </div>
-      <div class="field" style="margin-top:10px"><label>備註（選填）</label>
-        <input type="text" id="stock-notes" placeholder="例：逢低加碼"/></div>
-      <button class="full-btn" style="background:var(--stock)" onclick="submitStock()">記錄交易</button>
-    </div>
-  </div>
-  <!-- 持倉損益 -->
-  <div id="stock-tab-holdings" style="display:none">
-    <div class="seg" style="margin-bottom:10px">
-      <button class="chip sel-orange" data-haccfilter="全部" onclick="setHoldingsFilter('全部')">全部</button>
-      <button class="chip" data-haccfilter="個人" onclick="setHoldingsFilter('個人')">👤 個人</button>
-      <button class="chip" data-haccfilter="家庭" onclick="setHoldingsFilter('家庭')">👨‍👩‍👧‍👦 家庭</button>
-    </div>
-    <div id="stock-holdings-list"></div>
-  </div>
-  <!-- 交易紀錄 -->
-  <div id="stock-tab-history" style="display:none">
-    <div class="seg" style="margin-bottom:10px">
-      <button class="chip sel-orange" data-hfilter="全部" onclick="setStockHistFilter('全部')">全部</button>
-      <button class="chip" data-hfilter="個人" onclick="setStockHistFilter('個人')">👤 個人</button>
-      <button class="chip" data-hfilter="家庭" onclick="setStockHistFilter('家庭')">👨‍👩‍👧‍👦 家庭</button>
-    </div>
-    <div id="stock-history-list"></div>
-  </div>
-</div>
-
-<!-- 財務總覽 -->
-<div class="tpl" id="tpl-finance">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">💎</span>
-    <div><h2>財務總覽</h2>
-      <span class="tag" style="background:#D1FAE5;color:#065F46;">收入・支出・資產</span>
-    </div>
-  </div>
-  <div id="finance-monthly"></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px">
-    <div class="section-label" style="margin:0">🏦 銀行帳戶</div>
-    <button class="nb-btn" onclick="toggleBankForm()">+ 新增</button>
-  </div>
-  <div id="bank-add-form" style="display:none;background:white;border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
-    <div class="field"><label>銀行名稱</label>
-      <input type="text" id="bank-name-input" placeholder="例：台新、玉山、國泰世華"
-        style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit"/></div>
-    <div class="field"><label>目前餘額（NT$）</label>
-      <input type="number" id="bank-balance-input" placeholder="0" inputmode="decimal"
-        style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit"/></div>
-    <button class="full-btn" style="background:#059669" onclick="addBank()">儲存帳戶 ✓</button>
-  </div>
-  <div id="bank-list"></div>
-  <div class="section-label" style="margin-top:16px">📊 資產快照</div>
-  <div id="finance-assets"></div>
-</div>
-
-<!-- CEO 思維庫 -->
-<div class="tpl" id="tpl-ceo">
-  <button class="back" onclick="goHome()">← 返回</button>
-  <div class="tpl-header">
-    <span class="big-icon">🧠</span>
-    <div><h2>CEO 思維庫</h2>
-      <span class="tag" style="background:#EDE9FE;color:#4C1D95;">向 CEO 學思考</span>
-    </div>
-  </div>
-  <div class="eng-tabs" style="flex-wrap:wrap;gap:6px">
-    <button class="eng-tab-btn active" id="ceo-tab-patterns" onclick="switchCEOTab('patterns')">💡 思維模式</button>
-    <button class="eng-tab-btn" id="ceo-tab-quiz" onclick="switchCEOTab('quiz')">🎯 出考題</button>
-    <button class="eng-tab-btn" id="ceo-tab-add" onclick="switchCEOTab('add')">＋ 新增回饋</button>
-    <button class="eng-tab-btn" id="ceo-tab-cases" onclick="switchCEOTab('cases')">📝 我的案例</button>
-  </div>
-
-  <!-- 思維模式 -->
-  <div id="ceo-panel-patterns">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">從例會逐字稿萃取，每次新會議分析後由 Claude 更新。</div>
-
-    <div class="ceo-cat-label">👥 說服與溝通</div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">🎯 利害關係人說服力轉換</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>所有產品/執行決策，最終轉成「對方為什麼要繼續支持你」。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：看完網站改版 → 「成果怎麼讓贊助者知道，他明年為什麼還要支持」</p>
-        <p class="ceo-phrase">練習句：「這件事情，對（對象）來說，說服力在哪裡？」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">📐 拆層思考</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>先把問題拆成 2-3 個不同層面，再逐一回應，不混著說。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">口頭語：「這牽涉到兩個層面，第一個是⋯⋯，第二個是⋯⋯」</p>
-        <p class="ceo-phrase">練習：遇到任何問題，先問自己「這個問題有幾個維度？」</p>
-      </div>
-    </div>
-
-    <div class="ceo-cat-label">🎯 目標與執行</div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">⏱️ 壓時間節點，不讓討論懸空</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>討論完方向，一定接具體時間節點，永遠以「時間 + 行動」結束。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：「希望六月底我們先針對明年的願景先有個數，好不好？」</p>
-        <p class="ceo-phrase">練習句：「那我們就壓一個時間，＿月＿日前先⋯⋯」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">📋 目標層級才能落地</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>重要的事一定要放進 OGSM，並要求各部門指派明確負責人；只是策略就會因為忙碌被割捨。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（2O例會）：資料庫建置各說各的 → CEO 改成公司整體目標，強制各部門有人承攬</p>
-        <p class="ceo-phrase">練習句：「這件事如果不放進目標裡，有沒有可能真的被執行？」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">✂️ 目標 vs 策略嚴格區分</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>「建資料庫」是方法，「每月一支短影音」才是目標；目標必須是可測量的成果。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（CEO 例會）：把「建資料庫」當目標 → CEO 說應改成「7 月起每月至少一支短影音」</p>
-        <p class="ceo-phrase">練習句：「這件事是我要做的方法，還是我要達到的結果？結果是什麼？」</p>
-      </div>
-    </div>
-
-    <div class="ceo-cat-label">🔭 策略與視野</div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">🔗 現在 × 未來雙軌思考</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>看任何現況問題，同時在腦袋裡保留「2-3 年後的樣子」。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：討論網站改版 → 問「這怎麼幫三年後資料庫願景鋪路」</p>
-        <p class="ceo-phrase">練習句：「這個決定對我們兩三年後的目標有什麼幫助？」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">🔭 機會嗅覺（外部趨勢 → 我能做什麼）</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>看到外部趨勢，立刻連到「我們能接上什麼」。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例：美國退出孔子學院 → 臺灣華語教材進入美國學校的機會</p>
-        <p class="ceo-phrase">練習：「這件事如果發生，對我們是機會還是威脅？怎麼接上？」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">📦 資源意識下的分階段規劃</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>永遠考量現有能量/資源限制，做可行的分階段計畫，不空談。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">口頭語：「現階段我們能做⋯⋯，明年⋯⋯，兩三年後⋯⋯」</p>
-        <p class="ceo-phrase">練習：「如果資源只有一半，這件事的優先順序怎麼排？」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">🔀 兩條軌道並行，不互相等待</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>基礎建設和業務產出同步進行，不讓一方等另一方完成。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（CEO 例會）：「等資料庫建好再做媒體合作」→ CEO 說媒體合作先跑，資料庫同時建</p>
-        <p class="ceo-phrase">練習句：「這兩件事一定要有先後順序嗎？能不能同時推進？」</p>
-      </div>
-    </div>
-
-    <div class="ceo-cat-label">🗄️ 資料與 AI</div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">💾 資料先於 AI</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>沒有系統性整理的資料，AI 只能服務個人，無法變成公司資產；資料整理是 AI 真正發揮效益的前提。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（2O例會）：行銷部門用個人 Claude 訂閱存公司資料 → 資料分散、無法被傳承</p>
-        <p class="ceo-phrase">練習句：「如果今天問 AI 這件事，資料夠不夠完整？問題出在資料還是 AI？」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">🔨 土炮過程是學習，不是浪費</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>手工整理資料的過程能讓你真正弄清楚需要哪些資料、如何下標籤、哪些欄位真正有用。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（CEO 例會）：截圖做簡報的土炮過程，反而釐清了資料庫要收什麼</p>
-        <p class="ceo-phrase">練習句：「先做一次土法煉鋼，看看過程中卡在哪裡，那個卡點就是系統要解決的問題。」</p>
-      </div>
-    </div>
-
-    <div class="ceo-cat-label">🤝 談判與合作</div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">🃏 先拿籌碼，再談條件</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>談判之前，先讓對方承認他們單方面改變了原本條件；這個虧欠感本身就是籌碼，要先把它確立，再往下談其他事情。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（親子學談判）：平台改了分潤條件 → CEO 說先別急著討論新條件，先讓他們承認凹了我們，「把這籌碼先拿下來再往下談」</p>
-        <p class="ceo-phrase">練習句：「在我們討論後面的條件之前，我想先確認一件事⋯⋯」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">✂️ 切割問題，先讓能動的跑</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>把複雜的合作切成兩個部分，先讓簡單的那個合約跑起來，複雜的細節等有更多資訊再談。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（親子學談判）：一次性產品 + 訂閱分潤很複雜 → 先把一次性合約簽出去（六月底就要賣），訂閱的算清楚再談</p>
-        <p class="ceo-phrase">練習句：「我們先把可以確認的部分簽掉，另一個等我們算清楚再來討論。」</p>
-      </div>
-    </div>
-    <div class="ceo-pattern-card" onclick="toggleCEOPattern(this)">
-      <div class="ceo-pat-title">📊 掌握雙方邊際成本差異</div>
-      <div class="ceo-pat-body" style="display:none">
-        <p>弄清楚隨著規模擴大，對方的成本結構如何變化，我方的又如何；誰的邊際成本遞增、誰的是固定，這個不對稱就是談判槓桿。</p>
-        <p style="color:#7C3AED;font-weight:600;margin-top:8px">案例（親子學談判）：平台產品越多成本越高（邊際遞減），臺灣吧內容產製是固定成本 → 讓我們在分潤談判上有更強立場</p>
-        <p class="ceo-phrase">練習句：「這件事隨著規模擴大，你們的成本是增加的，但我們的是固定的——所以⋯⋯」</p>
-      </div>
-    </div>
-
-    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">最後更新：2026-06-17（親子學合作談判回饋）</div>
-  </div>
-
-  <!-- 出考題 -->
-  <div id="ceo-panel-quiz" class="e-hidden">
-    <div id="ceo-quiz-no-key" class="e-hidden">
-      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">需要 Groq API Key 才能出題。<br>請先到首頁 <strong>⚙️ 設定</strong> → 輸入 Groq API Key，這裡會自動讀取。</div>
-    </div>
-    <div id="ceo-quiz-body">
-      <div id="ceo-quiz-idle">
-        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">AI 會出一個你在臺灣吧可能真實遇到的工作情境，考你會用哪個 CEO 框架思考。</div>
-        <button class="full-btn" style="background:var(--ceo)" onclick="generateCEOQuiz()">出一題 →</button>
-      </div>
-      <div id="ceo-quiz-loading" class="e-hidden" style="text-align:center;padding:28px;color:var(--muted);font-size:14px">⋯ 出題中</div>
-      <div id="ceo-quiz-question" class="e-hidden">
-        <div class="ceo-quiz-q-box" id="ceo-quiz-q-text"></div>
-        <textarea id="ceo-quiz-ans" class="ceo-quiz-ans" placeholder="你會怎麼做？說明你的思考方向⋯"></textarea>
-        <button class="full-btn" style="background:var(--ceo);margin-top:10px" onclick="submitCEOAnswer()">送出答案 →</button>
-      </div>
-      <div id="ceo-quiz-fb-loading" class="e-hidden" style="text-align:center;padding:28px;color:var(--muted);font-size:14px">⋯ 分析中</div>
-      <div id="ceo-quiz-feedback" class="e-hidden">
-        <div class="ceo-quiz-fb-box" id="ceo-quiz-fb-text"></div>
-        <button class="full-btn" style="background:var(--ceo)" onclick="generateCEOQuiz()">再出一題 →</button>
-      </div>
-    </div>
-    <div id="ceo-quiz-hist" class="ceo-quiz-hist e-hidden">
-      <div class="ceo-quiz-hist-title">最近練習紀錄</div>
-      <div id="ceo-quiz-hist-list"></div>
-    </div>
-  </div>
-
-  <!-- 新增回饋 -->
-  <div id="ceo-panel-add" class="e-hidden">
-    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">把 CEO 說的話、做的決定記下來，累積越多我就能給你越準確的 CEO 視角。</div>
-    <div class="cap-form">
-      <div class="field"><label>會議日期</label>
-        <input type="date" id="ceo-case-date" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit"/>
-      </div>
-      <div class="field"><label>CEO 的原話或決策</label>
-        <textarea id="ceo-case-quote" placeholder="貼上 CEO 說的話，或描述他做了什麼決定⋯" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;min-height:120px;resize:vertical"></textarea>
-      </div>
-      <div class="field"><label>當時情境（選填）</label>
-        <textarea id="ceo-case-context" placeholder="在討論什麼話題？有沒有你覺得特別的地方？" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;min-height:72px;resize:vertical"></textarea>
-      </div>
-      <button class="full-btn" style="background:var(--ceo)" onclick="addCEOCase()">記錄這個案例 ✓</button>
-    </div>
-  </div>
-
-  <!-- 我的案例 -->
-  <div id="ceo-panel-cases" class="e-hidden">
-    <div id="ceo-cases-list"></div>
-  </div>
-</div>
-
 </div><!-- /wrap -->
 <div class="toast" id="toast"></div>
-
-<!-- 嵌入式 App Overlay -->
-<div class="embed-overlay" id="embed-overlay">
-  <div class="embed-bar">
-    <button class="embed-close" onclick="closeEmbed()">←</button>
-    <span class="embed-bar-title" id="embed-title"></span>
-    <span style="width:32px"></span>
-  </div>
-  <iframe class="embed-frame" id="embed-frame" src="" allow="microphone; clipboard-write"></iframe>
-</div>
 
 <script>
 /* ════ Utils ════ */
@@ -1273,19 +941,6 @@ async function syncLedgersFromCloud(){
   showToast(`已同步 ${toAdd.length} 筆記帳 ✓`);
 }
 
-async function syncStocksFromCloud(){
-  if(!gasUrl())return;
-  const res=await getGAS({type:'stocks'});
-  if(!res?.ok||!res.data?.length)return;
-  const local=getStocks();
-  const keys=new Set(local.map(s=>`${s.date}|${s.account}|${s.action}|${s.code}|${s.qty}|${s.price}`));
-  const toAdd=res.data.filter(s=>!keys.has(`${s.date}|${s.account}|${s.action}|${s.code}|${s.qty}|${s.price}`))
-    .map(s=>({id:Date.now()+Math.random(),synced:true,...s}));
-  if(!toAdd.length)return;
-  setStocks([...toAdd,...local].sort((a,b)=>b.date.localeCompare(a.date)));
-  showToast(`已同步 ${toAdd.length} 筆股票 ✓`);
-}
-
 /* ════ Init ════ */
 (function init(){
   const now=taipeiNow();
@@ -1309,40 +964,15 @@ function _showDOM(type){
   if(type==='capture')initCaptureForm();
   else if(type==='vocab')initEngCenter();
   else if(type==='ledger')initLedger();
-  else if(type==='stock')initStock();
-  else if(type==='finance')initFinance();
   else if(type==='aar')initAAR();
-  else if(type==='ceo')initCEO();
   else if(type==='tasks')renderTasks();
   else if(type==='bizcard')initBizCard();
   else if(type==='workout')initWorkout();
   else if(type==='settings')initSettings();
   window.scrollTo(0,0);
 }
-function openEmbed(type){
-  _openEmbedDOM(type);
-  history.pushState({embed:type},'');
-}
-function _openEmbedDOM(type){
-  const apps={
-    english:{url:'https://fgfg1717.github.io/english-review-app/',title:'英文練習 App'},
-    pr:     {url:'https://fgfg1717.github.io/pr-practice-app/',   title:'幕僚沙盤'}
-  };
-  const app=apps[type];
-  document.getElementById('embed-title').textContent=app.title;
-  document.getElementById('embed-frame').src=app.url;
-  document.getElementById('embed-overlay').classList.add('open');
-}
-function closeEmbed(){
-  if(history.state&&history.state.embed)history.back();
-  else _closeEmbedDOM();
-}
-function _closeEmbedDOM(){
-  document.getElementById('embed-overlay').classList.remove('open');
-  document.getElementById('embed-frame').src='';
-}
 function goHome(){
-  if(history.state&&(history.state.page||history.state.embed))history.back();
+  if(history.state&&history.state.page)history.back();
   else _goHomeDOM();
 }
 function _goHomeDOM(){
@@ -1352,17 +982,14 @@ function _goHomeDOM(){
   window.scrollTo(0,0);
 }
 window.addEventListener('popstate',e=>{
-  const emb=document.getElementById('embed-overlay');
-  if(emb&&emb.classList.contains('open'))_closeEmbedDOM();
   if(e.state&&e.state.page)_showDOM(e.state.page);
-  else if(e.state&&e.state.embed)_openEmbedDOM(e.state.embed);
   else _goHomeDOM();
 });
 function updateHomeFinanceHint(){
   const el=document.getElementById('home-finance-hint');if(!el)return;
   const now=taipeiNow();const ym=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
   const all=getLedgers().filter(l=>l.date.startsWith(ym));
-  if(!all.length){el.textContent='本月收支・銀行存款・股票資產';return}
+  if(!all.length){el.textContent='家用・個人・收入・支出';return}
   const exp=all.filter(l=>l.type==='支出').reduce((s,l)=>s+l.amount,0);
   const inc=all.filter(l=>l.type==='收入').reduce((s,l)=>s+l.amount,0);
   const net=inc-exp;
@@ -1442,9 +1069,9 @@ async function retrySyncAll(){
 }
 async function forceResyncAll(){
   if(!gasUrl()){showToast('請先設定 Apps Script 網址');return}
-  if(!confirm('強制從雲端重新同步所有記帳、快速記錄、股票紀錄，並覆蓋本機資料，確定嗎？'))return;
+  if(!confirm('強制從雲端重新同步所有記帳、快速記錄，並覆蓋本機資料，確定嗎？'))return;
   showToast('同步中…請稍候');
-  const[l,c,s]=await Promise.all([getGAS({type:'ledgers'}),getGAS({type:'captures'}),getGAS({type:'stocks'})]);
+  const[l,c]=await Promise.all([getGAS({type:'ledgers'}),getGAS({type:'captures'})]);
   if(l?.ok&&l.data){
     const localUnsynced=getLedgers().filter(x=>!x.synced);
     const mapped=l.data.map(r=>({id:Date.now()+Math.random(),synced:true,date:r.date,type:r.ledger_type,mainCat:r.main_cat,subCat:r.sub_cat||'',category:r.main_cat+(r.sub_cat?` · ${r.sub_cat}`:''),amount:r.amount,notes:r.notes||''}));
@@ -1457,11 +1084,6 @@ async function forceResyncAll(){
     const merged=[...cloud,...local.filter(x=>!keys.has(`${x.date}|${x.category}|${x.summary}`))];
     setCaptures(merged.sort((a,b)=>b.date.localeCompare(a.date)));
     loadCaptureList();
-  }
-  if(s?.ok&&s.data){
-    const localUnsynced=getStocks().filter(x=>!x.synced);
-    const mapped=s.data.map(r=>({id:Date.now()+Math.random(),synced:true,...r}));
-    setStocks([...mapped,...localUnsynced].sort((a,b)=>(b.date||'').localeCompare(a.date||'')));
   }
   await syncAppSettingsFromCloud();
   showToast('全部重新同步完成 ✓');
@@ -1488,7 +1110,7 @@ function saveGroqKey(){
   localStorage.setItem('pr_gemini_key_v1',v);
   const st=document.getElementById('groq-key-status');
   if(st){st.textContent='✅ 已儲存';st.style.color='#059669'}
-  showToast('✅ Groq API Key 已儲存，幕僚沙盤即可使用');
+  showToast('✅ Groq API Key 已儲存，英文練習的 AI 出題和批改可以用了');
 }
 function saveAnthropicKey(){
   const v=document.getElementById('anthropic-key-input').value.trim();
@@ -2858,9 +2480,7 @@ function pushSettingsToCloud(){
     classDate:'settings',
     settings:{
       budget:{ts:b._savedAt||0,data:b},
-      ledger_cats:{ts:Number(localStorage.getItem('ledger_cats_ts')||0),data:getLedgerCats()},
-      bank_accounts:{ts:Number(localStorage.getItem('bank_accounts_ts')||0),data:getBanks()},
-      stock_prices:{ts:Number(localStorage.getItem('stock_prices_ts')||0),data:getStockPrices()}
+      ledger_cats:{ts:Number(localStorage.getItem('ledger_cats_ts')||0),data:getLedgerCats()}
     }
   });
 }
@@ -2887,23 +2507,7 @@ async function syncAppSettingsFromCloud(){
       changed=true;
     }
   }
-  if(s.bank_accounts?.data&&Array.isArray(s.bank_accounts.data)){
-    const localTs=Number(localStorage.getItem('bank_accounts_ts')||0);
-    if((s.bank_accounts.ts||0)>localTs){
-      localStorage.setItem('bank_accounts_v1',JSON.stringify(s.bank_accounts.data));
-      localStorage.setItem('bank_accounts_ts',String(s.bank_accounts.ts));
-      changed=true;
-    }
-  }
-  if(s.stock_prices?.data&&typeof s.stock_prices.data==='object'){
-    const localTs=Number(localStorage.getItem('stock_prices_ts')||0);
-    if((s.stock_prices.ts||0)>localTs){
-      localStorage.setItem('stock_prices',JSON.stringify(s.stock_prices.data));
-      localStorage.setItem('stock_prices_ts',String(s.stock_prices.ts));
-      changed=true;
-    }
-  }
-  if(changed){renderBudgetDisplay();renderBankList();showToast('設定已同步 ✓');}
+  if(changed){renderBudgetDisplay();showToast('設定已同步 ✓');}
 }
 function openBudgetModal(){
   const b=getLedgerBudget();
@@ -3049,192 +2653,6 @@ function saveLedgerEdit(){
 }
 
 /* ════════════════════════════════
-   股票追蹤
-════════════════════════════════ */
-let stockState={account:'個人',market:'台股',action:'買入'};
-let stockHistFilter='全部';
-let holdingsFilter='全部';
-function setHoldingsFilter(f){
-  holdingsFilter=f;
-  document.querySelectorAll('[data-haccfilter]').forEach(b=>b.className='chip'+(b.dataset.haccfilter===f?' sel-orange':''));
-  loadStockHoldings();
-}
-function setStockField(field,val){
-  stockState[field]=val;
-  document.querySelectorAll(`[data-s${field}]`).forEach(b=>b.className='chip'+(b.dataset['s'+field]===val?' sel-orange':''));
-}
-function calcStockTotal(){
-  const qty=parseFloat(document.getElementById('stock-qty').value)||0;
-  const price=parseFloat(document.getElementById('stock-price').value)||0;
-  document.getElementById('stock-total').value=qty&&price?`NT$ ${(qty*price).toLocaleString()}`:'';
-}
-function getStocks(){try{return JSON.parse(localStorage.getItem('stocks')||'[]')}catch(e){return[]}}
-function setStocks(items){localStorage.setItem('stocks',JSON.stringify(items))}
-function getStockPrices(){try{return JSON.parse(localStorage.getItem('stock_prices')||'{}')}catch(e){return{}}}
-function setStockPrices(obj){
-  localStorage.setItem('stock_prices',JSON.stringify(obj));
-  localStorage.setItem('stock_prices_ts',String(Date.now()));
-  pushSettingsToCloud();
-}
-function initStock(){
-  const now=taipeiNow();document.getElementById('stock-date').value=fmtInputDate(now);
-  setStockField('account','個人');setStockField('market','台股');setStockField('action','買入');
-  loadStockHoldings();loadStockHistory();
-  retryUnsyncedStocks().then(()=>syncStocksFromCloud());
-  syncAppSettingsFromCloud();
-}
-async function retryUnsyncedStocks(){
-  if(!gasUrl())return;
-  const items=getStocks();const pending=items.filter(s=>!s.synced);
-  if(!pending.length)return;
-  let done=0;
-  for(const s of pending){
-    const ok=await postGAS({type:'stock',date:s.date,account:s.account,market:s.market,action:s.action,code:s.code,name:s.name||'',qty:s.qty,price:s.price,total:s.total,notes:s.notes||''});
-    if(ok){const idx=items.findIndex(x=>x.id===s.id);if(idx!==-1){items[idx].synced=true;done++}}
-  }
-  if(done){setStocks(items);loadStockHistory();showToast(`已補同步 ${done} 筆交易 ✓`)}
-}
-async function submitStock(){
-  const date=document.getElementById('stock-date').value.replace(/-/g,'/');
-  const code=document.getElementById('stock-code').value.trim().toUpperCase();
-  const name=document.getElementById('stock-name').value.trim();
-  const qty=parseFloat(document.getElementById('stock-qty').value);
-  const price=parseFloat(document.getElementById('stock-price').value);
-  const fee=parseFloat(document.getElementById('stock-fee').value)||0;
-  const notes=document.getElementById('stock-notes').value.trim();
-  if(!code||!qty||!price){showToast('請填寫代號、數量和價格');return}
-  const total=qty*price;
-  const item={id:Date.now(),date,...stockState,code,name,qty,price,total,fee,notes,synced:false};
-  const items=getStocks();items.unshift(item);setStocks(items);
-  document.getElementById('stock-code').value='';document.getElementById('stock-name').value='';
-  document.getElementById('stock-qty').value='';document.getElementById('stock-price').value='';document.getElementById('stock-total').value='';document.getElementById('stock-fee').value='';document.getElementById('stock-notes').value='';
-  loadStockHoldings();loadStockHistory();showToast('已記錄交易！');
-  const ok=await postGAS({type:'stock',date,account:stockState.account,market:stockState.market,action:stockState.action,code,name,qty,price,total,notes});
-  if(ok){const latest=getStocks();const idx=latest.findIndex(s=>s.id===item.id);if(idx!==-1){latest[idx].synced=true;setStocks(latest)}showToast('已記錄並同步 ✓')}
-}
-function showStockTab(tab){
-  ['record','holdings','history'].forEach(t=>{
-    const el=document.getElementById('stock-tab-'+t);if(el)el.style.display=t===tab?'block':'none'});
-  document.querySelectorAll('.stab').forEach((b,i)=>b.className='stab'+([['record','holdings','history'][i]].includes(tab)?' sel':''));
-  document.querySelectorAll('.stab')[['record','holdings','history'].indexOf(tab)].className='stab sel';
-}
-function loadStockHoldings(){
-  const list=document.getElementById('stock-holdings-list');if(!list)return;
-  const allItems=getStocks();const prices=getStockPrices();
-  const groups={};
-  allItems.forEach(s=>{
-    const key=`${s.account}|${s.market}|${s.code}`;
-    if(!groups[key])groups[key]={account:s.account,market:s.market,code:s.code,name:s.name,buyQty:0,sellQty:0,totalCost:0,totalSell:0};
-    if(s.action==='買入'||s.action==='定期定額'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total+(s.fee||0)}
-    else if(s.action==='賣出'){groups[key].sellQty+=s.qty;groups[key].totalSell+=s.total-(s.fee||0)}
-  });
-  let holdings=Object.entries(groups).filter(([,g])=>g.buyQty>g.sellQty);
-  if(holdingsFilter!=='全部')holdings=holdings.filter(([,g])=>g.account===holdingsFilter);
-  if(!holdings.length){list.innerHTML='<div class="empty-msg">目前沒有持倉紀錄</div>';return}
-  // Group by account for subtotals
-  const byAcc={};holdings.forEach(([key,g])=>{if(!byAcc[g.account])byAcc[g.account]=[];byAcc[g.account].push([key,g])});
-  let html='';
-  Object.entries(byAcc).forEach(([acc,rows])=>{
-    let accCost=0,accValue=0;
-    const cards=rows.map(([,g])=>{
-      const remaining=g.buyQty-g.sellQty;const avgCost=g.buyQty?g.totalCost/g.buyQty:0;
-      const priceKey=`${g.code}_${g.market}`;const curPrice=prices[priceKey]||0;
-      const unrealized=curPrice?(curPrice-avgCost)*remaining:null;
-      const costBasis=avgCost*remaining;
-      accCost+=costBasis;accValue+=curPrice?curPrice*remaining:costBasis;
-      const plClass=unrealized===null?'pl-zero':unrealized>0?'pl-profit':'pl-loss';
-      const plText=unrealized===null?'輸入現價後顯示':`${unrealized>=0?'+ ':''}NT$ ${Math.round(unrealized).toLocaleString()}`;
-      const realPL=g.totalSell-(avgCost*g.sellQty);
-      return`<div class="holding-card">
-        <div class="holding-top">
-          <div><div class="holding-code">${esc(g.code)}</div><div class="holding-name">${esc(g.name||'—')}</div></div>
-          <span class="holding-account">${esc(g.market)}</span>
-        </div>
-        <div class="holding-grid">
-          <div class="hg-item"><label>持有股數</label><span>${remaining.toLocaleString()}</span></div>
-          <div class="hg-item"><label>平均成本</label><span>${avgCost.toFixed(2)}</span></div>
-          <div class="hg-item"><label>未實現損益</label><span class="pl-badge ${plClass}">${plText}</span></div>
-        </div>
-        ${g.sellQty>0?`<div style="font-size:12px;color:var(--muted);margin:4px 0">已實現損益：<strong style="color:${realPL>=0?'#10B981':'#EF4444'}">${realPL>=0?'+ ':''}NT$ ${Math.round(realPL).toLocaleString()}</strong></div>`:''}
-        <div class="price-row">
-          <label>現價（手動更新）</label>
-          <input class="price-input" type="number" placeholder="輸入現價" value="${curPrice||''}"
-            onchange="updateStockPrice('${priceKey}',this.value)"/>
-        </div>
-      </div>`;
-    }).join('');
-    const accPnl=accValue-accCost;
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 2px 4px;font-size:13px;font-weight:700">
-      <span>${esc(acc)}</span>
-      <span style="color:${accPnl>=0?'#10B981':'#EF4444'}">${accPnl>=0?'+ ':''}NT$ ${Math.round(accPnl).toLocaleString()}</span>
-    </div>${cards}`;
-  });
-  list.innerHTML=html;
-}
-function updateStockPrice(key,val){const prices=getStockPrices();prices[key]=parseFloat(val)||0;setStockPrices(prices);loadStockHoldings();showToast('現價已更新，損益重算完成')}
-function setStockHistFilter(f){stockHistFilter=f;document.querySelectorAll('[data-hfilter]').forEach(b=>b.className='chip'+(b.dataset.hfilter===f?' sel-orange':''));loadStockHistory()}
-function loadStockHistory(){
-  const list=document.getElementById('stock-history-list');if(!list)return;
-  let items=getStocks();if(stockHistFilter!=='全部')items=items.filter(s=>s.account===stockHistFilter);
-  if(!items.length){list.innerHTML='<div class="empty-msg">沒有交易紀錄</div>';return}
-  list.innerHTML=items.map(s=>`<div class="rec-item"><div class="rec-top"><div class="rec-meta"><span class="rec-badge" style="background:${s.action==='買入'||s.action==='定期定額'?'#D1FAE5':'#FEE2E2'};color:${s.action==='買入'||s.action==='定期定額'?'#065F46':'#991B1B'}">${esc(s.action)}</span><span class="rec-badge" style="background:#F1F5F9;color:#475569">${esc(s.account)}</span><span class="rec-badge" style="background:#FED7AA;color:#7C2D12">${esc(s.market)}</span><span class="rec-time">${esc(s.date)}</span></div><div class="rec-right">${s.synced?'<span class="synced">已同步 ✓</span>':'<span class="not-synced">未同步</span>'}<button class="edit-btn" onclick="editStock(${s.id})">✏️</button><button class="del-btn" onclick="delStock(${s.id})">✕</button></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="rec-body"><strong>${esc(s.code)}</strong> ${esc(s.name||'')} × ${s.qty} 股 @ ${s.price}${s.fee?` <span style="font-size:11px;color:var(--muted)">手續費 ${s.fee}</span>`:''}</span><span class="stock-rec-amount">NT$ ${s.total.toLocaleString()}</span></div>${s.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(s.notes)}</div>`:''}</div>`).join('')
-}
-function delStock(id){
-  const all=getStocks();const s=all.find(x=>x.id===id);if(!s)return;
-  if(!confirm(`確定刪除這筆交易？\n${s.code} ${s.action} ${s.qty} 股 @ ${s.price}`))return;
-  setStocks(all.filter(x=>x.id!==id));loadStockHoldings();loadStockHistory();
-  if(s.synced){
-    postGAS({type:'delete_stock',date:s.date,account:s.account,action:s.action,code:s.code,qty:s.qty,price:s.price});
-    showToast('已刪除並同步至雲端 ✓');
-  }else{showToast('已刪除')}
-}
-
-let editStockState={action:'買入',account:'個人',market:'台股'};
-function editStock(id){
-  const s=getStocks().find(s=>s.id===id);if(!s)return;
-  editStockState={action:s.action,account:s.account,market:s.market||'台股'};
-  document.getElementById('edit-stock-id').value=id;
-  document.getElementById('edit-stock-date').value=s.date.replace(/\//g,'-');
-  document.getElementById('edit-stock-code').value=s.code;
-  document.getElementById('edit-stock-name').value=s.name||'';
-  document.getElementById('edit-stock-qty').value=s.qty;
-  document.getElementById('edit-stock-price').value=s.price;
-  document.getElementById('edit-stock-fee').value=s.fee||'';
-  document.getElementById('edit-stock-notes').value=s.notes||'';
-  const actions=['買入','賣出','定期定額'];
-  const accounts=['個人','家庭'];
-  document.getElementById('edit-action-chips').innerHTML=actions.map(a=>`<button class="chip${editStockState.action===a?' sel-orange':''}" onclick="editStockState.action='${a}';document.querySelectorAll('#edit-action-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
-  document.getElementById('edit-account-chips').innerHTML=accounts.map(a=>`<button class="chip${editStockState.account===a?' sel-orange':''}" onclick="editStockState.account='${a}';document.querySelectorAll('#edit-account-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
-  const markets=['台股','美股'];
-  document.getElementById('edit-market-chips').innerHTML=markets.map(a=>`<button class="chip${editStockState.market===a?' sel-orange':''}" onclick="editStockState.market='${a}';document.querySelectorAll('#edit-market-chips .chip').forEach(b=>b.className='chip');this.className='chip sel-orange'">${a}</button>`).join('');
-  document.getElementById('stock-edit-overlay').classList.add('open');
-}
-function closeStockEdit(){document.getElementById('stock-edit-overlay').classList.remove('open')}
-function saveStockEdit(){
-  const id=parseInt(document.getElementById('edit-stock-id').value);
-  const items=getStocks();const idx=items.findIndex(s=>s.id===id);if(idx===-1)return;
-  const s=items[idx];
-  const original={date:s.date,account:s.account,action:s.action,code:s.code,qty:s.qty,price:s.price};
-  const wasSynced=s.synced;
-  s.date=document.getElementById('edit-stock-date').value.replace(/-/g,'/');
-  s.code=document.getElementById('edit-stock-code').value.trim().toUpperCase();
-  s.name=document.getElementById('edit-stock-name').value.trim();
-  s.qty=parseFloat(document.getElementById('edit-stock-qty').value)||s.qty;
-  s.price=parseFloat(document.getElementById('edit-stock-price').value)||s.price;
-  s.fee=parseFloat(document.getElementById('edit-stock-fee').value)||0;
-  s.notes=document.getElementById('edit-stock-notes').value.trim();
-  s.total=s.qty*s.price;
-  s.action=editStockState.action;
-  s.account=editStockState.account;
-  s.market=editStockState.market;
-  setStocks(items);closeStockEdit();loadStockHoldings();loadStockHistory();showToast('交易紀錄已更新 ✓');
-  if(wasSynced){
-    postGAS({type:'update_stock',original,updated:{date:s.date,account:s.account,market:s.market,action:s.action,code:s.code,name:s.name||'',qty:s.qty,price:s.price,total:s.total,notes:s.notes||''}});
-    showToast('已更新並同步至雲端 ✓');
-  }
-}
-
-/* ════════════════════════════════
    AAR 讀取
 ════════════════════════════════ */
 let aarRange='week',aarData=[];
@@ -3281,356 +2699,6 @@ function copyAARFmt(mode){
 /* ════════════════════════════════
    今日策略
 ════════════════════════════════ */
-/* ════════════════════════════════
-   財務總覽
-════════════════════════════════ */
-const BANKS_KEY='bank_accounts_v1';
-function getBanks(){try{return JSON.parse(localStorage.getItem(BANKS_KEY)||'[]')}catch{return[]}}
-function setBanks(a){
-  localStorage.setItem(BANKS_KEY,JSON.stringify(a));
-  localStorage.setItem('bank_accounts_ts',String(Date.now()));
-  pushSettingsToCloud();
-}
-
-function initFinance(){
-  renderFinanceMonthly();
-  renderBankList();
-  document.getElementById('bank-add-form').style.display='none';
-  syncAppSettingsFromCloud().then(()=>renderBankList());
-}
-
-function renderFinanceMonthly(){
-  const el=document.getElementById('finance-monthly');if(!el)return;
-  const now=taipeiNow();const ym=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
-  const all=getLedgers().filter(l=>l.date.startsWith(ym));
-  const incItems=all.filter(l=>l.type==='收入');const expItems=all.filter(l=>l.type==='支出');
-  const totalInc=incItems.reduce((s,l)=>s+l.amount,0);
-  const totalExp=expItems.reduce((s,l)=>s+l.amount,0);
-  const net=totalInc-totalExp;
-  const byInc={};incItems.forEach(l=>{if(!byInc[l.mainCat])byInc[l.mainCat]=0;byInc[l.mainCat]+=l.amount});
-  const byExp={};expItems.forEach(l=>{if(!byExp[l.mainCat])byExp[l.mainCat]=0;byExp[l.mainCat]+=l.amount});
-  const monthLabel=`${now.getFullYear()} 年 ${now.getMonth()+1} 月`;
-  el.innerHTML=`<div class="finance-stat">
-    <div class="ms-title">📅 ${monthLabel} 收支概覽</div>
-    <div class="fin-stat-row"><span style="font-weight:700">💚 本月收入</span><span class="fin-income fin-net">NT$ ${totalInc.toLocaleString()}</span></div>
-    ${Object.entries(byInc).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${esc(k)}</span><span class="fin-income">+ NT$ ${v.toLocaleString()}</span></div>`).join('')}
-    ${!totalInc?'<div class="fin-stat-row"><span style="color:var(--muted);font-size:13px">尚無收入記錄</span><span style="font-size:12px;color:#94A3B8">→ 去「記帳」記收入</span></div>':''}
-    <div class="fin-stat-row" style="margin-top:4px"><span style="font-weight:700">❤️ 本月支出</span><span class="fin-expense fin-net">NT$ ${totalExp.toLocaleString()}</span></div>
-    ${Object.entries(byExp).map(([k,v])=>`<div class="fin-stat-row" style="padding-left:8px"><span style="color:var(--muted)">${esc(k)}</span><span class="fin-expense">- NT$ ${v.toLocaleString()}</span></div>`).join('')}
-    ${!totalExp?'<div class="fin-stat-row"><span style="color:var(--muted);font-size:13px">尚無支出記錄</span><span></span></div>':''}
-    <div class="fin-stat-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px">
-      <span style="font-weight:800;font-size:15px">💰 本月結餘</span>
-      <span class="fin-net" style="color:${net>=0?'#10B981':'#EF4444'}">${net>=0?'+ ':''}NT$ ${net.toLocaleString()}</span>
-    </div>
-  </div>`;
-  renderFinanceAssets();
-}
-
-function renderBankList(){
-  const list=document.getElementById('bank-list');if(!list)return;
-  const banks=getBanks();
-  if(!banks.length){
-    list.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">尚未新增銀行帳戶<br><span style="font-size:12px">點「+ 新增」加入你的帳戶</span></div>';
-    renderFinanceAssets();return;
-  }
-  list.innerHTML=banks.map(b=>`<div class="bank-card">
-    <div style="flex:1">
-      <div class="bank-name">🏦 ${esc(b.name)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">更新於 ${esc(b.updatedAt||b.addedAt||'—')}</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <div style="text-align:right">
-        <input type="number" value="${b.balance||0}" placeholder="餘額"
-          style="width:110px;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;text-align:right;background:white;font-family:inherit;color:var(--text)"
-          onchange="updateBankBalance(${b.id},this.value)"/>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">NT$</div>
-      </div>
-      <button class="del-btn" onclick="delBank(${b.id})" style="font-size:16px">✕</button>
-    </div>
-  </div>`).join('');
-  renderFinanceAssets();
-}
-
-function renderFinanceAssets(){
-  const el=document.getElementById('finance-assets');if(!el)return;
-  const banks=getBanks();
-  const totalBank=banks.reduce((s,b)=>s+(parseFloat(b.balance)||0),0);
-  const stocks=getStocks();const prices=getStockPrices();
-  const groups={};
-  stocks.forEach(s=>{
-    const key=`${s.code}_${s.market}`;
-    if(!groups[key])groups[key]={code:s.code,market:s.market,buyQty:0,sellQty:0,totalCost:0};
-    if(s.action==='買入'||s.action==='定期定額'){groups[key].buyQty+=s.qty;groups[key].totalCost+=s.total}
-    else if(s.action==='賣出')groups[key].sellQty+=s.qty;
-  });
-  let totalStockValue=0,totalStockCost=0;
-  Object.values(groups).filter(g=>g.buyQty>g.sellQty).forEach(g=>{
-    const remaining=g.buyQty-g.sellQty;
-    const avgCost=g.buyQty?g.totalCost/g.buyQty:0;
-    const curPrice=prices[`${g.code}_${g.market}`]||0;
-    totalStockCost+=avgCost*remaining;
-    totalStockValue+=curPrice?curPrice*remaining:avgCost*remaining;
-  });
-  const stockPnl=totalStockValue-totalStockCost;
-  const totalAssets=totalBank+totalStockValue;
-  el.innerHTML=`<div class="fin-asset-card">
-    <div style="font-size:13px;opacity:.75;margin-bottom:6px">總資產快照 · ${fmtMonth(taipeiNow())}</div>
-    <div style="font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:16px">NT$ ${Math.round(totalAssets).toLocaleString()}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="background:rgba(255,255,255,.18);border-radius:10px;padding:12px">
-        <div style="font-size:11px;opacity:.8;margin-bottom:5px">🏦 銀行存款</div>
-        <div style="font-size:17px;font-weight:700">NT$ ${totalBank.toLocaleString()}</div>
-        <div style="font-size:11px;opacity:.65;margin-top:3px">${banks.length} 個帳戶</div>
-      </div>
-      <div style="background:rgba(255,255,255,.18);border-radius:10px;padding:12px">
-        <div style="font-size:11px;opacity:.8;margin-bottom:5px">📈 股票市值</div>
-        <div style="font-size:17px;font-weight:700">NT$ ${Math.round(totalStockValue).toLocaleString()}</div>
-        <div style="font-size:11px;margin-top:3px;color:${stockPnl>=0?'#6EE7B7':'#FCA5A5'}">${stockPnl>=0?'▲ +':'▼ '}NT$ ${Math.round(stockPnl).toLocaleString()}</div>
-      </div>
-    </div>
-  </div>
-  ${!banks.length&&!Object.keys(groups).length?'<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:4px">新增銀行帳戶 + 記錄股票交易後，這裡會顯示完整資產</div>':'<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px">股票以手動輸入現價計算 · 若未輸入則以成本計</div>'}`;
-}
-
-function toggleBankForm(){
-  const f=document.getElementById('bank-add-form');
-  const open=f.style.display==='none';
-  f.style.display=open?'block':'none';
-  if(open){document.getElementById('bank-name-input').value='';document.getElementById('bank-balance-input').value='';document.getElementById('bank-name-input').focus()}
-}
-function addBank(){
-  const name=(document.getElementById('bank-name-input').value||'').trim();
-  const balance=parseFloat(document.getElementById('bank-balance-input').value)||0;
-  if(!name){showToast('請輸入銀行名稱');return}
-  const now=fmtYMD(taipeiNow());
-  const banks=getBanks();banks.push({id:Date.now(),name,balance,addedAt:now,updatedAt:now});
-  setBanks(banks);toggleBankForm();renderBankList();showToast(`「${name}」已新增 ✓`);
-}
-function updateBankBalance(id,val){
-  const banks=getBanks();const idx=banks.findIndex(b=>b.id===id);if(idx<0)return;
-  banks[idx].balance=parseFloat(val)||0;banks[idx].updatedAt=fmtYMD(taipeiNow());
-  setBanks(banks);renderFinanceAssets();showToast('餘額已更新 ✓');
-}
-function delBank(id){
-  if(!confirm('確定要刪除這個銀行帳戶嗎？'))return;
-  setBanks(getBanks().filter(b=>b.id!==id));renderBankList();showToast('已刪除');
-}
-
-window.addEventListener('scroll',()=>{const b=document.getElementById('back-top-btn');if(b)b.style.display=window.scrollY>300?'flex':'none';});
-
-/* ════ CEO 思維庫 ════ */
-const CEO_FRAMEWORKS=[
-  {id:1,cat:'策略與視野',title:'現在 × 未來雙軌思考',desc:'看任何現況問題，同時在腦袋裡保留「2-3 年後的樣子」。',phrase:'這個決定對我們兩三年後的目標有什麼幫助？'},
-  {id:2,cat:'說服與溝通',title:'利害關係人說服力轉換',desc:'所有產品/執行決策，最終轉成「對方為什麼要繼續支持你」。',phrase:'這件事情，對（對象）來說，說服力在哪裡？'},
-  {id:3,cat:'說服與溝通',title:'拆層思考',desc:'先把問題拆成 2-3 個不同層面，再逐一回應，不混著說。',phrase:'這個問題有幾個維度？'},
-  {id:4,cat:'目標與執行',title:'壓時間節點，不讓討論懸空',desc:'討論完方向，一定接具體時間節點，永遠以時間加行動結束。',phrase:'那我們就壓一個時間，＿月＿日前先⋯⋯'},
-  {id:5,cat:'策略與視野',title:'機會嗅覺（外部趨勢 → 我能做什麼）',desc:'看到外部趨勢，立刻連到「我們能接上什麼」。',phrase:'這件事如果發生，對我們是機會還是威脅？怎麼接上？'},
-  {id:6,cat:'策略與視野',title:'資源意識下的分階段規劃',desc:'永遠考量現有能量/資源限制，做可行的分階段計畫，不空談。',phrase:'如果資源只有一半，這件事的優先順序怎麼排？'},
-  {id:7,cat:'目標與執行',title:'目標層級才能落地',desc:'重要的事一定要放進 OGSM，並要求各部門指派明確負責人；只是策略就會因為忙碌被割捨。',phrase:'這件事如果不放進目標裡，有沒有可能真的被執行？'},
-  {id:8,cat:'資料與AI',title:'資料先於 AI',desc:'沒有系統性整理的資料，AI 只能服務個人，無法變成公司資產；資料整理是 AI 真正發揮效益的前提。',phrase:'如果今天問 AI 這件事，資料夠不夠完整？問題出在資料還是 AI？'},
-  {id:9,cat:'目標與執行',title:'目標 vs 策略嚴格區分',desc:'「建資料庫」是方法，「每月一支短影音」才是目標；目標必須是可測量的成果。',phrase:'這件事是我要做的方法，還是我要達到的結果？結果是什麼？'},
-  {id:10,cat:'策略與視野',title:'兩條軌道並行，不互相等待',desc:'基礎建設和業務產出同步進行，不讓一方等另一方完成。',phrase:'這兩件事一定要有先後順序嗎？能不能同時推進？'},
-  {id:11,cat:'資料與AI',title:'土炮過程是學習，不是浪費',desc:'手工整理資料的過程能讓你真正弄清楚需要哪些資料、如何下標籤、哪些欄位真正有用。',phrase:'先做一次土法煉鋼，看看過程中卡在哪裡，那個卡點就是系統要解決的問題。'},
-  {id:12,cat:'談判與合作',title:'先拿籌碼，再談條件',desc:'談判之前，先讓對方承認他們單方面改變了原本條件；這個虧欠感本身是籌碼，先確立再往下談其他事情。',phrase:'在我們討論後面的條件之前，我想先確認一件事⋯⋯'},
-  {id:13,cat:'談判與合作',title:'切割問題，先讓能動的跑',desc:'把複雜的合作切成兩個部分，先讓簡單的合約跑起來，複雜的細節等有更多資訊再談。',phrase:'我們先把可以確認的部分簽掉，另一個等我們算清楚再來討論。'},
-  {id:14,cat:'談判與合作',title:'掌握雙方邊際成本差異',desc:'弄清楚隨著規模擴大，對方的成本結構如何變化；誰的邊際成本遞增、誰的是固定，這個不對稱就是談判槓桿。',phrase:'這件事隨著規模擴大，你們的成本是增加的，但我們的是固定的——所以⋯⋯'},
-];
-
-function getCEOCases(){try{return JSON.parse(localStorage.getItem('ceo_cases')||'[]')}catch(e){return[]}}
-function setCEOCases(items){
-  localStorage.setItem('ceo_cases',JSON.stringify(items));
-  localStorage.setItem('ceo_cases_ts',String(Date.now()));
-  pushKV('ceo_cases',items);
-}
-function getCEOQuizHistory(){try{return JSON.parse(localStorage.getItem('ceo_quiz_history')||'[]')}catch(e){return[]}}
-function setCEOQuizHistory(items){
-  localStorage.setItem('ceo_quiz_history',JSON.stringify(items));
-  localStorage.setItem('ceo_quiz_history_ts',String(Date.now()));
-  pushKV('ceo_quiz_history',items);
-}
-async function syncCEOFromCloud(){
-  const kv=await getCloudKV();if(!kv)return;
-  let changed=false;
-  [['ceo_cases','ceo_cases_ts'],['ceo_quiz_history','ceo_quiz_history_ts']].forEach(([key,tsKey])=>{
-    const e=kv[key];
-    if(!e?.data||!Array.isArray(e.data))return;
-    const localTs=Number(localStorage.getItem(tsKey)||0);
-    if((e.ts||0)>localTs){
-      localStorage.setItem(key,JSON.stringify(e.data));
-      localStorage.setItem(tsKey,String(e.ts));
-      changed=true;
-    }
-  });
-  if(changed){renderCEOCases();renderCEOQuizHistory();showToast('CEO 思維庫已同步 ✓');}
-}
-
-let _ceoCurrentQ='';
-
-function initCEO(){
-  switchCEOTab('patterns');
-  const d=document.getElementById('ceo-case-date');
-  if(d)d.value=fmtInputDate(taipeiNow());
-  syncCEOFromCloud();
-}
-
-function switchCEOTab(tab){
-  ['patterns','quiz','add','cases'].forEach(t=>{
-    document.getElementById('ceo-panel-'+t).classList.toggle('e-hidden',t!==tab);
-    const btn=document.getElementById('ceo-tab-'+t);
-    if(btn)btn.classList.toggle('active',t===tab);
-  });
-  if(tab==='cases')renderCEOCases();
-  if(tab==='quiz')initCEOQuiz();
-}
-
-function toggleCEOPattern(el){
-  el.classList.toggle('open');
-  const body=el.querySelector('.ceo-pat-body');
-  body.style.display=el.classList.contains('open')?'block':'none';
-}
-
-function initCEOQuiz(){
-  const key=localStorage.getItem('pr_gemini_key_v1');
-  document.getElementById('ceo-quiz-no-key').classList.toggle('e-hidden',!!key);
-  document.getElementById('ceo-quiz-body').classList.toggle('e-hidden',!key);
-  _setQuizState('idle');
-  renderCEOQuizHistory();
-}
-
-async function generateCEOQuiz(){
-  _setQuizState('loading');
-  _ceoCurrentQ='';
-  const fwList=CEO_FRAMEWORKS.map(f=>`${f.id}. 【${f.title}】${f.desc}`).join('\n');
-  try{
-    const q=await _callGroqCEO([{role:'user',content:`你是 CEO 思維訓練師。根據以下 CEO 的 11 個思維框架，出一道情境題給吳靜華練習。
-
-吳靜華是臺灣吧（Taiwan Bar，臺灣歷史媒體品牌）的公關（PR），工作包含媒體溝通、活動策劃、品牌傳播、危機處理。
-
-11 個 CEO 框架：
-${fwList}
-
-出題規則：
-1. 描述一個吳靜華在臺灣吧可能真實遇到的工作情境（2-4 句）
-2. 結尾問「你會怎麼做？請說明你的思考方向。」
-3. 不要在題目中提示要用哪個框架
-4. 情境要具體、有點挑戰性
-
-只輸出題目本身，不要加標題或說明。`}]);
-    _ceoCurrentQ=q;
-    document.getElementById('ceo-quiz-q-text').textContent=q;
-    document.getElementById('ceo-quiz-ans').value='';
-    _setQuizState('question');
-  }catch(e){
-    _setQuizState('idle');
-    showToast('出題失敗，請確認 Groq Key 是否有效');
-  }
-}
-
-async function submitCEOAnswer(){
-  const ans=document.getElementById('ceo-quiz-ans').value.trim();
-  if(!ans){showToast('請先填寫你的回答');return;}
-  _setQuizState('fb-loading');
-  const fwList=CEO_FRAMEWORKS.map(f=>`${f.id}. 【${f.title}】${f.desc} 練習句：${f.phrase}`).join('\n');
-  try{
-    const fb=await _callGroqCEO([{role:'user',content:`你是 CEO 思維訓練師，請針對以下作答給回饋。
-
-【題目】
-${_ceoCurrentQ}
-
-【學員回答】
-${ans}
-
-【11 個 CEO 框架】
-${fwList}
-
-回饋格式（用繁體中文）：
-1. 先肯定學員做對的部分（具體指出）
-2. 說明 CEO 會用哪個框架（或哪幾個）看這個情況，說明原因
-3. 給 1-2 個 CEO 視角的補充觀點，具體一點
-4. 最後給一個可以套用的練習句
-
-語氣：像務實的前輩，直接說重點，不說廢話。`}]);
-    document.getElementById('ceo-quiz-fb-text').textContent=fb;
-    const hist=getCEOQuizHistory();
-    hist.unshift({date:fmtInputDate(taipeiNow()),q:_ceoCurrentQ,a:ans,fb});
-    if(hist.length>20)hist.splice(20);
-    setCEOQuizHistory(hist);
-    renderCEOQuizHistory();
-    _setQuizState('feedback');
-  }catch(e){
-    _setQuizState('question');
-    showToast('評分失敗，請稍後再試');
-  }
-}
-
-function _setQuizState(state){
-  ['idle','loading','question','fb-loading','feedback'].forEach(s=>{
-    document.getElementById('ceo-quiz-'+s).classList.toggle('e-hidden',s!==state);
-  });
-}
-
-function renderCEOQuizHistory(){
-  const hist=getCEOQuizHistory();
-  const histEl=document.getElementById('ceo-quiz-hist');
-  const listEl=document.getElementById('ceo-quiz-hist-list');
-  if(!hist.length){histEl.classList.add('e-hidden');return;}
-  histEl.classList.remove('e-hidden');
-  listEl.innerHTML=hist.slice(0,5).map(h=>`
-    <div class="ceo-quiz-hist-item">
-      <div class="ceo-quiz-hist-date">${esc(h.date)}</div>
-      <div style="font-weight:600">${esc(h.q.slice(0,55))}⋯</div>
-    </div>`).join('');
-}
-
-async function _callGroqCEO(messages){
-  const key=localStorage.getItem('pr_gemini_key_v1');
-  if(!key)throw new Error('no key');
-  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages,max_tokens:800,temperature:0.7})
-  });
-  if(!res.ok)throw new Error('api error');
-  const d=await res.json();
-  return d.choices[0].message.content;
-}
-
-function addCEOCase(){
-  const date=document.getElementById('ceo-case-date').value;
-  const quote=document.getElementById('ceo-case-quote').value.trim();
-  const ctx=document.getElementById('ceo-case-context').value.trim();
-  if(!quote){showToast('請填入 CEO 的話或決策');return;}
-  const cases=getCEOCases();
-  cases.unshift({id:Date.now(),date:date||fmtInputDate(taipeiNow()),quote,ctx});
-  setCEOCases(cases);
-  document.getElementById('ceo-case-quote').value='';
-  document.getElementById('ceo-case-context').value='';
-  showToast('案例已記錄 ✓');
-  switchCEOTab('cases');
-}
-
-function renderCEOCases(){
-  const cases=getCEOCases();
-  const el=document.getElementById('ceo-cases-list');
-  if(!cases.length){
-    el.innerHTML='<div class="empty-msg">還沒有案例。<br>去「＋ 新增回饋」記錄 CEO 說過的話！</div>';
-    return;
-  }
-  el.innerHTML=cases.map((c,i)=>`
-    <div class="ceo-case-item">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="ceo-case-date">${esc(c.date)}</div>
-        <button onclick="delCEOCase(${i})" style="background:none;border:none;cursor:pointer;color:#CBD5E1;font-size:13px">✕</button>
-      </div>
-      <div class="ceo-case-quote">${esc(c.quote)}</div>
-      ${c.ctx?`<div class="ceo-case-ctx">情境：${esc(c.ctx)}</div>`:''}
-    </div>`).join('');
-}
-
-function delCEOCase(i){
-  const cases=getCEOCases();cases.splice(i,1);setCEOCases(cases);renderCEOCases();
-}
-
 /* ════ 雜事清單 ════ */
 const TASKS_KEY='tasks_v1';
 function loadTasks(){try{return JSON.parse(localStorage.getItem(TASKS_KEY)||'[]');}catch{return[];}}
@@ -4610,40 +3678,6 @@ function buildWorkoutSparkline(pts){
     <div class="sheet-actions">
       <button class="full-btn" style="background:var(--muted)" onclick="closeLedgerEdit()">取消</button>
       <button class="full-btn" style="background:var(--ledger)" onclick="saveLedgerEdit()">儲存</button>
-    </div>
-  </div>
-</div>
-<!-- Stock Edit Modal -->
-<div class="stock-edit-overlay" id="stock-edit-overlay" onclick="if(event.target===this)closeStockEdit()">
-  <div class="stock-edit-sheet">
-    <div class="sheet-title">✏️ 編輯交易紀錄</div>
-    <input type="hidden" id="edit-stock-id"/>
-    <div class="field"><label>日期</label><input type="date" id="edit-stock-date"/></div>
-    <div class="btn-row">
-      <div class="field" style="flex:1;margin-bottom:0"><label>股票代號</label><input type="text" id="edit-stock-code"/></div>
-      <div class="field" style="flex:1;margin-bottom:0"><label>股票名稱</label><input type="text" id="edit-stock-name"/></div>
-    </div>
-    <div class="btn-row" style="margin-top:10px">
-      <div class="field" style="flex:1;margin-bottom:0"><label>數量（股）</label><input type="number" id="edit-stock-qty" inputmode="decimal"/></div>
-      <div class="field" style="flex:1;margin-bottom:0"><label>成交價</label><input type="number" id="edit-stock-price" inputmode="decimal"/></div>
-    </div>
-    <div class="field" style="margin-top:10px"><label>手續費</label><input type="number" id="edit-stock-fee" placeholder="0" inputmode="decimal"/></div>
-    <div class="field"><label>備註</label><input type="text" id="edit-stock-notes"/></div>
-    <div style="margin-top:10px">
-      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">操作</div>
-      <div class="btn-row" id="edit-action-chips"></div>
-    </div>
-    <div style="margin-top:10px">
-      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">帳戶</div>
-      <div class="btn-row" id="edit-account-chips"></div>
-    </div>
-    <div style="margin-top:10px">
-      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">市場</div>
-      <div class="btn-row" id="edit-market-chips"></div>
-    </div>
-    <div class="sheet-actions">
-      <button class="full-btn" style="background:var(--muted)" onclick="closeStockEdit()">取消</button>
-      <button class="full-btn" style="background:var(--stock)" onclick="saveStockEdit()">儲存</button>
     </div>
   </div>
 </div>
