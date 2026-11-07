@@ -125,7 +125,7 @@
     /* Toast */
     .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
       background:#1E293B;color:white;padding:12px 24px;border-radius:20px;
-      font-size:14px;font-weight:600;transition:transform .28s;z-index:99;
+      font-size:14px;font-weight:600;transition:transform .28s;z-index:10000;
       max-width:calc(100vw - 32px);text-align:center;line-height:1.5}
     .toast.show{transform:translateX(-50%) translateY(0)}
 
@@ -2785,6 +2785,7 @@ async function loadTasksFromCloud(){
 let _bizCards=[];
 let _bizCardField={source:'本人',method:'名片',status:'有效'};
 let _bizCardEditing=null;      // 編輯中的名片編號，null = 新增
+let _bizCardOcrRequest=0;      // 每次重置表單就 +1，用來丟棄過期的辨識結果
 let _bizCardPhotoBase64='';    // 本次表單待上傳的壓縮後照片（dataURL），未變更則為空字串
 
 function initBizCard(){
@@ -2836,6 +2837,8 @@ function resetBizCardForm(){
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
   const prev=document.getElementById('bizcard-photo-preview');if(prev){prev.style.display='none';prev.src=''}
   const link=document.getElementById('bizcard-photo-link');if(link){link.style.display='none';link.href='#'}
+  _bizCardOcrRequest++; // 表單換人了，還在跑的辨識結果不能再填進來
+  setBizCardOcrStatus('');
   applyBizCardFieldButtons();
   updateBizCardSourceVisibility();
 }
@@ -2954,35 +2957,67 @@ async function handleBizCardPhoto(evt){
 
   const key=localStorage.getItem('anthropic_api_key_v1');
   if(!key){
-    showToast('尚未設定 Anthropic API Key，請先到「⚙️ 設定」填入 — 這張先手動輸入資料');
+    setBizCardOcrStatus('error','這台裝置還沒設定 Anthropic API Key，所以沒有自動辨識。請到「⚙️ 設定」填入（每台裝置要各設一次），這張先手動輸入。');
     return;
   }
-  showToast('AI 辨識中…');
+  setBizCardOcrStatus('loading','⏳ AI 辨識中，約需 10 秒，先不用填⋯');
+  const request=_bizCardOcrRequest;
   try{
     const info=await recognizeBizCardWithAI(dataUrl);
-    if(info){
-      document.getElementById('bizcard-name').value=info.name||'';
-      document.getElementById('bizcard-company').value=info.company||'';
-      document.getElementById('bizcard-title').value=info.title||'';
-      document.getElementById('bizcard-phone').value=info.phone||'';
-      document.getElementById('bizcard-email').value=info.email||'';
-      document.getElementById('bizcard-address').value=info.address||'';
-      showToast('辨識完成，請確認資料 ✓');
+    if(request!==_bizCardOcrRequest)return;
+    document.getElementById('bizcard-name').value=info.name||'';
+    document.getElementById('bizcard-company').value=info.company||'';
+    document.getElementById('bizcard-title').value=info.title||'';
+    document.getElementById('bizcard-phone').value=info.phone||'';
+    document.getElementById('bizcard-email').value=info.email||'';
+    document.getElementById('bizcard-address').value=info.address||'';
+    if(info.name||info.company||info.phone||info.email){
+      setBizCardOcrStatus('ok','✓ 辨識完成，請確認資料');
+    }else{
+      setBizCardOcrStatus('error','AI 在照片裡讀不到名片資料，請靠近一點重拍，或手動輸入。');
     }
   }catch(e){
-    showToast('辨識失敗，請手動確認/輸入資料');
+    if(request!==_bizCardOcrRequest)return;
+    console.error('名片辨識失敗',e);
+    setBizCardOcrStatus('error',bizCardOcrErrorMessage(e));
   }
 }
 
-/* 呼叫 Anthropic API 辨識名片欄位，回傳 {name,company,title,phone,email} */
+/* 表單內的辨識狀態列：kind = 'loading'|'ok'|'error'，不帶 kind 就隱藏 */
+function setBizCardOcrStatus(kind,msg){
+  const el=document.getElementById('bizcard-ocr-status');
+  if(!el)return;
+  if(!kind){el.style.display='none';el.textContent='';return}
+  const colors={loading:['#EFF6FF','#1D4ED8'],ok:['#ECFDF5','#047857'],error:['#FEF2F2','#B91C1C']}[kind];
+  el.style.background=colors[0];el.style.color=colors[1];
+  el.textContent=msg;el.style.display='block';
+}
+
+/* 把辨識失敗原因翻成看得懂、知道下一步的白話 */
+function bizCardOcrErrorMessage(e){
+  const detail=(e&&e.message)||'';
+  const status=e&&e.status;
+  const prefix='沒有自動填入：';
+  const suffix='這張先手動輸入。';
+  if(e&&e.name==='AbortError')return prefix+'等超過 60 秒沒回應，可能是網路不穩，可以重拍一次。';
+  if(status===401)return prefix+'API Key 無效或已過期，請到「⚙️ 設定」換一組。'+suffix;
+  if(/credit balance/i.test(detail))return prefix+'Anthropic 帳戶餘額不足，要先儲值。'+suffix;
+  if(status===429||status>=500)return prefix+'AI 服務目前忙碌，等一下重拍一次。';
+  if(e instanceof TypeError)return prefix+'連不上 AI 服務，請確認網路後重拍一次。';
+  return prefix+detail+'。'+suffix;
+}
+
+/* 呼叫 Anthropic API 辨識名片欄位，回傳 {name,company,title,phone,email,address} */
 async function recognizeBizCardWithAI(dataUrl){
   const key=localStorage.getItem('anthropic_api_key_v1');
-  if(!key)return null;
   const m=dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
   if(!m)throw new Error('圖片格式錯誤');
   const mediaType=m[1],base64Data=m[2];
+  const abort=new AbortController();
+  const timer=setTimeout(()=>abort.abort(),60000);
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
+    signal:abort.signal,
     headers:{
       'Content-Type':'application/json',
       'x-api-key':key,
@@ -2991,7 +3026,7 @@ async function recognizeBizCardWithAI(dataUrl){
     },
     body:JSON.stringify({
       model:'claude-sonnet-5',
-      max_tokens:1024,
+      max_tokens:16000,
       messages:[{
         role:'user',
         content:[
@@ -3018,12 +3053,16 @@ async function recognizeBizCardWithAI(dataUrl){
         }
       }
     })
-  });
+  }).finally(()=>clearTimeout(timer));
   if(!res.ok){
     let msg='';try{msg=(await res.json()).error?.message||''}catch(e){}
-    throw new Error('Anthropic API 錯誤 '+res.status+' '+msg);
+    const err=new Error('Anthropic API 錯誤 '+res.status+' '+msg);
+    err.status=res.status;
+    throw err;
   }
   const d=await res.json();
+  if(d.stop_reason==='refusal')throw new Error('AI 拒絕處理這張照片');
+  if(d.stop_reason==='max_tokens')throw new Error('AI 回覆被截斷');
   const block=(d.content||[]).find(b=>b.type==='text');
   if(!block)throw new Error('沒有收到辨識結果');
   return JSON.parse(block.text);
@@ -3748,6 +3787,7 @@ function buildWorkoutSparkline(pts){
 
     <img id="bizcard-photo-preview" style="display:none;width:100%;max-height:180px;object-fit:contain;border-radius:10px;margin-bottom:8px;background:#F8FAFC"/>
     <a id="bizcard-photo-link" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;color:var(--plan);margin-bottom:10px">🔗 查看原圖</a>
+    <div id="bizcard-ocr-status" style="display:none;font-size:13px;font-weight:600;line-height:1.5;padding:10px 12px;border-radius:10px;margin-bottom:12px"></div>
 
     <div class="field"><label>來源</label>
       <div class="seg">
